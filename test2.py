@@ -15,7 +15,7 @@ import torchvision.utils as vutils
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-import pyformulas as pf
+#import pyformulas as pf
 #from IPython.display import HTML
 
 # Set random seed for reproducibility
@@ -101,6 +101,44 @@ def weights_init(m):
         nn.init.normal_(m.weight.data, 1.0, 0.02)
         nn.init.constant_(m.bias.data, 0)
 
+class GeneratorOld(nn.Module):
+    def __init__(self, ngpu):
+        super(GeneratorOld, self).__init__()
+        self.ngpu = ngpu
+        self.main = nn.Sequential(
+            # input is Z, going into a convolution
+            #nn.ConvTranspose2d( in_channels=nz, out_channels=ngf * 8, kernel_size=(4,4), stride=(1,1), padding=(0,0), bias=False),
+            nn.ConvTranspose2d( in_channels=nz, out_channels=ngf * 4, kernel_size=(8,8), stride=(1,1), padding=(0,0), bias=False),
+            #nn.BatchNorm2d(num_features=ngf * 8),
+            nn.BatchNorm2d(num_features=ngf * 4),
+            nn.ReLU(True),
+            # state size. (ngf*8) x 4 x 4
+            
+            #nn.ConvTranspose2d(in_channels=ngf * 8, out_channels=ngf * 4, kernel_size=4, stride=2, padding=1, bias=False),
+            #nn.BatchNorm2d(ngf * 4),
+            #nn.ReLU(True),
+            # state size. (ngf*4) x 8 x 8
+            
+            #nn.ConvTranspose2d( in_channels=ngf * 4, out_channels=ngf, kernel_size=34, stride=2, padding=1, bias=False),
+            #nn.BatchNorm2d(ngf),
+            nn.ConvTranspose2d( in_channels=ngf * 4, out_channels=ngf * 2, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(ngf * 2),
+            nn.ReLU(True),
+            # state size. (ngf*2) x 16 x 16
+            
+            nn.ConvTranspose2d( in_channels=ngf * 2, out_channels=ngf, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(ngf),
+            nn.ReLU(True),
+            # state size. (ngf) x 32 x 32
+            
+            nn.ConvTranspose2d( in_channels=ngf, out_channels=nc, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.Tanh()
+            # state size. (nc) x 64 x 64
+        )
+
+    def forward(self, input):
+        return self.main(input)
+
 class Generator(nn.Module):
     def __init__(self, ngpu):
         super(Generator, self).__init__()
@@ -113,20 +151,24 @@ class Generator(nn.Module):
             nn.BatchNorm2d(num_features=ngf * 4),
             nn.ReLU(True),
             # state size. (ngf*8) x 4 x 4
+    
             #nn.ConvTranspose2d(in_channels=ngf * 8, out_channels=ngf * 4, kernel_size=4, stride=2, padding=1, bias=False),
             #nn.BatchNorm2d(ngf * 4),
             #nn.ReLU(True),
             # state size. (ngf*4) x 8 x 8
-            #nn.ConvTranspose2d( in_channels=ngf * 4, out_channels=ngf, kernel_size=34, stride=2, padding=1, bias=False),
-            #nn.BatchNorm2d(ngf),
-            nn.ConvTranspose2d( in_channels=ngf * 4, out_channels=ngf * 2, kernel_size=4, stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(ngf * 2),
-            nn.ReLU(True),
-            # state size. (ngf*2) x 16 x 16
-            nn.ConvTranspose2d( in_channels=ngf * 2, out_channels=ngf, kernel_size=4, stride=2, padding=1, bias=False),
+            
+            nn.ConvTranspose2d( in_channels=ngf * 4, out_channels=ngf, kernel_size=20, stride=2, padding=1, bias=False),
             nn.BatchNorm2d(ngf),
+            #nn.ConvTranspose2d( in_channels=ngf * 4, out_channels=ngf * 2, kernel_size=4, stride=2, padding=1, bias=False),
+            #nn.BatchNorm2d(ngf * 2),
             nn.ReLU(True),
+            # state size. (ngf*2) x 16 x 16 
+            
+            #nn.ConvTranspose2d( in_channels=ngf * 2, out_channels=ngf, kernel_size=4, stride=2, padding=1, bias=False),
+            #nn.BatchNorm2d(ngf),
+            #nn.ReLU(True),
             # state size. (ngf) x 32 x 32
+            
             nn.ConvTranspose2d( in_channels=ngf, out_channels=nc, kernel_size=4, stride=2, padding=1, bias=False),
             nn.Tanh()
             # state size. (nc) x 64 x 64
@@ -141,25 +183,63 @@ class Generator(nn.Module):
 netG_ = Generator(ngpu)
 netG = netG_.to(device)
 
+
+############### hook #####################
+
+activation = {}
+def get_activation(name):
+    def hook(model, input, output):
+        activation[name] = output.detach()
+        print(name, output.shape)
+    return hook
+
+for i in range(len(netG_.main)):
+    netG_.main[i].register_forward_hook(get_activation("Generator layer "+str(i)+" output:"))
+
+
+########################################
+
+print("layer 0:************************")
 conv1 = netG_.main[0]
 #Noise shape:  torch.Size([64, 100, 1, 1])
 Hin = 1
 Win = 1
 #Formula ConvTranspose2: https://pytorch.org/docs/stable/generated/torch.nn.ConvTranspose2d.html
-conv1Hout = int((Hin-1)*conv1.kernel_size[0]-2*conv1.padding[0]+conv1.dilation[0]*(conv1.kernel_size[0]-1)+conv1.output_padding[0]+1)
-conv1Wout = int((Win-1)*conv1.kernel_size[1]-2*conv1.padding[1]+conv1.dilation[1]*(conv1.kernel_size[1]-1)+conv1.output_padding[1]+1)
+conv1Hout = (Hin-1)*conv1.stride[0]-2*conv1.padding[0]+conv1.dilation[0]*(conv1.kernel_size[0]-1)+conv1.output_padding[0]+1
+conv1Wout = (Win-1)*conv1.stride[1]-2*conv1.padding[1]+conv1.dilation[1]*(conv1.kernel_size[1]-1)+conv1.output_padding[1]+1
 print("conv1Hout = ", conv1Hout)
 print("conv1Wout = ", conv1Wout)
-
 targetH = 8
-kernelSize = (targetH + 2*conv1.padding[0] - conv1.output_padding[0] - 1 + conv1.dilation[0])/(Hin-1+conv1.dilation[0])
-print("kernelSize to achieve size 8 = ", kernelSize)
+kernelSize = ((targetH - (Hin-1)*conv1.stride[0] + 2*conv1.padding[0] - conv1.output_padding[0] - 1)/conv1.dilation[0])+1
+print("kernelSize to achieve size "+str(targetH)+" = ", kernelSize)
+print("****************************************************")
 
-
+print("layer 3:*******************")
 conv1 = netG_.main[3]
+Hin = 8
+Win = 8
+conv1Hout = int((Hin-1)*conv1.stride[0]-2*conv1.padding[0]+conv1.dilation[0]*(conv1.kernel_size[0]-1)+conv1.output_padding[0]+1)
+conv1Wout = int((Win-1)*conv1.stride[1]-2*conv1.padding[1]+conv1.dilation[1]*(conv1.kernel_size[1]-1)+conv1.output_padding[1]+1)
+print("conv1Hout = ", conv1Hout)
+print("conv1Wout = ", conv1Wout)
 targetH = 32
-kernelSize = (targetH + 2*conv1.padding[0] - conv1.output_padding[0] - 1 + conv1.dilation[0])/(Hin-1+conv1.dilation[0])
-print("kernelSize to achieve size 32 = ", kernelSize)
+kernelSize = ((targetH - (Hin-1)*conv1.stride[0] + 2*conv1.padding[0] - conv1.output_padding[0] - 1)/conv1.dilation[0])+1
+print("kernelSize to achieve size "+str(targetH)+" = ", kernelSize)
+print("****************************************************")
+
+print("layer 6:**************")
+conv1 = netG_.main[6]
+Hin = 32
+Win = 32
+conv1Hout = int((Hin-1)*conv1.stride[0]-2*conv1.padding[0]+conv1.dilation[0]*(conv1.kernel_size[0]-1)+conv1.output_padding[0]+1)
+conv1Wout = int((Win-1)*conv1.stride[1]-2*conv1.padding[1]+conv1.dilation[1]*(conv1.kernel_size[1]-1)+conv1.output_padding[1]+1)
+print("conv1Hout = ", conv1Hout)
+print("conv1Wout = ", conv1Wout)
+targetH = 64
+kernelSize = ((targetH - (Hin-1)*conv1.stride[0] + 2*conv1.padding[0] - conv1.output_padding[0] - 1)/conv1.dilation[0])+1
+print("kernelSize to achieve size "+str(targetH)+" = ", kernelSize)
+print("****************************************************")
+
 
 # Handle multi-gpu if desired
 if (device.type == 'cuda') and (ngpu > 1):
@@ -291,6 +371,10 @@ for epoch in range(num_epochs):
         print("Noise shape: ", noise.shape)
         # Generate fake image batch with G
         fake = netG(noise)
+        
+        ##############
+        #print(activation['conv3'])
+        
         label.fill_(fake_label)
         # Classify all fake batch with D
         output = netD(fake.detach()).view(-1)
@@ -333,14 +417,15 @@ for epoch in range(num_epochs):
 
             
             #%%capture
-        if i % 500 == 0:   
+        if i % 50 == 0:   
             #fig = plt.figure(figsize=(8,8))
             img_list = []
             img_list.append(vutils.make_grid(fake, padding=2, normalize=True))
             plt.axis("off")
             for i in img_list:
               plt.imshow(np.transpose(i,(1,2,0)))
-            plt.pause(0.001)
+            #plt.pause(0.001)
+            plt.savefig('debug.pdf') #Open it with sumatrapdf 
             
 
             '''
