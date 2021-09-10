@@ -11,10 +11,13 @@ import torch.optim as optim
 import torch.utils.data
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
+from torchvision.transforms import ToTensor, Lambda, Compose
 import torchvision.utils as vutils
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import pytorchUtils
+
 #import pyformulas as pf
 #from IPython.display import HTML
 
@@ -40,7 +43,7 @@ batch_size = 64
 image_size = 64
 
 # Number of channels in the training images. For color images this is 3
-nc = 3
+nc = 1
 
 # Size of z latent vector (i.e. size of generator input)
 nz = 100
@@ -67,6 +70,7 @@ ngpu = 1
 
 # We can use an image folder dataset the way we have it setup.
 # Create the dataset
+'''
 dataset = dset.ImageFolder(root=dataroot,
                            transform=transforms.Compose([
                                transforms.Resize(image_size),
@@ -77,6 +81,28 @@ dataset = dset.ImageFolder(root=dataroot,
 # Create the dataloader
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
                                          shuffle=True, num_workers=workers)
+'''
+
+
+
+
+########################## MNIST
+
+# Download training data from open datasets.
+training_data = dset.FashionMNIST(
+    root="data",
+    train=True,
+    download=True,
+    transform=ToTensor(),
+)
+batch_size = 64
+
+# Create data loaders.
+dataloader = torch.utils.data.DataLoader(training_data, batch_size=batch_size)
+
+pytorchUtils.explainDataloader(dataloader)
+##########################
+
 
 # Decide which device we want to run on
 device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
@@ -101,30 +127,16 @@ def weights_init(m):
         nn.init.normal_(m.weight.data, 1.0, 0.02)
         nn.init.constant_(m.bias.data, 0)
 
-class GeneratorOld(nn.Module):
+class Generator(nn.Module):
     def __init__(self, ngpu):
-        super(GeneratorOld, self).__init__()
+        super(Generator, self).__init__()
         self.ngpu = ngpu
         self.main = nn.Sequential(
             # input is Z, going into a convolution
-            #nn.ConvTranspose2d( in_channels=nz, out_channels=ngf * 8, kernel_size=(4,4), stride=(1,1), padding=(0,0), bias=False),
-            nn.ConvTranspose2d( in_channels=nz, out_channels=ngf * 4, kernel_size=(8,8), stride=(1,1), padding=(0,0), bias=False),
-            #nn.BatchNorm2d(num_features=ngf * 8),
+            nn.ConvTranspose2d( in_channels=nz, out_channels=ngf * 4, kernel_size=(5,5), stride=(1,1), padding=(0,0), bias=False),
             nn.BatchNorm2d(num_features=ngf * 4),
             nn.ReLU(True),
-            # state size. (ngf*8) x 4 x 4
-            
-            #nn.ConvTranspose2d(in_channels=ngf * 8, out_channels=ngf * 4, kernel_size=4, stride=2, padding=1, bias=False),
-            #nn.BatchNorm2d(ngf * 4),
-            #nn.ReLU(True),
-            # state size. (ngf*4) x 8 x 8
-            
-            #nn.ConvTranspose2d( in_channels=ngf * 4, out_channels=ngf, kernel_size=34, stride=2, padding=1, bias=False),
-            #nn.BatchNorm2d(ngf),
-            nn.ConvTranspose2d( in_channels=ngf * 4, out_channels=ngf * 2, kernel_size=4, stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(ngf * 2),
-            nn.ReLU(True),
-            # state size. (ngf*2) x 16 x 16
+            # state size. (ngf*8) x 4 x 4            
             
             nn.ConvTranspose2d( in_channels=ngf * 2, out_channels=ngf, kernel_size=4, stride=2, padding=1, bias=False),
             nn.BatchNorm2d(ngf),
@@ -139,107 +151,13 @@ class GeneratorOld(nn.Module):
     def forward(self, input):
         return self.main(input)
 
-class Generator(nn.Module):
-    def __init__(self, ngpu):
-        super(Generator, self).__init__()
-        self.ngpu = ngpu
-        self.main = nn.Sequential(
-            # input is Z, going into a convolution
-            #nn.ConvTranspose2d( in_channels=nz, out_channels=ngf * 8, kernel_size=(4,4), stride=(1,1), padding=(0,0), bias=False),
-            nn.ConvTranspose2d( in_channels=nz, out_channels=ngf * 4, kernel_size=(8,8), stride=(1,1), padding=(0,0), bias=False),
-            #nn.BatchNorm2d(num_features=ngf * 8),
-            nn.BatchNorm2d(num_features=ngf * 4),
-            nn.ReLU(True),
-            # state size. (ngf*8) x 4 x 4
-    
-            #nn.ConvTranspose2d(in_channels=ngf * 8, out_channels=ngf * 4, kernel_size=4, stride=2, padding=1, bias=False),
-            #nn.BatchNorm2d(ngf * 4),
-            #nn.ReLU(True),
-            # state size. (ngf*4) x 8 x 8
-            
-            nn.ConvTranspose2d( in_channels=ngf * 4, out_channels=ngf, kernel_size=20, stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(ngf),
-            #nn.ConvTranspose2d( in_channels=ngf * 4, out_channels=ngf * 2, kernel_size=4, stride=2, padding=1, bias=False),
-            #nn.BatchNorm2d(ngf * 2),
-            nn.ReLU(True),
-            # state size. (ngf*2) x 16 x 16 
-            
-            #nn.ConvTranspose2d( in_channels=ngf * 2, out_channels=ngf, kernel_size=4, stride=2, padding=1, bias=False),
-            #nn.BatchNorm2d(ngf),
-            #nn.ReLU(True),
-            # state size. (ngf) x 32 x 32
-            
-            nn.ConvTranspose2d( in_channels=ngf, out_channels=nc, kernel_size=4, stride=2, padding=1, bias=False),
-            nn.Tanh()
-            # state size. (nc) x 64 x 64
-        )
-
-    def forward(self, input):
-        return self.main(input)
-
-
-
 # Create the generator
 netG_ = Generator(ngpu)
 netG = netG_.to(device)
 
 
-############### hook #####################
-
-activation = {}
-def get_activation(name):
-    def hook(model, input, output):
-        activation[name] = output.detach()
-        print(name, output.shape)
-    return hook
-
-for i in range(len(netG_.main)):
-    netG_.main[i].register_forward_hook(get_activation("Generator layer "+str(i)+" output:"))
-
-
-########################################
-
-print("layer 0:************************")
-conv1 = netG_.main[0]
-#Noise shape:  torch.Size([64, 100, 1, 1])
-Hin = 1
-Win = 1
-#Formula ConvTranspose2: https://pytorch.org/docs/stable/generated/torch.nn.ConvTranspose2d.html
-conv1Hout = (Hin-1)*conv1.stride[0]-2*conv1.padding[0]+conv1.dilation[0]*(conv1.kernel_size[0]-1)+conv1.output_padding[0]+1
-conv1Wout = (Win-1)*conv1.stride[1]-2*conv1.padding[1]+conv1.dilation[1]*(conv1.kernel_size[1]-1)+conv1.output_padding[1]+1
-print("conv1Hout = ", conv1Hout)
-print("conv1Wout = ", conv1Wout)
-targetH = 8
-kernelSize = ((targetH - (Hin-1)*conv1.stride[0] + 2*conv1.padding[0] - conv1.output_padding[0] - 1)/conv1.dilation[0])+1
-print("kernelSize to achieve size "+str(targetH)+" = ", kernelSize)
-print("****************************************************")
-
-print("layer 3:*******************")
-conv1 = netG_.main[3]
-Hin = 8
-Win = 8
-conv1Hout = int((Hin-1)*conv1.stride[0]-2*conv1.padding[0]+conv1.dilation[0]*(conv1.kernel_size[0]-1)+conv1.output_padding[0]+1)
-conv1Wout = int((Win-1)*conv1.stride[1]-2*conv1.padding[1]+conv1.dilation[1]*(conv1.kernel_size[1]-1)+conv1.output_padding[1]+1)
-print("conv1Hout = ", conv1Hout)
-print("conv1Wout = ", conv1Wout)
-targetH = 32
-kernelSize = ((targetH - (Hin-1)*conv1.stride[0] + 2*conv1.padding[0] - conv1.output_padding[0] - 1)/conv1.dilation[0])+1
-print("kernelSize to achieve size "+str(targetH)+" = ", kernelSize)
-print("****************************************************")
-
-print("layer 6:**************")
-conv1 = netG_.main[6]
-Hin = 32
-Win = 32
-conv1Hout = int((Hin-1)*conv1.stride[0]-2*conv1.padding[0]+conv1.dilation[0]*(conv1.kernel_size[0]-1)+conv1.output_padding[0]+1)
-conv1Wout = int((Win-1)*conv1.stride[1]-2*conv1.padding[1]+conv1.dilation[1]*(conv1.kernel_size[1]-1)+conv1.output_padding[1]+1)
-print("conv1Hout = ", conv1Hout)
-print("conv1Wout = ", conv1Wout)
-targetH = 64
-kernelSize = ((targetH - (Hin-1)*conv1.stride[0] + 2*conv1.padding[0] - conv1.output_padding[0] - 1)/conv1.dilation[0])+1
-print("kernelSize to achieve size "+str(targetH)+" = ", kernelSize)
-print("****************************************************")
-
+#Register my debug hook
+pytorchUtils.registerDebugHook(netG_)
 
 # Handle multi-gpu if desired
 if (device.type == 'cuda') and (ngpu > 1):
@@ -251,6 +169,7 @@ netG.apply(weights_init)
 
 # Print the model
 print(netG)
+pytorchUtils.explainModel(netG, 1, 1, 28, 28)
 
 
 class Discriminator(nn.Module):
@@ -283,7 +202,9 @@ class Discriminator(nn.Module):
 
 
 # Create the Discriminator
-netD = Discriminator(ngpu).to(device)
+netD_ = Discriminator(ngpu)
+netD = netD_.to(device)
+
 
 # Handle multi-gpu if desired
 if (device.type == 'cuda') and (ngpu > 1):
@@ -295,7 +216,7 @@ netD.apply(weights_init)
 
 # Print the model
 print(netD)
-
+pytorchUtils.explainModel(netD, 28, 28, 1, 1)
 
 # Initialize BCELoss function
 criterion = nn.BCELoss()
