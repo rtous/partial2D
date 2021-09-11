@@ -384,8 +384,8 @@ for epoch in range(num_epochs):
             plt.axis("off")
             for i in img_list:
               plt.imshow(np.transpose(i,(1,2,0)))
-            #plt.pause(0.001)
-            plt.savefig('debug.pdf') #Open it with sumatrapdf 
+            plt.pause(0.001)
+            #plt.savefig('debug.pdf') #Open it with sumatrapdf 
             
 
             '''

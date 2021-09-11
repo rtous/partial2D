@@ -17,9 +17,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import pytorchUtils
+import argparse
 
-#import pyformulas as pf
-#from IPython.display import HTML
+parser = argparse.ArgumentParser()
+parser.add_argument('--debug', type=int, default = 0)
+parser.add_argument('--interactive', type=int, default = 0)
+arguments, unparsed = parser.parse_known_args()
 
 # Set random seed for reproducibility
 manualSeed = 999
@@ -68,24 +71,6 @@ beta1 = 0.5
 # Number of GPUs available. Use 0 for CPU mode.
 ngpu = 1
 
-# We can use an image folder dataset the way we have it setup.
-# Create the dataset
-'''
-dataset = dset.ImageFolder(root=dataroot,
-                           transform=transforms.Compose([
-                               transforms.Resize(image_size),
-                               transforms.CenterCrop(image_size),
-                               transforms.ToTensor(),
-                               transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-                           ]))
-# Create the dataloader
-dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
-                                         shuffle=True, num_workers=workers)
-'''
-
-
-
-
 ########################## MNIST
 
 # Download training data from open datasets.
@@ -133,17 +118,22 @@ class Generator(nn.Module):
         self.ngpu = ngpu
         self.main = nn.Sequential(
             # input is Z, going into a convolution
-            nn.ConvTranspose2d( in_channels=nz, out_channels=ngf * 4, kernel_size=(5,5), stride=(1,1), padding=(0,0), bias=False),
+            nn.ConvTranspose2d( in_channels=nz, out_channels=ngf * 4, kernel_size=(4,4), stride=(1,1), padding=(0,0), bias=False),
             nn.BatchNorm2d(num_features=ngf * 4),
             nn.ReLU(True),
-            # state size. (ngf*8) x 4 x 4            
+            # state size. (ngf*8) x 4 x 4   
+
+            nn.ConvTranspose2d( in_channels=ngf * 4, out_channels=ngf * 2, kernel_size=(3,3), stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(ngf * 2),
+            nn.ReLU(True),
+            # state size. (ngf) x 32 x 32         
             
-            nn.ConvTranspose2d( in_channels=ngf * 2, out_channels=ngf, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.ConvTranspose2d( in_channels=ngf * 2, out_channels=ngf, kernel_size=(4,4), stride=2, padding=1, bias=False),
             nn.BatchNorm2d(ngf),
             nn.ReLU(True),
             # state size. (ngf) x 32 x 32
             
-            nn.ConvTranspose2d( in_channels=ngf, out_channels=nc, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.ConvTranspose2d( in_channels=ngf, out_channels=nc, kernel_size=(4,4), stride=2, padding=1, bias=False),
             nn.Tanh()
             # state size. (nc) x 64 x 64
         )
@@ -155,9 +145,9 @@ class Generator(nn.Module):
 netG_ = Generator(ngpu)
 netG = netG_.to(device)
 
-
 #Register my debug hook
-pytorchUtils.registerDebugHook(netG_)
+if arguments.debug:
+	pytorchUtils.registerDebugHook(netG_)
 
 # Handle multi-gpu if desired
 if (device.type == 'cuda') and (ngpu > 1):
@@ -178,22 +168,22 @@ class Discriminator(nn.Module):
         self.ngpu = ngpu
         self.main = nn.Sequential(
             # input is (nc) x 64 x 64
-            nn.Conv2d(nc, ndf, 4, 2, 1, bias=False),
+            nn.Conv2d(in_channels=nc, out_channels=ndf, kernel_size=(16,16), stride=2, padding=1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf) x 32 x 32
-            nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
+            nn.Conv2d(in_channels=ndf, out_channels=ndf * 2, kernel_size=4, stride=2, padding=1, bias=False),
             nn.BatchNorm2d(ndf * 2),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*2) x 16 x 16
-            nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ndf * 4),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*4) x 8 x 8
-            nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
+            nn.Conv2d(in_channels=ndf * 2, out_channels=ndf * 8, kernel_size=4, stride=2, padding=1, bias=False),
             nn.BatchNorm2d(ndf * 8),
             nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*4) x 8 x 8
+            #nn.Conv2d(in_channels=ndf * 4, out_channels=ndf * 8, kernel_size=4, stride=2, padding=1, bias=False),
+            #nn.BatchNorm2d(ndf * 8),
+            #nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*8) x 4 x 4
-            nn.Conv2d(ndf * 8, 1, 4, 1, 0, bias=False),
+            nn.Conv2d(in_channels=ndf * 8, out_channels=1, kernel_size=2, stride=1, padding=0, bias=False),
             nn.Sigmoid()
         )
 
@@ -205,6 +195,9 @@ class Discriminator(nn.Module):
 netD_ = Discriminator(ngpu)
 netD = netD_.to(device)
 
+#Register my debug hook
+if arguments.debug:
+	pytorchUtils.registerDebugHook(netD_)
 
 # Handle multi-gpu if desired
 if (device.type == 'cuda') and (ngpu > 1):
@@ -261,8 +254,7 @@ for epoch in range(num_epochs):
     # For each batch in the dataloader
     for i, data in enumerate(dataloader, 0):
 
-        print("Training iteration "+str(i))
-
+        #print("Training iteration "+str(i))
 
         ############################
         # (1) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
@@ -275,7 +267,7 @@ for epoch in range(num_epochs):
         #print("Length of data[1]: ", len(data[1]))
         #print(data[1].shape)
         real_cpu = data[0].to(device)
-        print("Shape of data[0] [N, C, H, W]: ", real_cpu.shape)
+        #print("Shape of data[0] [N, C, H, W]: ", real_cpu.shape)
         b_size = real_cpu.size(0)
         label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
         # Forward pass real batch through D
@@ -289,7 +281,7 @@ for epoch in range(num_epochs):
         ## Train with all-fake batch
         # Generate batch of latent vectors
         noise = torch.randn(b_size, nz, 1, 1, device=device)
-        print("Noise shape: ", noise.shape)
+        #print("Noise shape: ", noise.shape)
         # Generate fake image batch with G
         fake = netG(noise)
         
@@ -318,9 +310,9 @@ for epoch in range(num_epochs):
         output = netD(fake).view(-1)
         # Calculate G's loss based on this output
         errG = criterion(output, label)
-        print("errG = criterion(output, label)")
-        print("output shape = ", output.shape)
-        print("label shape = ", label.shape)
+        #print("errG = criterion(output, label)")
+        #print("output shape = ", output.shape)
+        #print("label shape = ", label.shape)
         # Calculate gradients for G
         errG.backward()
         D_G_z2 = output.mean().item()
@@ -345,37 +337,11 @@ for epoch in range(num_epochs):
             plt.axis("off")
             for i in img_list:
               plt.imshow(np.transpose(i,(1,2,0)))
-            #plt.pause(0.001)
-            plt.savefig('debug.pdf') #Open it with sumatrapdf 
+            if arguments.interactive:
+              plt.pause(0.001)
+            else:
+              plt.savefig('debug.pdf') #Open it with sumatrapdf 
             
-
-            '''
-            fig = plt.figure(figsize=(8,8))
-            plt.axis("off")
-            for i in img_list:
-              plt.imshow(np.transpose(i,(1,2,0)))
-
-            '''
-
-            '''
-            now = time.time() - start
-            x = np.linspace(now-2, now, 100)
-            y = np.sin(2*np.pi*x) + np.sin(3*np.pi*x)
-            plt.xlim(now-2,now+1)
-            plt.ylim(-3,3)
-            plt.plot(x, y, c='black')
-
-        
-            fig.canvas.draw()
-            image = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
-            image = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-            screen.update(image)
-            '''
-            
-            
-            
-            
-
         # Save Losses for plotting later
         G_losses.append(errG.item())
         D_losses.append(errD.item())
