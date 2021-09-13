@@ -16,9 +16,13 @@ def explainModel(model, Hin, Win, desiredHout, desiredWout):
             Hout = int((layerHin-1)*layer.stride[0]-2*layer.padding[0]+layer.dilation[0]*(layer.kernel_size[0]-1)+layer.output_padding[0]+1)
             Wout = int((layerWin-1)*layer.stride[1]-2*layer.padding[1]+layer.dilation[1]*(layer.kernel_size[1]-1)+layer.output_padding[1]+1)
             print("Layer "+str(i)+" (ConvTranspose2d) output: "+str(Hout)+"x"+str(Wout))
+        elif isinstance(layer, nn.Linear):
+            Hout = layer.out_features
+            Wout = layerWin
         layerHin = Hout
         layerWin = Wout
     print()
+    '''
     for i in range(len(model.main)-1, -1, -1):
         layer = model.main[i]
         if isinstance(layer, nn.Conv2d):
@@ -37,6 +41,16 @@ def explainModel(model, Hin, Win, desiredHout, desiredWout):
             kernelSizeShouldBe = calculateKernelSizeForDesiredOutputSize(layer, layerHin, desiredHout)
             print("kernelSize to achieve "+str(desiredHout)+" in layer "+str(i)+" with input "+str(layerHin)+" should be = ", kernelSizeShouldBe)
             desiredHout = layerHin
+    '''
+
+def computeModel(model, Hin, layersOutputs):
+    for layerOutput in layersOutputs:
+        layerIndex = layerOutput["layer"]
+        layer = model.main[layerIndex]
+        desiredHout = layerOutput["output"]
+        kernelSizeShouldBe = calculateKernelSizeForDesiredOutputSize(layer, Hin, desiredHout)
+        print("kernelSize to achieve "+str(desiredHout)+" in layer "+str(layerIndex)+" with input "+str(Hin)+" should be = ", kernelSizeShouldBe)
+        Hin = desiredHout    
 
 def calculateKernelSizeForDesiredOutputSize(layer, Hin, targetH):
     if isinstance(layer, nn.Conv2d):

@@ -19,6 +19,9 @@ import matplotlib.animation as animation
 import pytorchUtils
 import argparse
 
+#Base code is from Pytorch tutorial on GAN for faces but
+#The network is tuned as here: https://machinelearningmastery.com/how-to-develop-a-generative-adversarial-network-for-an-mnist-handwritten-digits-from-scratch-in-keras/
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--debug', type=int, default = 0)
 parser.add_argument('--interactive', type=int, default = 0)
@@ -43,7 +46,7 @@ batch_size = 64
 
 # Spatial size of training images. All images will be resized to this
 #   size using a transformer.
-image_size = 64
+image_size = 28
 
 # Number of channels in the training images. For color images this is 3
 nc = 1
@@ -53,11 +56,11 @@ nz = 100
 
 # Size of feature maps in generator
 #ngf = 64
-ngf = 16
+ngf = 64
 
 # Size of feature maps in discriminator
 #ndf = 64
-ndf = 16
+ndf = 64
 
 # Number of training epochs
 num_epochs = 5
@@ -70,6 +73,8 @@ beta1 = 0.5
 
 # Number of GPUs available. Use 0 for CPU mode.
 ngpu = 1
+
+GENERATOR_OUTPUT_IMAGE_SHAPE = 28 * 28 * 1
 
 ########################## MNIST
 
@@ -113,33 +118,29 @@ def weights_init(m):
         nn.init.constant_(m.bias.data, 0)
 
 class Generator(nn.Module):
-    def __init__(self, ngpu):
-        super(Generator, self).__init__()
-        self.ngpu = ngpu
-        self.main = nn.Sequential(
-            # input is Z, going into a convolution
-            nn.ConvTranspose2d( in_channels=nz, out_channels=ngf * 4, kernel_size=(4,4), stride=(1,1), padding=(0,0), bias=False),
-            nn.BatchNorm2d(num_features=ngf * 4),
-            nn.ReLU(True),
-            # state size. (ngf*8) x 4 x 4   
-
-            nn.ConvTranspose2d( in_channels=ngf * 4, out_channels=ngf * 2, kernel_size=(3,3), stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(ngf * 2),
-            nn.ReLU(True),
-            # state size. (ngf) x 32 x 32         
-            
-            nn.ConvTranspose2d( in_channels=ngf * 2, out_channels=ngf, kernel_size=(4,4), stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(ngf),
-            nn.ReLU(True),
-            # state size. (ngf) x 32 x 32
-            
-            nn.ConvTranspose2d( in_channels=ngf, out_channels=nc, kernel_size=(4,4), stride=2, padding=1, bias=False),
-            nn.Tanh()
-            # state size. (nc) x 64 x 64
+	def __init__(self, ngpu):
+		super(Generator, self).__init__()
+		self.ngpu = ngpu
+		self.main = nn.Sequential(
+          # First upsampling
+          nn.Linear(nz, 128, bias=False),
+          nn.BatchNorm1d(128, 0.8),
+          nn.LeakyReLU(0.25),
+          # Second upsampling
+          nn.Linear(128, 256, bias=False),
+          nn.BatchNorm1d(256, 0.8),
+          nn.LeakyReLU(0.25),
+          # Third upsampling
+          nn.Linear(256, 512, bias=False),
+          nn.BatchNorm1d(512, 0.8),
+          nn.LeakyReLU(0.25),
+          # Final upsampling
+          nn.Linear(512, GENERATOR_OUTPUT_IMAGE_SHAPE, bias=False),
+          nn.Tanh()
         )
 
-    def forward(self, input):
-        return self.main(input)
+	def forward(self, input):
+		return self.main(x)
 
 # Create the generator
 netG_ = Generator(ngpu)
@@ -159,31 +160,21 @@ netG.apply(weights_init)
 
 # Print the model
 print(netG)
-pytorchUtils.explainModel(netG, 1, 1, 28, 28)
-pytorchUtils.computeModel(netG, 1, [{"layer":0, "output":7},{"layer":6, "output":14},{"layer":9, "output":28}])
+#pytorchUtils.explainModel(netG, 1, 1, 28, 28)
+#pytorchUtils.computeModel(netG, 1, [{"layer":0, "output":7},{"layer":6, "output":14},{"layer":9, "output":28}])
 
 class Discriminator(nn.Module):
     def __init__(self, ngpu):
         super(Discriminator, self).__init__()
         self.ngpu = ngpu
         self.main = nn.Sequential(
-            # input is (nc) x 64 x 64
-            nn.Conv2d(in_channels=nc, out_channels=ndf, kernel_size=(16,16), stride=2, padding=1, bias=False),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf) x 32 x 32
-            nn.Conv2d(in_channels=ndf, out_channels=ndf * 2, kernel_size=4, stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(ndf * 2),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*2) x 16 x 16
-            nn.Conv2d(in_channels=ndf * 2, out_channels=ndf * 8, kernel_size=4, stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(ndf * 8),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*4) x 8 x 8
-            #nn.Conv2d(in_channels=ndf * 4, out_channels=ndf * 8, kernel_size=4, stride=2, padding=1, bias=False),
-            #nn.BatchNorm2d(ndf * 8),
-            #nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*8) x 4 x 4
-            nn.Conv2d(in_channels=ndf * 8, out_channels=1, kernel_size=2, stride=1, padding=0, bias=False),
+            nn.Linear(GENERATOR_OUTPUT_IMAGE_SHAPE, 1024), 
+            nn.LeakyReLU(0.25),
+            nn.Linear(1024, 512), 
+            nn.LeakyReLU(0.25),
+            nn.Linear(512, 256), 
+            nn.LeakyReLU(0.25),
+            nn.Linear(256, 1),
             nn.Sigmoid()
         )
 
@@ -209,7 +200,8 @@ netD.apply(weights_init)
 
 # Print the model
 print(netD)
-pytorchUtils.explainModel(netD, 28, 28, 1, 1)
+#pytorchUtils.explainModel(netD, 28, 28, 1, 1)
+#pytorchUtils.computeModel(netD, 28, [{"layer":0, "output":14},{"layer":2, "output":7},{"layer":5, "output":4},{"layer":8, "output":1}])
 
 # Initialize BCELoss function
 criterion = nn.BCELoss()
@@ -217,6 +209,7 @@ criterion = nn.BCELoss()
 # Create batch of latent vectors that we will use to visualize
 #  the progression of the generator
 fixed_noise = torch.randn(64, nz, 1, 1, device=device)
+print("noise shape = ", fixed_noise.shape)
 
 # Establish convention for real and fake labels during training
 real_label = 1.
@@ -281,6 +274,10 @@ for epoch in range(num_epochs):
         ## Train with all-fake batch
         # Generate batch of latent vectors
         noise = torch.randn(b_size, nz, 1, 1, device=device)
+
+        #noise = torch.randn(b_size, nz, device=device)
+
+
         #print("Noise shape: ", noise.shape)
         # Generate fake image batch with G
         fake = netG(noise)
