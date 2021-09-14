@@ -69,12 +69,12 @@ def explainDataloader(dataloader):
 def debugHook(name):
     def hook(model, input, output):
         #activation[name] = output.detach()
-        print(name, output.shape)
+        print(name+" input:"+str(input[0].shape)+" output:"+str(output.shape))
     return hook
     
 def registerDebugHook(model):
     for i in range(len(model.main)):
-        model.main[i].register_forward_hook(debugHook(model.__class__.__name__+" layer "+str(i)+" output:"))
+        model.main[i].register_forward_hook(debugHook(model.__class__.__name__+" layer "+str(i)))
 
     
 
