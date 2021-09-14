@@ -20,10 +20,12 @@ import pytorchUtils
 import argparse
 from torchvision.datasets import MNIST
 
-#BASE CODE: https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html
-#CONDITIONAL:
-# https://medium.com/analytics-vidhya/step-by-step-implementation-of-conditional-generative-adversarial-networks-54e4b47497d6
-# https://github.com/eriklindernoren/PyTorch-GAN/blob/master/implementations/cgan/cgan.py
+'''
+Here I change the nose to be a simple batchsize x 100 tensor.
+I order to input this into the deconvolution I did within the forward:
+inputReshaped = input.view(b_size, nz, 1, 1)
+return self.main(inputReshaped)
+'''
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--debug', type=int, default = 0)
@@ -80,6 +82,18 @@ ngpu = 1
 ########################## MNIST
 
 # Download training data from open datasets.
+'''
+training_data = dset.FashionMNIST(
+    root="data",
+    train=True,
+    download=True,
+    transform=ToTensor(),
+)
+batch_size = 64
+
+# Create data loaders.
+dataloader = torch.utils.data.DataLoader(training_data, batch_size=batch_size)
+'''
 def prepare_dataset():
   
   """ Prepare dataset through DataLoader """
@@ -101,6 +115,16 @@ pytorchUtils.explainDataloader(dataloader)
 # Decide which device we want to run on
 device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
 
+'''
+# Plot some training images
+print("Plotting some...")
+real_batch = next(iter(dataloader))
+plt.figure(figsize=(8,8))
+plt.axis("off")
+plt.title("Training Images")
+plt.imshow(np.transpose(vutils.make_grid(real_batch[0].to(device)[:64], padding=2, normalize=True).cpu(),(1,2,0)))
+plt.show()
+'''
 
 # custom weights initialization called on netG and netD
 def weights_init(m):
@@ -115,14 +139,10 @@ class Generator(nn.Module):
     def __init__(self, ngpu):
         super(Generator, self).__init__()
         self.ngpu = ngpu
-        
-        #self.layers = nn.ModuleList()
-
-        self.digit_embedding = nn.Embedding(10, 10)
-       
         self.main = nn.Sequential(
             # input is Z, going into a convolution
-            nn.ConvTranspose2d( in_channels=nz+10, out_channels=ngf * 4, kernel_size=(4,4), stride=(1,1), padding=(0,0), bias=False),
+
+            nn.ConvTranspose2d( in_channels=nz, out_channels=ngf * 4, kernel_size=(4,4), stride=(1,1), padding=(0,0), bias=False),
             nn.BatchNorm2d(num_features=ngf * 4),
             nn.ReLU(True),
             # state size. (ngf*8) x 4 x 4   
@@ -142,17 +162,10 @@ class Generator(nn.Module):
             # state size. (nc) x 64 x 64
         )
 
-    def forward(self, noise, digit):
-        print("Generator...")
-        print("digit[0]: ", digit[0].detach().numpy())
-        #print("digit: ", digit)
-        #print("noise: ", noise)
-        #print("self.digit_embedding(digit): ", self.digit_embedding(digit))
-        
-        gen_input = torch.cat((self.digit_embedding(digit), noise), -1)  
-        print("gen_input shape: ", gen_input.shape)      
-        inputReshaped = gen_input.view(b_size, nz+10, 1, 1)
-        print("inputReshaped shape: ", inputReshaped.shape)    
+    def forward(self, input):
+        print("Generator input shape: ",input.shape)
+        inputReshaped = input.view(b_size, nz, 1, 1)
+        print("inputReshaped shape: ", inputReshaped.shape) 
         return self.main(inputReshaped)
 
 # Create the generator
@@ -180,7 +193,6 @@ class Discriminator(nn.Module):
     def __init__(self, ngpu):
         super(Discriminator, self).__init__()
         self.ngpu = ngpu
-        self.digit_embedding = nn.Embedding(10, 10)
         self.main = nn.Sequential(
             # input is (nc) x 64 x 64
             nn.Conv2d(in_channels=nc, out_channels=ndf, kernel_size=(16,16), stride=2, padding=1, bias=False),
@@ -203,9 +215,6 @@ class Discriminator(nn.Module):
         )
 
     def forward(self, input):
-        print("Discriminator...")
-        #c = self.label_embedding(labels)
-        #x = torch.cat([input, c], 1)
         return self.main(input)
 
 
@@ -234,8 +243,7 @@ criterion = nn.BCELoss()
 
 # Create batch of latent vectors that we will use to visualize
 #  the progression of the generator
-fixed_noise = torch.randn(batch_size, nz, device=device)
-fixed_digits = torch.full((batch_size, ), 7, dtype=int)
+fixed_noise = torch.randn(64, nz, device=device)
 
 # Establish convention for real and fake labels during training
 real_label = 1.
@@ -300,20 +308,9 @@ for epoch in range(num_epochs):
         ## Train with all-fake batch
         # Generate batch of latent vectors
         noise = torch.randn(b_size, nz, device=device)
-        #random_digits = torch.randint(0, 10, (b_size,))
-        #random_digits = torch.randint(low=0, high=10, shape=(b_size, 10, 1, 1), device=device)
-        random_digits = torch.randint(10, (b_size, ))
-        
-        '''
-        random_digits = np.expand_dims(random_digits, axis=1)
-        random_digits = np.expand_dims(random_digits, axis=1)
-        random_digits = torch.tensor(random_digits)
-        '''
-        print("random_digits shape", random_digits.shape)
-        #random_digits = random_digits.to(device)
         #print("Noise shape: ", noise.shape)
         # Generate fake image batch with G
-        fake = netG(noise, random_digits)
+        fake = netG(noise)
         
         ##############
         #print(activation['conv3'])
@@ -355,7 +352,7 @@ for epoch in range(num_epochs):
                   % (epoch, num_epochs, i, len(dataloader),
                      errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
             with torch.no_grad():
-                fake = netG(fixed_noise, fixed_digits).detach().cpu()
+                fake = netG(fixed_noise).detach().cpu()
                 print("Shape of fake: ", fake.shape)
 
             
