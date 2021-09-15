@@ -1,4 +1,5 @@
 import torch.nn as nn
+import sys
 
 def explainModel(model, Hin, Win, desiredHout, desiredWout):
     #Hin = input.shape[0]
@@ -77,6 +78,22 @@ def registerDebugHook(model):
         model.main[i].register_forward_hook(debugHook(model.__class__.__name__+" layer "+str(i)))
 
     
+def showMNIST(array784, color=2):
+    if color == 0:
+        c = "\033[91m"
+    elif color == 1:
+        c = "\033[92m"
+    else:
+        c = ""
+    endColor = "\033[0m"
 
+    for i in range(0, 28):
+        for j in range(0, 28):
+            if array784[i*28+j]>0:
+                sys.stdout.write(c+"*"+endColor)
+            else:
+                sys.stdout.write(" ")
+            sys.stdout.flush()
+        sys.stdout.write("\n")
     
     

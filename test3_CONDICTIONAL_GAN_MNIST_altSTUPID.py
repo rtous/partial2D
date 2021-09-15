@@ -147,16 +147,16 @@ class Generator(nn.Module):
         )
 
     def forward(self, noise, digit):
-        print("Generator...")
-        print("digit[0]: ", digit[0].detach().numpy())
+        #print("Generator...")
+        #print("digit[0]: ", digit[0].detach().numpy())
         #print("digit: ", digit)
         #print("noise: ", noise)
         #print("self.digit_embedding(digit): ", self.digit_embedding(digit))
         
         gen_input = torch.cat((self.digit_embedding(digit), noise), -1)  
-        print("gen_input shape: ", gen_input.shape)      
+        #print("gen_input shape: ", gen_input.shape)      
         inputReshaped = gen_input.view(b_size, nz+10, 1, 1)
-        print("inputReshaped shape: ", inputReshaped.shape)    
+        #print("inputReshaped shape: ", inputReshaped.shape)    
         return self.main(inputReshaped)
 
 # Create the generator
@@ -225,25 +225,31 @@ class Discriminator(nn.Module):
     def __init__(self, ngpu):
         super(Discriminator, self).__init__()
         self.ngpu = ngpu
-        self.flatten = nn.Flatten()
-        self.digit_embedding = nn.Embedding(10, 10)
         self.main = nn.Sequential(
-            nn.Linear(28*28+10, 1024), 
-            nn.LeakyReLU(0.25),
-            nn.Linear(1024, 512), 
-            nn.LeakyReLU(0.25),
-            nn.Linear(512, 256), 
-            nn.LeakyReLU(0.25),
-            nn.Linear(256, 1),
+            # input is (nc) x 64 x 64
+            nn.Conv2d(in_channels=nc, out_channels=ndf, kernel_size=(16,16), stride=2, padding=1, bias=False),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf) x 32 x 32
+            nn.Conv2d(in_channels=ndf, out_channels=ndf * 2, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(ndf * 2),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*2) x 16 x 16
+            nn.Conv2d(in_channels=ndf * 2, out_channels=ndf * 8, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(ndf * 8),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*4) x 8 x 8
+            #nn.Conv2d(in_channels=ndf * 4, out_channels=ndf * 8, kernel_size=4, stride=2, padding=1, bias=False),
+            #nn.BatchNorm2d(ndf * 8),
+            #nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*8) x 4 x 4
+            #nn.Conv2d(in_channels=ndf * 8, out_channels=1, kernel_size=2, stride=1, padding=0, bias=False),
+            nn.Flatten(),
+            nn.Linear(512, 10),
             nn.Sigmoid()
         )
 
-    def forward(self, imageBatch, digitBatch):
-        imageBatch_flat = self.flatten(imageBatch)
-        digitBatch_embedding = self.digit_embedding(digitBatch)
-        concatenated = torch.cat((imageBatch_flat, digitBatch_embedding), 1) #or -1?
-        print("concatenated.shape=",concatenated.shape)
-        return self.main(concatenated)
+    def forward(self, input):
+        return self.main(input)
 
 # Create the Discriminator
 netD_ = Discriminator(ngpu)
@@ -267,6 +273,7 @@ print(netD)
 
 # Initialize BCELoss function
 criterion = nn.BCELoss()
+criterion2 = nn.CrossEntropyLoss(ignore_index=-1)
 
 # Create batch of latent vectors that we will use to visualize
 #  the progression of the generator
@@ -324,18 +331,23 @@ for epoch in range(num_epochs):
         #print("Length of data[1]: ", len(data[1]))
         #print(data[1].shape)
         real_image_batch = data[0].to(device)
-        print("Discriminator REAL input batch (images) = ", real_image_batch)
-        pytorchUtils.showMNIST(np.reshape(real_image_batch[0], 784))
+        #print("Discriminator REAL input batch (images) = ", real_image_batch)
+        #pytorchUtils.showMNIST(np.reshape(real_image_batch[0], 784))
         real_digit_batch = data[1].to(device)
-        print("Discriminator REAL input batch (digits) = ", real_digit_batch)
+        #print("Discriminator REAL input batch (digits) = ", real_digit_batch)
         #print("Shape of data[0] [N, C, H, W]: ", real_cpu.shape)
         b_size = real_image_batch.size(0)
         batch_of_LABEL_REAL_1 = torch.full((b_size,), LABEL_REAL_1, dtype=torch.float, device=device)
         # Forward pass real batch through D
-        DOutput = netD(real_image_batch, real_digit_batch).view(-1)
+        DOutput = netD(real_image_batch)
         
         # Calculate loss on all-real batch
-        errD_real = criterion(DOutput, batch_of_LABEL_REAL_1)
+        #errD_real = criterion(DOutput, batch_of_LABEL_REAL_1)
+        #print("DOutput.shape: ", DOutput.shape)
+        #print("real_digit_batch.shape: ", real_digit_batch.shape)
+        #print("DOutput: ", DOutput)
+        #print("real_digit_batch: ", real_digit_batch)
+        errD_real = criterion2(DOutput, real_digit_batch)
         
 
         # Calculate gradients for D in backward pass
@@ -354,7 +366,7 @@ for epoch in range(num_epochs):
         random_digits = np.expand_dims(random_digits, axis=1)
         random_digits = torch.tensor(random_digits)
         '''
-        print("random_digits shape", random_digits.shape)
+        #print("random_digits shape", random_digits.shape)
         #random_digits = random_digits.to(device)
         #print("Noise shape: ", noise.shape)
 
@@ -364,11 +376,13 @@ for epoch in range(num_epochs):
         ##############
         #print(activation['conv3'])
         
-        batch_of_LABEL_FAKE_0 = torch.full((b_size,), LABEL_FAKE_0, dtype=torch.float, device=device)
+        #batch_of_LABEL_FAKE_0 = torch.full((b_size,), LABEL_FAKE_0, dtype=torch.float, device=device)
+        batch_of_LABEL_FAKE_0 = torch.full((b_size,), -1, dtype=torch.long, device=device)
+
         # Classify all fake batch with D
-        Doutput = netD(fakeImages.detach(), random_digits).view(-1)
+        Doutput = netD(fakeImages.detach())
         # Calculate D's loss on the all-fake batch
-        errD_fake = criterion(Doutput, batch_of_LABEL_FAKE_0)
+        errD_fake = criterion2(Doutput, batch_of_LABEL_FAKE_0)
         # Calculate the gradients for this batch, accumulated (summed) with previous gradients
         errD_fake.backward()
         D_G_z1 = Doutput.mean().item()
@@ -382,11 +396,11 @@ for epoch in range(num_epochs):
         ###########################
         netG.zero_grad()
         #label.fill_(real_label)  # fake labels are real for generator cost
-        batch_of_LABEL_REAL_1 = torch.full((b_size,), LABEL_REAL_1, dtype=torch.float, device=device)
+        #batch_of_LABEL_REAL_1 = torch.full((b_size,), LABEL_REAL_1, dtype=torch.float, device=device)
         # Since we just updated D, perform another forward pass of all-fake batch through D
-        Doutput = netD(fakeImages, random_digits).view(-1)
+        Doutput = netD(fakeImages)
         # Calculate G's loss based on this output
-        errG = criterion(Doutput, batch_of_LABEL_REAL_1)
+        errG = criterion2(Doutput, random_digits)
         #print("errG = criterion(output, label)")
         #print("output shape = ", output.shape)
         #print("label shape = ", label.shape)
