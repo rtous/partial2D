@@ -1,5 +1,6 @@
 import torch.nn as nn
 import sys
+import numpy as np
 
 def explainModel(model, Hin, Win, desiredHout, desiredWout):
     #Hin = input.shape[0]
@@ -96,4 +97,25 @@ def showMNIST(array784, color=2):
             sys.stdout.flush()
         sys.stdout.write("\n")
     
-    
+def apply_random_mask(img, mask_size):
+    """Randomly masks image"""
+    img_size = img.shape[1]
+    print("img_size =", img_size)
+    y1, x1 = np.random.randint(0, img_size - mask_size, 2)
+    y2, x2 = y1 + mask_size, x1 + mask_size
+    masked_part = img[:, y1:y2, x1:x2]
+    masked_img = img.clone()
+    masked_img[:, y1:y2, x1:x2] = 1
+
+    return masked_img, masked_part
+
+def apply_center_mask(img, mask_size):
+    """Mask center part of image"""
+    # Get upper-left pixel coordinate
+    img_size = img.shape[1]
+    print("img_size =", img_size)
+    i = (img_size - mask_size) // 2
+    masked_img = img.clone()
+    masked_img[:, i : i + mask_size, i : i + mask_size] = 1
+
+    return masked_img, i
