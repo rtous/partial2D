@@ -51,7 +51,7 @@ mask_size = 64
 # number of image channels
 channels = 3
 # interval between image sampling
-sample_interval = 500
+sample_interval = 5
 
 cuda = True if torch.cuda.is_available() else False
 os.makedirs("images", exist_ok=True)

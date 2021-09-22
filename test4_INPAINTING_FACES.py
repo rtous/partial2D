@@ -22,6 +22,13 @@ import pytorchUtils
 #base code: Pytorch GAN tutorial
 #inpainting code: https://www.kaggle.com/balraj98/context-encoder-gan-for-image-inpainting-pytorch
 
+#Context-Encoder GAN for Image Inpainting (paper: https://arxiv.org/pdf/1604.07379.pdf)
+
+'''
+The generator receives an image with a part zeroed (masked). Outputs just the missing part! 
+the discriminator receives a part and determines if it's real or fake. But it does in a patchGAN style, matrix of real/fake values.
+'''
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--debug', type=int, default = 0)
 parser.add_argument('--interactive', type=int, default = 0)
@@ -43,13 +50,13 @@ workers = 2
 
 # Batch size during training
 #batch_size = 128
-batch_size = 64
+batch_size = 16
 
 # Spatial size of training images. All images will be resized to this
 #   size using a transformer.
-image_size = 64
+image_size = 128
 
-mask_size = 32
+mask_size = 64
 
 # Number of channels in the training images. For color images this is 3
 nc = 3
@@ -185,11 +192,12 @@ class Generator(nn.Module):
         )
 
     def forward(self, x):
+        #print("Generator received: ", x.shape)
         return self.model(x)
 
 
 # Create the generator
-netG_ = Generator(ngpu)
+netG_ = Generator(channels=nc)
 netG = netG_.to(device)
 
 
@@ -204,7 +212,7 @@ netG.apply(weights_init)
 # Print the model
 print(netG)
 
-
+'''
 class Discriminator(nn.Module):
     def __init__(self, ngpu):
         super(Discriminator, self).__init__()
@@ -232,10 +240,35 @@ class Discriminator(nn.Module):
 
     def forward(self, input):
         return self.main(input)
+'''
+class Discriminator(nn.Module):
+    def __init__(self, channels=3):
+        super(Discriminator, self).__init__()
 
+        def discriminator_block(in_filters, out_filters, stride, normalize):
+            """Returns layers of each discriminator block"""
+            layers = [nn.Conv2d(in_filters, out_filters, 3, stride, 1)]
+            if normalize:
+                layers.append(nn.InstanceNorm2d(out_filters))
+            layers.append(nn.LeakyReLU(0.2, inplace=True))
+            return layers
+
+        layers = []
+        in_filters = channels
+        for out_filters, stride, normalize in [(64, 2, False), (128, 2, True), (256, 2, True), (512, 1, True)]:
+            layers.extend(discriminator_block(in_filters, out_filters, stride, normalize))
+            in_filters = out_filters
+
+        layers.append(nn.Conv2d(out_filters, 1, 3, 1, 1))
+
+        self.model = nn.Sequential(*layers)
+
+    def forward(self, img):
+        #print("Discriminator received: ", img.shape)
+        return self.model(img)
 
 # Create the Discriminator
-netD = Discriminator(ngpu).to(device)
+netD = Discriminator(channels=nc).to(device)
 
 # Handle multi-gpu if desired
 if (device.type == 'cuda') and (ngpu > 1):
@@ -251,6 +284,10 @@ print(netD)
 
 # Initialize BCELoss function
 criterion = nn.BCELoss()
+
+# Loss function
+adversarial_loss = torch.nn.MSELoss()
+pixelwise_loss = torch.nn.L1Loss()
 
 # Create batch of latent vectors that we will use to visualize
 #  the progression of the generator
@@ -295,13 +332,15 @@ for i in range(axarr.shape[0]):
 	for j in range(axarr.shape[1]):
 		#axarr[i,j].figure(figsize=(100,100))
 		axarr[i,j].axis("off")
+        
+    
+
 
 for epoch in range(num_epochs):
     # For each batch in the dataloader
     for i, data in enumerate(dataloader, 0):
 
         print("Training iteration "+str(i))
-
 
         ############################
         # (1) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
@@ -321,46 +360,62 @@ for epoch in range(num_epochs):
         	masked_image, masked_part = pytorchUtils.apply_random_mask(image, mask_size)
         	masked_images.append(masked_image)
         	masked_parts.append(masked_part)
-        #masked_images = torch.from_numpy(np.array(masked_images))
-        #masked_parts = torch.from_numpy(np.array(masked_parts))
-
-        #masked_images, masked_part = [pytorchUtils.apply_random_mask(image, mask_size) for image in real_cpu]
-        #masked_images, masked_part = pytorchUtils.apply_random_mask(data[0][1], mask_size)
-
+        
         gridImage = vutils.make_grid(masked_images, padding=2, normalize=True)
         axarr[0,0].imshow(np.transpose(gridImage,(1,2,0)))
         if arguments.interactive:
           plt.pause(0.001)
 
-        print("Shape of data[0] [N, C, H, W]: ", real_cpu.shape)
+        #print("Shape of data[0] [N, C, H, W]: ", real_cpu.shape)
         b_size = real_cpu.size(0)
         label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
         # Forward pass real batch through D
-        output = netD(real_cpu).view(-1)
+        #output = netD(real_cpu)
+        masked_parts = torch.stack(masked_parts) #list of tensors -> tensor
+        output = netD(masked_parts)
+        #print("Discriminator output for real batch: ", output.shape)
+        
         # Calculate loss on all-real batch
-        errD_real = criterion(output, label)
+        
+        #errD_real = criterion(output, label)
+        #errD_real = adversarial_loss(output, label)
+        
+        # Adversarial ground truths
+        # Calculate output dims of image discriminator (PatchGAN)
+        patch_h, patch_w = int(mask_size / 2 ** 3), int(mask_size / 2 ** 3)
+        patch = (1, patch_h, patch_w)
+        valid_labels = Variable(torch.Tensor(batch_size, *patch).fill_(1.0), requires_grad=False)
+        fake_labels = Variable(torch.Tensor(batch_size, *patch).fill_(0.0), requires_grad=False)
+        
+        #print("valid_labels shape: ", valid_labels.shape)
+        errD_real = adversarial_loss(output, valid_labels)
+        
         # Calculate gradients for D in backward pass
         errD_real.backward()
         D_x = output.mean().item()
 
         ## Train with all-fake batch
         # Generate batch of latent vectors
-        noise = torch.randn(b_size, nz, 1, 1, device=device)
-        print("Noise shape: ", noise.shape)
+        #noise = torch.randn(b_size, nz, 1, 1, device=device)
+        #print("Noise shape: ", noise.shape)
         # Generate fake image batch with G
         #fake = netG(noise)
         #masked_samples = masked_images
         masked_images = torch.stack(masked_images) #list of tensors -> tensor
-        fake = netG(masked_images)
+        fake = netG(masked_images)########################################################### masked_images -> G -> fake parts
+        #print("Generator output: ", fake.shape)
         
         ##############
         #print(activation['conv3'])
         
         label.fill_(fake_label)
         # Classify all fake batch with D
-        output = netD(fake.detach()).view(-1)
+        output = netD(fake.detach()) ########################################################### fake parts -> D -> quality matrix
+        #print("Discriminator output for fake batch: ", output.shape)
+        #print("label batch shape: ", label.shape)
         # Calculate D's loss on the all-fake batch
-        errD_fake = criterion(output, label)
+        #errD_fake = criterion(output, label)
+        errD_fake = adversarial_loss(output, fake_labels)
         # Calculate the gradients for this batch, accumulated (summed) with previous gradients
         errD_fake.backward()
         D_G_z1 = output.mean().item()
@@ -375,12 +430,13 @@ for epoch in range(num_epochs):
         netG.zero_grad()
         label.fill_(real_label)  # fake labels are real for generator cost
         # Since we just updated D, perform another forward pass of all-fake batch through D
-        output = netD(fake).view(-1)
+        output = netD(fake)
         # Calculate G's loss based on this output
-        errG = criterion(output, label)
-        print("errG = criterion(output, label)")
-        print("output shape = ", output.shape)
-        print("label shape = ", label.shape)
+        #errG = criterion(output, label)
+        errG = adversarial_loss(output, valid_labels)
+        #print("errG = criterion(output, label)")
+        #print("output shape = ", output.shape)
+        #print("label shape = ", label.shape)
         # Calculate gradients for G
         errG.backward()
         D_G_z2 = output.mean().item()
@@ -393,7 +449,7 @@ for epoch in range(num_epochs):
                   % (epoch, num_epochs, i, len(dataloader),
                      errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
             with torch.no_grad():
-                fake = netG(fixed_noise).detach().cpu()
+                fake = netG(masked_images).detach().cpu()
                 #print("Shape of fake: ", fake.shape)
 
         

@@ -100,7 +100,7 @@ def showMNIST(array784, color=2):
 def apply_random_mask(img, mask_size):
     """Randomly masks image"""
     img_size = img.shape[1]
-    print("img_size =", img_size)
+    #print("img_size =", img_size)
     y1, x1 = np.random.randint(0, img_size - mask_size, 2)
     y2, x2 = y1 + mask_size, x1 + mask_size
     masked_part = img[:, y1:y2, x1:x2]
