@@ -389,7 +389,7 @@ for epoch in range(num_epochs):
         fake_labels = Variable(torch.Tensor(batch_size, *patch).fill_(0.0), requires_grad=False)
         
         #print("valid_labels shape: ", valid_labels.shape)
-        errD_real = adversarial_loss(output, valid_labels)
+        errD_real = adversarial_loss(output, valid_labels.to(device))
         
         # Calculate gradients for D in backward pass
         errD_real.backward()
