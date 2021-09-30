@@ -385,8 +385,8 @@ for epoch in range(num_epochs):
         # Calculate output dims of image discriminator (PatchGAN)
         patch_h, patch_w = int(mask_size / 2 ** 3), int(mask_size / 2 ** 3)
         patch = (1, patch_h, patch_w)
-        valid_labels = Variable(torch.Tensor(batch_size, *patch).fill_(1.0), requires_grad=False)
-        fake_labels = Variable(torch.Tensor(batch_size, *patch).fill_(0.0), requires_grad=False)
+        valid_labels = Variable(torch.Tensor(batch_size, *patch).fill_(1.0), requires_grad=False).to(device)
+        fake_labels = Variable(torch.Tensor(batch_size, *patch).fill_(0.0), requires_grad=False).to(device)
         
         #print("valid_labels shape: ", valid_labels.shape)
         errD_real = adversarial_loss(output, valid_labels.to(device))
@@ -416,7 +416,7 @@ for epoch in range(num_epochs):
         #print("label batch shape: ", label.shape)
         # Calculate D's loss on the all-fake batch
         #errD_fake = criterion(output, label)
-        errD_fake = adversarial_loss(output, fake_labels.to(device))
+        errD_fake = adversarial_loss(output, fake_labels)
         # Calculate the gradients for this batch, accumulated (summed) with previous gradients
         errD_fake.backward()
         D_G_z1 = output.mean().item()
