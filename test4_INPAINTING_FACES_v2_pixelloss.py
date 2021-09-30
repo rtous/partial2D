@@ -416,7 +416,7 @@ for epoch in range(num_epochs):
         #print("label batch shape: ", label.shape)
         # Calculate D's loss on the all-fake batch
         #errD_fake = criterion(output, label)
-        errD_fake = adversarial_loss(output, fake_labels)
+        errD_fake = adversarial_loss(output, fake_labels.to(device))
         # Calculate the gradients for this batch, accumulated (summed) with previous gradients
         errD_fake.backward()
         D_G_z1 = output.mean().item()
