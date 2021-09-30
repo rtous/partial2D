@@ -361,8 +361,9 @@ for epoch in range(num_epochs):
         	masked_images.append(masked_image)
         	masked_parts.append(masked_part)
         
+        
         gridImage = vutils.make_grid(masked_images, padding=2, normalize=True)
-        axarr[0,0].imshow(np.transpose(gridImage,(1,2,0)))
+        axarr[0,0].imshow(np.transpose(gridImage.cpu(),(1,2,0)))
         if arguments.interactive:
           plt.pause(0.001)
 
