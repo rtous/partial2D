@@ -2,131 +2,168 @@
 import json
 import cv2
 import numpy as np
+import math
+
+WIDTH = 64
+HEIGHT = 64
+SPINESIZE = WIDTH/4
 
 #https://github.com/CMU-Perceptual-Computing-Lab/openpose/issues/1644
 
-# From https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/20d8eca4b43fe28cefc02d341476b04c6a6d6ff2/doc/output.md#pose-output-format-body_25
-
-# Openpose code: https://github.com/ArtificialShane/OpenPose/blob/master/include/openpose/pose/poseParameters.hpp (outdated!)
-
-#https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/src/openpose/pose/poseParameters.cpp
-
+#25 May 2019
+#https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/include/openpose/pose/poseParametersRender.hpp
  
-POSE_MPI_BODY_PARTS = {
-    0:  "Head",
-    1:  "Neck",
-    2:  "RShoulder",
-    3:  "RElbow",
-    4:  "RWrist",
-    5:  "LShoulder",
-    6:  "LElbow",
-    7:  "LWrist",
-    8:  "RHip",
-    9:  "RKnee",
-    10: "RAnkle",
-    11: "LHip",
-    12: "LKnee",
-    13: "LAnkle",
-    14: "Chest",
-    15: "Background"
-}
+POSE_BODY_25_BODY_PARTS = [
+	"Nose",
+	"Neck",
+	"RShoulder",
+	"RElbow",
+	"RWrist",
+	"LShoulder",
+	"LElbow",
+	"LWrist",
+	"MidHip",
+	"RHip",
+	"RKnee",
+	"RAnkle",
+	"LHip",
+	"LKnee",
+	"LAnkle",
+	"REye",
+	"LEye",
+	"REar",
+	"LEar",
+	"LBigToe",
+	"LSmallToe",
+	"LHeel",
+	"RBigToe",
+	"RSmallToe",
+	"RHeel",
+	"Background"
+]
 
-POSE_MPI_COLORS_RENDER_GPU  = [
-        [255,     0,    85], 
+POSE_BODY_25_COLORS_RENDER_GPU =[
+        [255,     0,    85],
         [255,     0,     0], 
         [255,    85,     0], 
-        [255,   170,     0], 
-        [255,   255,     0], 
-        [170,   255,     0], 
-         [85,   255,     0], 
-         [43,   255,     0], 
-          [0,   255,     0], 
-          [0,   255,    85], 
-          [0,   255,   170], 
-          [0,   255,   255], 
-          [0,   170,   255], 
-          [0,    85,   255], 
-          [0,     0,   255]
+        [255,   170,     0],
+        [255,   255,     0],
+        [170,   255,     0],
+         [85,   255,     0],
+          [0,   255,     0],
+        [255,     0,     0],
+          [0,   255,    85],
+          [0,   255,   170],
+          [0,   255,   255],
+          [0,   170,   255],
+          [0,    85,   255],
+          [0,     0,   255],
+        [255,     0,   170],
+        [170,     0,   255],
+        [255,     0,   255],
+         [85,     0,   255],
+          [0,     0,   255],
+          [0,     0,   255],
+          [0,     0,   255],
+          [0,   255,   255],
+          [0,   255,   255],
+          [0,   255,   255]
 ]
 
-POSE_BODY_23_COLORS_RENDER_GPU =[
-        [255,     0,     0], 
-        [255,    55,     0], 
-        [255,   110,     0], 
-        [255,   165,     0], 
-        [255,   215,     0], 
-        [255,   235,     0], 
-        [255,   255,     0], 
-        [255,     0,     0], 
-        [175,   255,     0], 
-         [85,   255,     0], 
-          [0,   255,     0], 
-          [0,   255,    85], 
-          [0,   255,   170], 
-         [25,    25,   128], 
-          [0,    85,   255], 
-          [0,   170,   255], 
-          [0,   212,   255], 
-          [0,   255,   255], 
-        [255,     0,     0], 
-        [255,     0,   255], 
-        [238,   130,   238], 
-        [138,    43,   226], 
-         [138,    43,   226], 
-          [138,    43,   226], 
-           [138,    43,   226], 
-         [75,     0,   130]
-]
+POSE_BODY_25_PAIRS_RENDER_GP = [[1,8],   [1,2],   [1,5],   [2,3],   [3,4],   [5,6],   [6,7],   [8,9],   [9,10],  [10,11], [8,12],  [12,13], [13,14],  [1,0],   [0,15], [15,17],  [0,16], [16,18],   [14,19],[19,20],[14,21], [11,22],[22,23],[11,24]]
 
-POSE_MPI_NUMBER_PARTS            = 15 #// Equivalent to size of std::map POSE_MPI_NUMBER_PARTS - 1 (removing background)
-#POSE_MPI_MAP_IDX = [16,17, 18,19, 20,21, 22,23, 24,25, 26,27, 28,29, 30,31, 32,33, 34,35, 36,37, 38,39, 40,41, 42,43]
+def findPart(partName):
+	for i, part in enumerate(POSE_BODY_25_BODY_PARTS):
+		if part == partName:
+			return i
+	raise RuntimeError("part name not found:"+partName)
 
-POSE_MPI_PAIRS_RENDER_GPU = [[0,1],   [1,2],   [2,3],   [3,4],   [1,5],   [5,6],   [6,7],   [1,14],  [14,8],  [8,9],  [9,10],  [14,11], [11,12], [12,13]]
-
-#POSE_BODY_23_PAIRS = [[0,1],  [0,4],  [1,2],  [2,3],  [4,5],  [5,6],  [0,7],  [7,8],  [7,13], [8,9],  [9,10],[10,11],[10,12],[13,14],[14,15],[15,16],[15,17], [0,18],[18,19],[18,21],[19,20],[21,22], [1,20], [4,22]]
-
-POSE_BODY_23_PAIRS = [[0,1],  [0,4],  [1,2],  [2,3],  [4,5],  [5,6],  [0,7],  [7,8],  [7,13], [8,9],  [9,10],[10,11],[10,12],[13,14],[14,15],[15,16],[15,17], [0,18],[18,19],[18,21],[19,20],[21,22], [1,20]]
-
-POSE_BODY_PART_PAIRS_BODY_25 = [[1,8],   [1,2],   [1,5],   [2,3],   [3,4],   [5,6],   [6,7],   [8,9],   [9,10],  [10,11], [8,12],  [12,13], [13,14],  [1,0],   [0,15], [15,17],  [0,16], [16,18],   [2,17],  [5,18],   [14,19],[19,20],[14,21], [11,22],[22,23],[11,24]]
-
-
-#BONES = [[0,1],   [1,2],   [2,3],   [3,4],   [1,5],   [5,6],   [6,7],   [1,14]]
-
-#def keypointsToBones(keypoints):
-#     for idx, k in enumerate(keypoints):
-     
-
-def draw_pose(img, keypoints, threshold=0.2):
-    '''
-    for idx, k in enumerate(keypoints):
-        x = int(k[0])
-        y = int(k[1])
-        c = float(k[2])
-        img = cv2.circle(img, (int(x), int(y)), 5, (0, 255, 0), -1)
-        if idx > 0:
-            px = int(previous[0])
-            py = int(previous[1])
-            pc = float(previous[2])
-            if pc != 0 and c != 0:
-                img = cv2.line(img, (px, py), (x, y), (0, idx * 10, 255), 2)
-        previous = k
-    '''   
-          
-    for boneNumer, bone in enumerate(POSE_BODY_PART_PAIRS_BODY_25):
+def draw_part(img, keypoint1, keypoint2, color):
+	img = cv2.line(img, (keypoint1[0], keypoint1[1]), (keypoint2[0], keypoint2[1]), (color[0], color[1], color[2]), 2)
+        
+def draw_pose(img, keypoints, threshold=0.1):        
+    for boneNumer, bone in enumerate(POSE_BODY_25_PAIRS_RENDER_GP):
         print("Part: "+str(bone[0])+","+str(bone[1]))
         keypoint1 = keypoints[bone[0]]
         keypoint2 = keypoints[bone[1]]
-        color = POSE_BODY_23_COLORS_RENDER_GPU[boneNumer]
+        color = POSE_BODY_25_COLORS_RENDER_GPU[boneNumer]
         
         print(keypoint1)
         
         if keypoint1[2] > threshold and keypoint2[2] > threshold:
-            img = cv2.line(img, (keypoint1[0], keypoint1[1]), (keypoint2[0], keypoint2[1]), (color[0], color[1], color[2]), 2)
-        
-        
-        
+            #img = cv2.line(img, (keypoint1[0], keypoint1[1]), (keypoint2[0], keypoint2[1]), (color[0], color[1], color[2]), 2)
+        	draw_part(img, keypoint1, keypoint2, color)
 
- 
+'''
+def scale_bone(boneIndex, scaleFactor):
+	#scaleFactor = 0.5
+	keypoint1 = keypoints[POSE_BODY_25_PAIRS_RENDER_GP[boneIndex][0]]
+	keypoint2 = keypoints[POSE_BODY_25_PAIRS_RENDER_GP[boneIndex][1]]
+	x_distance = keypoint1[0]-keypoint2[0]
+	y_distance = keypoint1[1]-keypoint2[1]
+
+	new_keypoint1 = (int(keypoint1[0]*scaleFactor), int(keypoint1[1]*scaleFactor), keypoint1[2])	
+	new_keypoint2 = (int(keypoint2[0]*scaleFactor), int(keypoint2[1]*scaleFactor), keypoint2[2])	
+	
+	#new_keypoint2 =  (int(new_keypoint1[0]+x_distance/scaleFactor), int(new_keypoint1[1]+y_distance/scaleFactor), keypoint2[2])
+	
+	print("new_keypoint1=",new_keypoint1)
+	print("new_keypoint2=",new_keypoint2)
+
+	keypoints[POSE_BODY_25_PAIRS_RENDER_GP[boneIndex][0]]= new_keypoint1
+	keypoints[POSE_BODY_25_PAIRS_RENDER_GP[boneIndex][1]]= new_keypoint2
+'''
+#def scale_keypoint(keypointIndex):
+
+
+
+
+def normalize_pose(keypoints):
+	#keypoints_norm = []
+
+	boneSpineIndex = findPart('Nose')
+	keypoint1 = keypoints[POSE_BODY_25_PAIRS_RENDER_GP[boneSpineIndex][0]]
+	keypoint2 = keypoints[POSE_BODY_25_PAIRS_RENDER_GP[boneSpineIndex][1]]
+	x_distance = keypoint1[0]-keypoint2[0]
+	y_distance = keypoint1[1]-keypoint2[1]
+	#Normalize: divide each component by its magnitude
+	magnitudeSpine = math.sqrt(pow(x_distance, 2)+pow(y_distance, 2))
+	magnitudeSpine = magnitudeSpine/SPINESIZE
+	print("magnitudeSpine=",magnitudeSpine)
+
+	#x_displacement = keypoint1[0] - int(WIDTH/2)
+	#y_displacement = keypoint1[1] - int(HEIGHT/2)
+
+	'''
+	new_keypoint1 = (int(WIDTH/2), int(HEIGHT/2), keypoint1[2]) 
+	new_keypoint2 =  (int(new_keypoint1[0]+x_distance/magnitudeSpine), int(new_keypoint1[1]+y_distance/magnitudeSpine), keypoint2[2])
+	print("new_keypoint1=",new_keypoint1)
+	print("new_keypoint2=",new_keypoint2)
+
+	keypoints[POSE_BODY_25_PAIRS_RENDER_GP[boneSpineIndex][0]]= new_keypoint1
+	keypoints[POSE_BODY_25_PAIRS_RENDER_GP[boneSpineIndex][1]]= new_keypoint2
+	'''
+
+	#for boneNumer, bone in enumerate(POSE_BODY_25_PAIRS_RENDER_GP):
+	#	scale_bone(boneNumer, magnitudeSpine)
+
+	#SCALE
+	for i, k in enumerate(keypoints):
+		new_keypoint = (int(k[0]/magnitudeSpine), int(k[1]/magnitudeSpine), k[2]) 
+		keypoints[i] = new_keypoint
+
+	#CENTER SPINE
+	boneSpineIndex = findPart('Nose')
+	keypoint1 = keypoints[POSE_BODY_25_PAIRS_RENDER_GP[boneSpineIndex][1]]
+	x_displacement = keypoint1[0] - int(WIDTH/2)
+	y_displacement = keypoint1[1] - int(HEIGHT/2)
+	for i, k in enumerate(keypoints):
+		new_keypoint = (int(k[0]-x_displacement), int(k[1]-y_displacement), k[2]) 
+		keypoints[i] = new_keypoint
+
+	return keypoints
+
+
 # Opening JSON file
 f = open('001_keypoints.json',)
  
@@ -148,26 +185,51 @@ keypoints = list(zip(
     list(map(float, keypointsFlat[2::3]))  
 ))
 
-print(keypoints)
+#print(keypoints)
 print(str(len(keypoints))+" keypoints found")
-print(str(len(POSE_BODY_23_PAIRS))+" parts found")
-print(str(len(POSE_BODY_23_COLORS_RENDER_GPU))+" colors found")
+print(str(len(POSE_BODY_25_PAIRS_RENDER_GP))+" parts found")
 
+'''
 for idx, k in enumerate(keypoints):
     x = k[0]
     y = k[1]
     c = k[2]
     print (str(x) +',' + str(y) + '(' + str(c) + ')')
+'''
 
-blank_image = np.zeros((500,500,3), np.uint8)
+blank_image = np.zeros((WIDTH,HEIGHT,3), np.uint8)
+
+
+
+normalize_pose(keypoints)
 
 draw_pose(blank_image, keypoints, threshold=0.2)
+
+'''
+neckIndex = findPart("Nose")
+#print("neckIndex="+neckIndex)
+neckJoints = POSE_BODY_25_PAIRS_RENDER_GP[neckIndex]
+draw_part(blank_image, keypoints[neckJoints[0]], keypoints[neckJoints[1]], POSE_BODY_25_COLORS_RENDER_GPU[neckIndex])
+'''
+
+'''
+neckIndex = findPart("RShoulder")
+#print("neckIndex="+neckIndex)
+neckJoints = POSE_BODY_25_PAIRS_RENDER_GP[neckIndex]
+draw_part(blank_image, keypoints[neckJoints[0]], keypoints[neckJoints[1]], POSE_BODY_25_COLORS_RENDER_GPU[neckIndex])
+
+neckIndex = findPart("RElbow")
+#print("neckIndex="+neckIndex)
+neckJoints = POSE_BODY_25_PAIRS_RENDER_GP[neckIndex]
+draw_part(blank_image, keypoints[neckJoints[0]], keypoints[neckJoints[1]], POSE_BODY_25_COLORS_RENDER_GPU[neckIndex])
+'''
+
 
 #cv2.drawKeypoints(blank_image, kps5, img_brisk, kps5, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
 cv2.namedWindow('Test', cv2.WINDOW_NORMAL)
 cv2.imshow('Test', blank_image)
-cv2.resizeWindow('Test', 600,600)
+cv2.resizeWindow('Test', WIDTH,HEIGHT)
 
 k = cv2.waitKey(0) & 0xFF
 
@@ -176,7 +238,9 @@ if k == 27:         # wait for ESC key to exit
 else:
   print("Exit")
 
-
- 
 # Closing file
 f.close()
+
+
+
+
