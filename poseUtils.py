@@ -30,33 +30,36 @@ def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, bo
 	
 	keypoint1 = keypoints[keypoint_index_pairs[boneSpineIndex][0]]
 	keypoint2 = keypoints[keypoint_index_pairs[boneSpineIndex][1]]
-	x_distance = keypoint1[0]-keypoint2[0]
-	y_distance = keypoint1[1]-keypoint2[1]
 
-	#Compute the length of the spine
-	magnitudeSpine = math.sqrt(pow(x_distance, 2)+pow(y_distance, 2))
+	if keypoint1[0]!=0 and keypoint1[1]!=0 and keypoint2[0]!=0 and keypoint2[1]!=0:
 
-	#Compute scale factor to obtain the desired spine size
-	scaleFactor = magnitudeSpine/spinesize
+		x_distance = keypoint1[0]-keypoint2[0]
+		y_distance = keypoint1[1]-keypoint2[1]
 
-	#Scale: dividing any keypoint by the scale factor
-	for i, k in enumerate(keypoints):
-		if haveThreshold:
-			new_keypoint = (int(k[0]/scaleFactor), int(k[1]/scaleFactor), k[2]) 
-		else: 
-			new_keypoint = (int(k[0]/scaleFactor), int(k[1]/scaleFactor)) 
-		keypoints[i] = new_keypoint
+		#Compute the length of the spine
+		magnitudeSpine = math.sqrt(pow(x_distance, 2)+pow(y_distance, 2))
 
-	#Center to the top of the spine
-	keypoint1 = keypoints[keypoint_index_pairs[boneSpineIndex][1]]
-	x_displacement = keypoint1[0] - int(width/2)
-	y_displacement = keypoint1[1] - int(height/2)
-	for i, k in enumerate(keypoints):
-		if haveThreshold:
-			new_keypoint = (int(k[0]-x_displacement), int(k[1]-y_displacement), k[2]) 
-		else:
-			new_keypoint = (int(k[0]-x_displacement), int(k[1]-y_displacement))
-		keypoints[i] = new_keypoint
+		#Compute scale factor to obtain the desired spine size
+		scaleFactor = magnitudeSpine/spinesize
+
+		#Scale: dividing any keypoint by the scale factor
+		for i, k in enumerate(keypoints):
+			if haveThreshold:
+				new_keypoint = (int(k[0]/scaleFactor), int(k[1]/scaleFactor), k[2]) 
+			else: 
+				new_keypoint = (int(k[0]/scaleFactor), int(k[1]/scaleFactor)) 
+			keypoints[i] = new_keypoint
+
+		#Center to the top of the spine
+		keypoint1 = keypoints[keypoint_index_pairs[boneSpineIndex][1]]
+		x_displacement = keypoint1[0] - int(width/2)
+		y_displacement = keypoint1[1] - int(height/2)
+		for i, k in enumerate(keypoints):
+			if haveThreshold:
+				new_keypoint = (int(k[0]-x_displacement), int(k[1]-y_displacement), k[2]) 
+			else:
+				new_keypoint = (int(k[0]-x_displacement), int(k[1]-y_displacement))
+			keypoints[i] = new_keypoint
 
 	return keypoints
 
