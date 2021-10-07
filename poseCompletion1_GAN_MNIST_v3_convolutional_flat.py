@@ -51,10 +51,10 @@ batch_size = 64
 
 # Spatial size of training images. All images will be resized to this
 #   size using a transformer.
-image_size = 64
+image_size = 28
 
 # Number of channels in the training images. For color images this is 3
-nc = 1
+nc = 3
 
 # Size of z latent vector (i.e. size of generator input)
 nz = 100
@@ -68,7 +68,7 @@ ngf = 16
 ndf = 16
 
 # Number of training epochs
-num_epochs = 5
+num_epochs = 50
 
 # Learning rate for optimizers
 lr = 0.0002
@@ -304,6 +304,9 @@ for epoch in range(num_epochs):
         label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
         # Forward pass real batch through D
         output = netD(real_cpu).view(-1)
+        print("Discriminator output: ", output.shape)
+        
+        
         # Calculate loss on all-real batch
         errD_real = criterion(output, label)
         # Calculate gradients for D in backward pass
