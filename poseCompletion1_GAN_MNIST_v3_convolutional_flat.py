@@ -19,6 +19,7 @@ import matplotlib.animation as animation
 import pytorchUtils
 import argparse
 from torchvision.datasets import MNIST
+import pathlib
 
 '''
 Here I change the nose to be a simple batchsize x 100 tensor.
@@ -41,6 +42,8 @@ torch.manual_seed(manualSeed)
 
 # Root directory for dataset
 dataroot = "data/H36M_ECCV18"
+OUTPUTPATH = "data/output"
+pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
 
 # Number of workers for dataloader
 workers = 2
@@ -378,7 +381,7 @@ for epoch in range(num_epochs):
             if arguments.interactive:
               plt.pause(0.001)
             else:
-              plt.savefig('debug.pdf') #Open it with sumatrapdf 
+              plt.savefig(OUTPUTPATH+'/debug.pdf') #Open it with sumatrapdf 
             
         # Save Losses for plotting later
         G_losses.append(errG.item())
