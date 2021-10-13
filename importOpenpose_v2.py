@@ -6,6 +6,7 @@ import math
 import poseUtils
 from os import listdir
 from os.path import isfile, join, splitext
+import pathlib
 
 
 WIDTH = 64
@@ -14,7 +15,9 @@ SPINESIZE = WIDTH/4
 THRESHOLD = 0.1
 HAVETHRESHOLD = True
 INPUTPATH = "dynamicData/H36M_ECCV18"
-OUTPUTPATH = "data/H36M_ECCV18"
+OUTPUTPATH = "data/H36M_ECCV18/poselets"
+
+pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
 
 #https://github.com/CMU-Perceptual-Computing-Lab/openpose/issues/1644
 
@@ -132,7 +135,9 @@ for f in jsonFiles:
     draw_part(blank_image, keypoints[neckJoints[0]], keypoints[neckJoints[1]], POSE_BODY_25_COLORS_RENDER_GPU[neckIndex])
     '''
     
-    cv2.imwrite(join(OUTPUTPATH, filename_noextension+".jpg"), blank_image)
+    targetFilePath = join(OUTPUTPATH, filename_noextension+".jpg")
+    print("Writing image to "+targetFilePath)
+    cv2.imwrite(targetFilePath, blank_image)
     
     #poseUtils.displayImage(blank_image, WIDTH, HEIGHT)
 

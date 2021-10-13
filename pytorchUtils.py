@@ -2,6 +2,7 @@ import torch.nn as nn
 import sys
 import numpy as np
 
+
 def explainModel(model, Hin, Win, desiredHout, desiredWout):
     #Hin = input.shape[0]
     #Win = input.shape[1]
@@ -119,3 +120,4 @@ def apply_center_mask(img, mask_size):
     masked_img[:, i : i + mask_size, i : i + mask_size] = 1
 
     return masked_img, i
+
