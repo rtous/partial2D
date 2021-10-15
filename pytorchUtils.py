@@ -76,6 +76,7 @@ def debugHook(name):
     return hook
     
 def registerDebugHook(model):
+    print("Debug hook registered for ",model.__class__.__name__)
     for i in range(len(model.main)):
         model.main[i].register_forward_hook(debugHook(model.__class__.__name__+" layer "+str(i)))
 

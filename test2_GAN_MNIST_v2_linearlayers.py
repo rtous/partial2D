@@ -299,7 +299,7 @@ print("Starting Training Loop...")
 for epoch in range(num_epochs):
     # For each batch in the dataloader
     for i, data in enumerate(dataloader, 0):
-
+        print("Data received:", data[0])
         #print("Training iteration "+str(i))
 
         ############################
