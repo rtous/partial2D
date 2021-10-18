@@ -121,6 +121,14 @@ def json2normalizedKeypoints(path):
 
     return keypoints
 
+def normalize(keypoints):
+
+    boneSpineIndex = findPart('Nose')
+
+    poseUtils.normalize_pose(keypoints, POSE_BODY_25_PAIRS_RENDER_GP, SPINESIZE, WIDTH, HEIGHT, boneSpineIndex, False)
+
+    return keypoints
+
 def removeConfidence(keypoints):
     for i, k in enumerate(keypoints):
         new_keypoint = (k[0], k[1])

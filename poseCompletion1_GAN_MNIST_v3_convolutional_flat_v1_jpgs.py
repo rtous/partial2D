@@ -365,6 +365,7 @@ for epoch in range(num_epochs):
             with torch.no_grad():
                 fake = netG(fixed_noise).detach().cpu()
                 print("Shape of fake: ", fake.shape)
+                print("fake[0]:", fake)
 
             
             #%%capture

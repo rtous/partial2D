@@ -403,6 +403,8 @@ for epoch in range(num_epochs):
             print("Shape of fake2: ", fake2.shape)
             fake3 = torch.from_numpy(np.reshape(fake2, newshape=(128, 1, 28, 28)))
             print("Shape of fake3: ", fake3.shape)
+            print("fake3[0]:")
+            print(fake3[0])
 
             #fakes_reshaped = np.reshape(fake, (batch_size, 28, 28))
             img_list = []

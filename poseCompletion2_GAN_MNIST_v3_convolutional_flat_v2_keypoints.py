@@ -26,12 +26,13 @@ from os.path import isfile, join, splitext
 import openPoseUtils
 import poseUtils
 import cv2
+import traceback
 
 class JsonDataset(torch.utils.data.IterableDataset):
     def __init__(self, inputpath):
         self.inputpath = inputpath
         self.jsonFiles = [f for f in listdir(self.inputpath) if isfile(join(self.inputpath, f)) and f.endswith("json") ]
-
+    
     def __iter__(self):
         #jsonFiles = [f for f in listdir(self.inputpath) if isfile(join(self.inputpath, f)) and f.endswith("json") ]
         for json_file in self.jsonFiles:
@@ -246,7 +247,7 @@ class Generator(nn.Module):
           nn.LeakyReLU(0.25),
           # Final upsampling
           nn.Linear(512, 50, bias=False),
-          nn.Tanh()
+          #nn.Tanh()
         )
 
     def forward(self, input):
@@ -304,7 +305,7 @@ class Discriminator(nn.Module):
         )
 
     def forward(self, input):
-        #print("Discriminator input:",input)
+        print("Discriminator input:",input)
         #print("Discriminator input shape:",input.shape)
         return self.main(input)
 
@@ -401,7 +402,7 @@ for epoch in range(num_epochs):
         label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
         # Forward pass real batch through D
         
-        real_cpu = torch.randn(b_size, 50, device=device)#BORRAR!
+        #real_cpu = torch.randn(b_size, 50, device=device)#BORRAR!
         #print(real_cpu.dtype)
         output = netD(real_cpu).view(-1)
         #print("Discriminator output: ", output.shape)
@@ -470,36 +471,49 @@ for epoch in range(num_epochs):
 
             
             #%%capture
-        if i % 100 == 0:  
+        if i % 1000 == 0:  
             NUM_ROWS = 8
             NUM_COLS = 8
             WIDTH = 64
             HEIGHT = 64
             images = np.empty(shape=(NUM_ROWS, NUM_COLS),dtype='object')
+            
+
+
+            
             for idx in range(NUM_ROWS*NUM_COLS):
                 blank_image = np.zeros((WIDTH,HEIGHT,3), np.uint8)
                 fakeKeypointsOneImage = fakeReshapedAsKeypoints[idx]
-                print("fakeKeypointsOneImage:")
-                print(fakeKeypointsOneImage)
-                fakeKeypointsOneImageList = []
-                for j, k in enumerate(fakeKeypointsOneImage):
-                    new_keypoint = (int(k[0]), int(k[1]))
-                    fakeKeypointsOneImageList.append(new_keypoint)
+                #print("fakeKeypointsOneImage:", fakeKeypointsOneImage)
+                fakeKeypointsOneImage = openPoseUtils.normalize(fakeKeypointsOneImage)
+                #print("normalizedFakeKeypointsOneImage:", fakeKeypointsOneImage)
+                fakeKeypointsOneImageInt = poseUtils.keypointsToInteger(fakeKeypointsOneImage)
+                #print("integer normalizedFakeKeypointsOneImage:", fakeKeypointsOneImageInt)
+                #print("Trying to draw:", fakeKeypointsOneImageInt)
+                #poseUtils.draw_pose(blank_image, fakeKeypointsOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+                
                 try:
-                    print("Drawing fakeKeypointsOneImage:")
-                    print(fakeKeypointsOneImageList)
-                    poseUtils.draw_pose(blank_image, fakeKeypointsOneImageList, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
-                except:
-                    print("WARNING: Cannot draw keypoints ", fakeKeypointsOneImageList)
+                    #print("Drawing fakeKeypointsOneImage:")
+                    #print(fakeKeypointsOneImageList)
+                    poseUtils.draw_pose(blank_image, fakeKeypointsOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+                    targetFilePath = "data/output/debug"+str(idx)+".jpg"
+                    #cv2.imwrite(targetFilePath, blank_image)
+                    images[int(idx/NUM_COLS)][int(idx%NUM_COLS)] = blank_image
+                except Exception:
+                    print("WARNING: Cannot draw keypoints ", fakeKeypointsOneImageInt)
+                    traceback.print_exc()
                 
             
             try:
-                images[int(i/NUM_COLS)][int(i%NUM_COLS)] = blank_image
+                
+                #print("Assigning: images[int("+str(idx)+"/NUM_COLS)][int("+str(idx)+"%NUM_COLS)]")
                 total_image = poseUtils.concat_tile(images)
                 targetFilePath = "data/output/debug.jpg"
-                cv2.imwrite(targetFilePath, blank_image)
-            except:
+                cv2.imwrite(targetFilePath, total_image)
+            except Exception:
                 print("WARNING: Cannot draw tile ")
+                traceback.print_exc()
+            
 
 # Closing
             #poseUtils.draw_pose(blank_image, keypoints, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
