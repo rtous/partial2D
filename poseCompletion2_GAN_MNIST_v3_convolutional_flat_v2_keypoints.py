@@ -28,6 +28,16 @@ import poseUtils
 import cv2
 import traceback
 
+# Root directory for dataset
+dataroot = "dynamicData/H36M_ECCV18_FILTERED"
+OUTPUTPATH = "data/output"
+pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
+
+#To avoid parallel error on macos (change for )
+# Number of workers for dataloader
+workers = 2
+#Also run export OMP_NUM_THREADS=1 in the terminal
+
 class JsonDataset(torch.utils.data.IterableDataset):
     def __init__(self, inputpath):
         self.inputpath = inputpath
@@ -81,17 +91,14 @@ print("Random Seed: ", manualSeed)
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
 
-# Root directory for dataset
-dataroot = "dynamicData/H36M_ECCV18"
-OUTPUTPATH = "data/output"
-pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
 
-# Number of workers for dataloader
-workers = 2
+
+
 
 # Batch size during training
 #batch_size = 128
-batch_size = 64
+#batch_size = 64
+batch_size = 32
 
 # Spatial size of training images. All images will be resized to this
 #   size using a transformer.
@@ -228,25 +235,26 @@ class Generator(nn.Module):
         #print("inputReshaped shape: ", inputReshaped.shape) 
         return self.main(input)
 '''
+NEURONS_PER_LAYER_GENERATOR = 512
 class Generator(nn.Module):
     def __init__(self, ngpu):
         super(Generator, self).__init__()
         self.ngpu = ngpu
         self.main = nn.Sequential(
           # First upsampling
-          nn.Linear(nz, 128, bias=False),
-          nn.BatchNorm1d(128, 0.8),
+          nn.Linear(nz, NEURONS_PER_LAYER_GENERATOR, bias=False),
+          nn.BatchNorm1d(NEURONS_PER_LAYER_GENERATOR, 0.8),
           nn.LeakyReLU(0.25),
           # Second upsampling
-          nn.Linear(128, 256, bias=False),
-          nn.BatchNorm1d(256, 0.8),
+          nn.Linear(NEURONS_PER_LAYER_GENERATOR, NEURONS_PER_LAYER_GENERATOR, bias=False),
+          nn.BatchNorm1d(NEURONS_PER_LAYER_GENERATOR, 0.8),
           nn.LeakyReLU(0.25),
           # Third upsampling
-          nn.Linear(256, 512, bias=False),
-          nn.BatchNorm1d(512, 0.8),
+          nn.Linear(NEURONS_PER_LAYER_GENERATOR, NEURONS_PER_LAYER_GENERATOR, bias=False),
+          nn.BatchNorm1d(NEURONS_PER_LAYER_GENERATOR, 0.8),
           nn.LeakyReLU(0.25),
           # Final upsampling
-          nn.Linear(512, 50, bias=False),
+          nn.Linear(NEURONS_PER_LAYER_GENERATOR, 50, bias=False),
           #nn.Tanh()
         )
 
@@ -274,7 +282,7 @@ print(netG)
 pytorchUtils.explainModel(netG, 1, 1, 28, 28)
 #pytorchUtils.computeModel(netG, 1, [{"layer":0, "output":7},{"layer":6, "output":14},{"layer":9, "output":28}])
 
-
+NEURONS_PER_LAYER_DISCRIMINATOR = 512
 class Discriminator(nn.Module):
     def __init__(self, ngpu):
         super(Discriminator, self).__init__()
@@ -282,16 +290,16 @@ class Discriminator(nn.Module):
         self.main = nn.Sequential(
             # input is (nc) x 64 x 64
             #nn.Conv2d(in_channels=nc, out_channels=ndf, kernel_size=(16,16), stride=2, padding=1, bias=False),
-            nn.Linear(50, 128, bias=False),
+            nn.Linear(50, NEURONS_PER_LAYER_DISCRIMINATOR, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf) x 32 x 32
             #nn.Conv2d(in_channels=ndf, out_channels=ndf * 2, kernel_size=4, stride=2, padding=1, bias=False),
-            nn.Linear(128, 128, bias=False),
+            nn.Linear(NEURONS_PER_LAYER_DISCRIMINATOR, NEURONS_PER_LAYER_DISCRIMINATOR, bias=False),
             #nn.BatchNorm2d(ndf * 2),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*2) x 16 x 16
             #nn.Conv2d(in_channels=ndf * 2, out_channels=ndf * 8, kernel_size=4, stride=2, padding=1, bias=False),
-            nn.Linear(128, 128, bias=False),
+            nn.Linear(NEURONS_PER_LAYER_DISCRIMINATOR, NEURONS_PER_LAYER_DISCRIMINATOR, bias=False),
             #nn.BatchNorm2d(ndf * 8),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*4) x 8 x 8
@@ -300,12 +308,12 @@ class Discriminator(nn.Module):
             #nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*8) x 4 x 4
             #nn.Conv2d(in_channels=ndf * 8, out_channels=1, kernel_size=2, stride=1, padding=0, bias=False),
-            nn.Linear(128, 1, bias=False),
+            nn.Linear(NEURONS_PER_LAYER_DISCRIMINATOR, 1, bias=False),
             nn.Sigmoid()
         )
 
     def forward(self, input):
-        print("Discriminator input:",input)
+        #print("Discriminator input:",input)
         #print("Discriminator input shape:",input.shape)
         return self.main(input)
 

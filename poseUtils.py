@@ -71,6 +71,18 @@ def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, bo
 
 	return keypoints
 
+def poseIsConfident(keypoints, thresholdNoneBelow, thresholdNotMoreThanNBelow, N):
+	
+	nBelowThreshold = 0
+	for i, k in enumerate(keypoints):
+		if k[2] < thresholdNoneBelow:
+			return False
+		if k[2] < thresholdNotMoreThanNBelow:
+			nBelowThreshold = nBelowThreshold+1
+			if nBelowThreshold>N:
+				return False
+	return True
+
 def displayImage(image, width, height):
 	cv2.namedWindow('Test', cv2.WINDOW_NORMAL)
 	cv2.imshow('Test', image)
