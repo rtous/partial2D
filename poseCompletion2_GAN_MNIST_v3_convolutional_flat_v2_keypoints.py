@@ -499,7 +499,9 @@ for epoch in range(num_epochs):
                 #print("integer normalizedFakeKeypointsOneImage:", fakeKeypointsOneImageInt)
                 #print("Trying to draw:", fakeKeypointsOneImageInt)
                 #poseUtils.draw_pose(blank_image, fakeKeypointsOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
-                
+               	
+               	openPoseUtils.normalizedKeypoints2json(fakeKeypointsOneImageInt, "data/output/"+str(idx)+".json")
+
                 try:
                     #print("Drawing fakeKeypointsOneImage:")
                     #print(fakeKeypointsOneImageList)

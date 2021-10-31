@@ -1,12 +1,29 @@
-1) GAN for CELEB faces from Pytorch tutorials. 
+-------------------------------------
+(learning GANs)
+
+- GAN for CELEB faces from Pytorch tutorials. 
 	(convolutional, batch normalization)
 	(strange: the noise vector within the channels...)
 	(tested also a linear version)
 
-2) GAN for MNIST digits (myself)
+- GAN for MNIST digits (myself)
 	- same as (1)
 	- flat, with a flat noise vector
 
-3) Condition GAN for MNIST 
+- Conditional GAN for MNIST (myself)
 
-4) Inpainting with a Context Encoder 
+- Inpainting faces with a Context Encoder
+
+-------------------------------------
+20-10-2021: GAN for pose generation. Input/output = normalized keypoints from H36M_ECCV18_FILTERED.
+
+
+31-10-2021: Tested the ouput keypoints with smplify-x, it seems to work! :-)
+
+MISSING: 
+	- Normalize and center keypoints? 
+	- Better prefiltering for the dataset? 
+	- Explore deep learning for low dimensional data: overfitting problem
+	- Alernatives: Bayesian deep neural (no overfit), radial basis function network
+	- Alternative representation of the data: heatmaps, images, etc.  
+-------------------------------------
