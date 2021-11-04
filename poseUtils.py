@@ -34,7 +34,7 @@ def draw_keypoints(img, keypoints):
     for k in keypoints:
         cv2.circle(img,(k[0],k[1]), 1, (0,255,0), thickness=5, lineType=8, shift=0)
 
-def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, boneSpineIndex, haveThreshold):
+def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, boneSpineIndex, keepThreshold):
 	
 	keypoint1 = keypoints[keypoint_index_pairs[boneSpineIndex][0]]
 	keypoint2 = keypoints[keypoint_index_pairs[boneSpineIndex][1]]
@@ -52,7 +52,7 @@ def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, bo
 
 		#Scale: dividing any keypoint by the scale factor
 		for i, k in enumerate(keypoints):
-			if haveThreshold:
+			if keepThreshold:
 				new_keypoint = (int(k[0]/scaleFactor), int(k[1]/scaleFactor), k[2]) 
 			else: 
 				new_keypoint = (int(k[0]/scaleFactor), int(k[1]/scaleFactor)) 
@@ -63,7 +63,7 @@ def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, bo
 		x_displacement = keypoint1[0] - int(width/2)
 		y_displacement = keypoint1[1] - int(height/2)
 		for i, k in enumerate(keypoints):
-			if haveThreshold:
+			if keepThreshold:
 				new_keypoint = (int(k[0]-x_displacement), int(k[1]-y_displacement), k[2]) 
 			else:
 				new_keypoint = (int(k[0]-x_displacement), int(k[1]-y_displacement))

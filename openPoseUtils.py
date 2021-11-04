@@ -12,7 +12,7 @@ import pathlib
 WIDTH = 64
 HEIGHT = 64
 SPINESIZE = WIDTH/4
-THRESHOLD = 0.1
+THRESHOLD = 0 #disabled #0.05 #0.05
 HAVETHRESHOLD = True
 INPUTPATH = "dynamicData/H36M_ECCV18"
 OUTPUTPATH = "data/H36M_ECCV18/poselets"
@@ -181,8 +181,14 @@ def normalize(keypoints):
     return keypoints
 
 def removeConfidence(keypoints):
+    #If confidence below theshold (0.1) the keypoint will be 0,0
     for i, k in enumerate(keypoints):
-        new_keypoint = (k[0], k[1])
+        
+        if k[2] > THRESHOLD: 
+            new_keypoint = (k[0], k[1])
+        else:
+            new_keypoint = (0.0, 0.0)
+        #new_keypoint = (k[0], k[1])
         keypoints[i] = new_keypoint
     return keypoints
 

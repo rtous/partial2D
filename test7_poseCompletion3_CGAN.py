@@ -66,6 +66,7 @@ class JsonDataset(torch.utils.data.IterableDataset):
                 yield keypoints_cropped, keypoints_original
             except:
                 print("WARNING: Error reading ", json_file)
+                traceback.print_exc()
 
     def __len__(self):
         return len(self.jsonFiles)
@@ -367,6 +368,7 @@ for epoch in range(num_epochs):
         #batch_of_keypoints_cropped  = (x[0] for x in batch_of_real_pairs)
         #batch_of_keypoints_original = (x[1] for x in batch_of_real_pairs)
 
+        print("batch_of_keypoints_cropped:")
         print(batch_of_keypoints_cropped)
 
         b_size = batch_of_keypoints_cropped.size(0)

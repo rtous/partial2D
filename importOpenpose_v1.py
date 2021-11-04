@@ -82,7 +82,8 @@ def findPart(partName):
 	raise RuntimeError("part name not found:"+partName)
 
 # Opening JSON file
-f = open('00001_keypoints_LATESTOPENPOSEWINDOWS.json',)
+#f = open('00001_keypoints_LATESTOPENPOSEWINDOWS.json',)
+f = open('dynamicData/012_keypoints.json',)
  
 # returns JSON object as
 # a dictionary
@@ -101,6 +102,8 @@ keypoints = list(zip(
     list(map(int, keypointsFlat[1::3])), 
     list(map(float, keypointsFlat[2::3]))  
 ))
+
+print(keypoints)
 
 print(str(len(keypoints))+" keypoints found")
 
