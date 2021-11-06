@@ -454,21 +454,28 @@ for epoch in range(num_epochs):
                 fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
                 #print(fakeReshapedAsKeypoints)
 
-            
+                croppedReshapedAsKeypoints = np.reshape(batch_of_keypoints_cropped, (64, 25, 2))
+                croppedReshapedAsKeypoints = croppedReshapedAsKeypoints.numpy()
+ 
             #%%capture
         if i % 1000 == 0:  
             NUM_ROWS = 8
             NUM_COLS = 8
             WIDTH = 64
             HEIGHT = 64
+            imagesCropped = np.empty(shape=(NUM_ROWS, NUM_COLS),dtype='object')
             images = np.empty(shape=(NUM_ROWS, NUM_COLS),dtype='object')
             
             for idx in range(NUM_ROWS*NUM_COLS):
+                blank_imageCropped = np.zeros((WIDTH,HEIGHT,3), np.uint8)
                 blank_image = np.zeros((WIDTH,HEIGHT,3), np.uint8)
+                fakeKeypointsCroppedOneImage = croppedReshapedAsKeypoints[idx]
                 fakeKeypointsOneImage = fakeReshapedAsKeypoints[idx]
                 #print("fakeKeypointsOneImage:", fakeKeypointsOneImage)
                 fakeKeypointsOneImage = openPoseUtils.normalize(fakeKeypointsOneImage)
                 #print("normalizedFakeKeypointsOneImage:", fakeKeypointsOneImage)
+                print("fakeKeypointsCroppedOneImage:",fakeKeypointsCroppedOneImage)
+                fakeKeypointsCroppedOneImageInt = poseUtils.keypointsToInteger(fakeKeypointsCroppedOneImage)
                 fakeKeypointsOneImageInt = poseUtils.keypointsToInteger(fakeKeypointsOneImage)
                 #print("integer normalizedFakeKeypointsOneImage:", fakeKeypointsOneImageInt)
                 #print("Trying to draw:", fakeKeypointsOneImageInt)
@@ -479,9 +486,12 @@ for epoch in range(num_epochs):
                 try:
                     #print("Drawing fakeKeypointsOneImage:")
                     #print(fakeKeypointsOneImageList)
+                    poseUtils.draw_pose(blank_imageCropped, fakeKeypointsCroppedOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
                     poseUtils.draw_pose(blank_image, fakeKeypointsOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+                    targetFilePathCropped = "data/output/debug_input"+str(idx)+".jpg"
                     targetFilePath = "data/output/debug"+str(idx)+".jpg"
                     #cv2.imwrite(targetFilePath, blank_image)
+                    imagesCropped[int(idx/NUM_COLS)][int(idx%NUM_COLS)] = blank_imageCropped
                     images[int(idx/NUM_COLS)][int(idx%NUM_COLS)] = blank_image
                 except Exception:
                     print("WARNING: Cannot draw keypoints ", fakeKeypointsOneImageInt)
@@ -489,8 +499,11 @@ for epoch in range(num_epochs):
             try:
                 
                 #print("Assigning: images[int("+str(idx)+"/NUM_COLS)][int("+str(idx)+"%NUM_COLS)]")
+                total_imageCropped = poseUtils.concat_tile(imagesCropped)
                 total_image = poseUtils.concat_tile(images)
+                targetFilePathCropped = "data/output/debug_input.jpg"
                 targetFilePath = "data/output/debug.jpg"
+                cv2.imwrite(targetFilePathCropped, total_imageCropped)
                 cv2.imwrite(targetFilePath, total_image)
             except Exception:
                 print("WARNING: Cannot draw tile ")

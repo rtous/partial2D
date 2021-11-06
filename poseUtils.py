@@ -8,19 +8,18 @@ def draw_part(img, keypoint1, keypoint2, color, keypoint_index_pairs):
 	img = cv2.line(img, (keypoint1[0], keypoint1[1]), (keypoint2[0], keypoint2[1]), (color[0], color[1], color[2]), 2)
         
 def draw_pose(img, keypoints, threshold, keypoint_index_pairs, colors, haveThreshold):        
-    for boneNumer, bone in enumerate(keypoint_index_pairs):
-        #print("Part: "+str(bone[0])+","+str(bone[1]))
-        keypoint1 = keypoints[bone[0]]
-        keypoint2 = keypoints[bone[1]]
-        color = colors[boneNumer]
-        
-        #print(keypoint1)
-        
-        if haveThreshold:
-            if keypoint1[2] > threshold and keypoint2[2] > threshold:
-                draw_part(img, keypoint1, keypoint2, color, keypoint_index_pairs)
-        else:
-                draw_part(img, keypoint1, keypoint2, color, keypoint_index_pairs)
+	for boneNumer, bone in enumerate(keypoint_index_pairs):
+		#print("Part: "+str(bone[0])+","+str(bone[1]))
+		keypoint1 = keypoints[bone[0]]
+		keypoint2 = keypoints[bone[1]]
+		color = colors[boneNumer]
+		if haveThreshold:
+			if keypoint1[2] > threshold and keypoint2[2] > threshold:
+				if keypoint1[0] > 0 and keypoint1[1] > 0 and keypoint2[0] > 0 and keypoint2[1] > 0:
+					draw_part(img, keypoint1, keypoint2, color, keypoint_index_pairs)
+		else:
+			if keypoint1[0] > 0 and keypoint1[1] > 0 and keypoint2[0] > 0 and keypoint2[1] > 0:
+				draw_part(img, keypoint1, keypoint2, color, keypoint_index_pairs)
 
 def keypointsToInteger(keypoints):
     intKeypoints = []        
