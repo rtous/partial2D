@@ -89,7 +89,7 @@ def findPart(partName):
             return i
     raise RuntimeError("part name not found:"+partName)
 
-def json2normalizedKeypoints(path):
+def json2Keypoints(path):
 
     # Opening JSON file
     f = open(path)
@@ -112,12 +112,17 @@ def json2normalizedKeypoints(path):
         list(map(float, keypointsFlat[2::3]))  
     ))
 
+    f.close()
+
+    return keypoints
+
+def json2normalizedKeypoints(path):
+
+    keypoints = json2Keypoints(path)
 
     boneSpineIndex = findPart('Nose')
 
     scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, POSE_BODY_25_PAIRS_RENDER_GP, SPINESIZE, WIDTH, HEIGHT, boneSpineIndex, HAVETHRESHOLD)
-
-    f.close()
 
     return keypoints, scaleFactor, x_displacement, y_displacement
 
@@ -164,13 +169,20 @@ def dummyKeypoints(howMany):
         dummy.append(new_keypoint)
     dummy = np.array(dummy).flatten()
     return dummy
-
+'''
 def addConfidenceValue(keypoints):
 
     for i, k in enumerate(keypoints):
         new_keypoint = (k[0], k[1], 1.0)
         keypoints[i] = new_keypoint
     return keypoints
+'''
+def addConfidenceValue(keypoints):
+    intKeypoints = []        
+    for j, k in enumerate(keypoints):
+        new_keypoint = (k[0], k[1], 1.0)
+        intKeypoints.append(new_keypoint)
+    return intKeypoints
 
 def normalize(keypoints):
 

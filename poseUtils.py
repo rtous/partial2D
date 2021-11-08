@@ -5,8 +5,9 @@ import numpy as np
 import math
 
 def draw_part(img, keypoint1, keypoint2, color, keypoint_index_pairs):
-	img = cv2.line(img, (keypoint1[0], keypoint1[1]), (keypoint2[0], keypoint2[1]), (color[0], color[1], color[2]), 2)
-        
+	#img = cv2.line(img, (keypoint1[0], keypoint1[1]), (keypoint2[0], keypoint2[1]), (color[0], color[1], color[2]), 2)
+    img = cv2.line(img, (int(keypoint1[0]), int(keypoint1[1])), (int(keypoint2[0]), int(keypoint2[1])), (color[0], color[1], color[2]), 2)
+    
 def draw_pose(img, keypoints, threshold, keypoint_index_pairs, colors, haveThreshold):        
 	for boneNumer, bone in enumerate(keypoint_index_pairs):
 		#print("Part: "+str(bone[0])+","+str(bone[1]))
@@ -20,14 +21,14 @@ def draw_pose(img, keypoints, threshold, keypoint_index_pairs, colors, haveThres
 		else:
 			if keypoint1[0] > 0 and keypoint1[1] > 0 and keypoint2[0] > 0 and keypoint2[1] > 0:
 				draw_part(img, keypoint1, keypoint2, color, keypoint_index_pairs)
-
+'''
 def keypointsToInteger(keypoints):
     intKeypoints = []        
     for j, k in enumerate(keypoints):
         new_keypoint = (int(k[0]), int(k[1]))
         intKeypoints.append(new_keypoint)
     return intKeypoints
-
+'''
 
 def draw_keypoints(img, keypoints):        
     for k in keypoints:
@@ -56,20 +57,24 @@ def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, bo
 		#Scale: dividing any keypoint by the scale factor
 		for i, k in enumerate(keypoints):
 			if keepThreshold:
-				new_keypoint = (int(k[0]/scaleFactor), int(k[1]/scaleFactor), k[2]) 
+				#new_keypoint = (int(k[0]/scaleFactor), int(k[1]/scaleFactor), k[2]) 
+				new_keypoint = (k[0]/scaleFactor, k[1]/scaleFactor, k[2]) 
 			else: 
-				new_keypoint = (int(k[0]/scaleFactor), int(k[1]/scaleFactor)) 
+				#new_keypoint = (int(k[0]/scaleFactor), int(k[1]/scaleFactor)) 
+				new_keypoint = (k[0]/scaleFactor, k[1]/scaleFactor) 
 			keypoints[i] = new_keypoint
 
 		#Center to the top of the spine
 		keypoint1 = keypoints[keypoint_index_pairs[boneSpineIndex][1]]
-		x_displacement = keypoint1[0] - int(width/2)
-		y_displacement = keypoint1[1] - int(height/2)
+		x_displacement = keypoint1[0] - width/2
+		y_displacement = keypoint1[1] - height/2
 		for i, k in enumerate(keypoints):
 			if keepThreshold:
-				new_keypoint = (int(k[0]-x_displacement), int(k[1]-y_displacement), k[2]) 
+				#new_keypoint = (int(k[0]-x_displacement), int(k[1]-y_displacement), k[2]) 
+				new_keypoint = (k[0]-x_displacement, k[1]-y_displacement, k[2]) 
 			else:
-				new_keypoint = (int(k[0]-x_displacement), int(k[1]-y_displacement))
+				#new_keypoint = (int(k[0]-x_displacement), int(k[1]-y_displacement))
+				new_keypoint = (k[0]-x_displacement, k[1]-y_displacement)
 			keypoints[i] = new_keypoint
 
 	return scaleFactor, x_displacement, y_displacement
