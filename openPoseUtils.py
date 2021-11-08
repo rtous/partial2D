@@ -115,11 +115,11 @@ def json2normalizedKeypoints(path):
 
     boneSpineIndex = findPart('Nose')
 
-    poseUtils.normalize_pose(keypoints, POSE_BODY_25_PAIRS_RENDER_GP, SPINESIZE, WIDTH, HEIGHT, boneSpineIndex, HAVETHRESHOLD)
+    scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, POSE_BODY_25_PAIRS_RENDER_GP, SPINESIZE, WIDTH, HEIGHT, boneSpineIndex, HAVETHRESHOLD)
 
     f.close()
 
-    return keypoints
+    return keypoints, scaleFactor, x_displacement, y_displacement
 
 def normalizedKeypoints2json(keypoints, path):
     '''
@@ -176,7 +176,15 @@ def normalize(keypoints):
 
     boneSpineIndex = findPart('Nose')
 
-    poseUtils.normalize_pose(keypoints, POSE_BODY_25_PAIRS_RENDER_GP, SPINESIZE, WIDTH, HEIGHT, boneSpineIndex, False)
+    scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, POSE_BODY_25_PAIRS_RENDER_GP, SPINESIZE, WIDTH, HEIGHT, boneSpineIndex, False)
+
+    return keypoints, scaleFactor, x_displacement, y_displacement
+
+def denormalize(keypoints, scaleFactor, x_displacement, y_displacement):
+
+    boneSpineIndex = findPart('Nose')
+
+    poseUtils.denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, False)
 
     return keypoints
 

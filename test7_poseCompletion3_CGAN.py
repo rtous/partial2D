@@ -49,21 +49,21 @@ class JsonDataset(torch.utils.data.IterableDataset):
         #jsonFiles = [f for f in listdir(self.inputpath) if isfile(join(self.inputpath, f)) and f.endswith("json") ]
         for json_file in self.jsonFiles:
             try:
-                keypoints_cropped = openPoseUtils.json2normalizedKeypoints(join(self.inputpath_cropped, json_file))
+                keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(self.inputpath_cropped, json_file))
                 keypoints_cropped = openPoseUtils.removeConfidence(keypoints_cropped)
                 keypoints_cropped = [item for sublist in keypoints_cropped for item in sublist]
                 keypoints_cropped = [float(k) for k in keypoints_cropped]
                 keypoints_cropped = torch.tensor(keypoints_cropped)
                 keypoints_cropped = keypoints_cropped.flatten()
 
-                keypoints_original = openPoseUtils.json2normalizedKeypoints(join(self.inputpath_original, json_file))
+                keypoints_original, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(self.inputpath_original, json_file))
                 keypoints_original = openPoseUtils.removeConfidence(keypoints_original)
                 keypoints_original = [item for sublist in keypoints_original for item in sublist]
                 keypoints_original = [float(k) for k in keypoints_original]
                 keypoints_original = torch.tensor(keypoints_original)
                 keypoints_original = keypoints_original.flatten()
                 
-                yield keypoints_cropped, keypoints_original
+                yield keypoints_cropped, keypoints_original, scaleFactor, x_displacement, y_displacement
             except:
                 print("WARNING: Error reading ", json_file)
                 traceback.print_exc()
@@ -340,7 +340,7 @@ print("Starting Training Loop...")
 for epoch in range(num_epochs):
     # For each batch in the dataloader
     i = 0
-    for batch_of_keypoints_cropped, batch_of_keypoints_original in dataloader:
+    for batch_of_keypoints_cropped, batch_of_keypoints_original, scaleFactor, x_displacement, y_displacement in dataloader:
 
         batch_of_keypoints_cropped.to(device)
         batch_of_keypoints_original.to(device)
@@ -472,7 +472,7 @@ for epoch in range(num_epochs):
                 fakeKeypointsCroppedOneImage = croppedReshapedAsKeypoints[idx]
                 fakeKeypointsOneImage = fakeReshapedAsKeypoints[idx]
                 #print("fakeKeypointsOneImage:", fakeKeypointsOneImage)
-                fakeKeypointsOneImage = openPoseUtils.normalize(fakeKeypointsOneImage)
+                fakeKeypointsOneImage, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalize(fakeKeypointsOneImage)
                 #print("normalizedFakeKeypointsOneImage:", fakeKeypointsOneImage)
                 print("fakeKeypointsCroppedOneImage:",fakeKeypointsCroppedOneImage)
                 fakeKeypointsCroppedOneImageInt = poseUtils.keypointsToInteger(fakeKeypointsCroppedOneImage)
@@ -483,6 +483,13 @@ for epoch in range(num_epochs):
                	
                	openPoseUtils.normalizedKeypoints2json(fakeKeypointsOneImageInt, "data/output/"+f"{idx:02d}"+"_img_keypoints.json")
 
+               	#Draw over the image
+               	fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalize(fakeKeypointsOneImageInt, scaleFactor, x_displacement, y_displacement)
+               	imgWithKyepoints = np.zeros((500, 500, 3), np.uint8)
+               	poseUtils.draw_pose(imgWithKyepoints, fakeKeypointsCroppedOneImageIntRescaled, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+               	cv2.imwrite("data/output/"+f"{idx:02d}"+"_img_keypoints.jpg", imgWithKyepoints)
+
+               	#Draw the pairs  
                 try:
                     #print("Drawing fakeKeypointsOneImage:")
                     #print(fakeKeypointsOneImageList)
@@ -497,7 +504,6 @@ for epoch in range(num_epochs):
                     print("WARNING: Cannot draw keypoints ", fakeKeypointsOneImageInt)
                     traceback.print_exc()
             try:
-                
                 #print("Assigning: images[int("+str(idx)+"/NUM_COLS)][int("+str(idx)+"%NUM_COLS)]")
                 total_imageCropped = poseUtils.concat_tile(imagesCropped)
                 total_image = poseUtils.concat_tile(images)
@@ -508,6 +514,34 @@ for epoch in range(num_epochs):
             except Exception:
                 print("WARNING: Cannot draw tile ")
                 traceback.print_exc()
+
+            #Test over the test image
+            keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints("dynamicData/012_keypoints.json")
+            keypoints_cropped = openPoseUtils.removeConfidence(keypoints_cropped)
+            keypoints_cropped = [item for sublist in keypoints_cropped for item in sublist]
+            keypoints_cropped = [float(k) for k in keypoints_cropped]
+            keypoints_cropped = torch.tensor(keypoints_cropped)
+            keypoints_cropped = keypoints_cropped.flatten()
+            print("keypoints_cropped.shape = ", keypoints_cropped.shape)
+
+            batch_of_one_keypoints_cropped = np.reshape(keypoints_cropped, (1, 50))
+            fixed_noise_one = torch.randn(1, nz, device=device)
+            netG.eval()
+            fake = netG(batch_of_one_keypoints_cropped, fixed_noise_one).detach().cpu()
+            netG.train()
+            fakeReshapedAsKeypoints = np.reshape(fake, (1, 25, 2))
+            fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
+
+            fakeKeypointsOneImage = fakeReshapedAsKeypoints[0]
+            fakeKeypointsOneImage, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalize(fakeKeypointsOneImage)
+            fakeKeypointsOneImageInt = poseUtils.keypointsToInteger(fakeKeypointsOneImage)
+
+            fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalize(fakeKeypointsOneImageInt, scaleFactor, x_displacement, y_displacement)
+           	#imgWithKyepoints = np.zeros((500, 500, 3), np.uint8)
+            imgWithKyepoints = cv2.imread("dynamicData/012.jpg")
+            poseUtils.draw_pose(imgWithKyepoints, fakeKeypointsCroppedOneImageIntRescaled, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+            cv2.imwrite("data/output/test_keypoints.jpg", imgWithKyepoints)
+
 
         # Save Losses for plotting later
         G_losses.append(errG.item())

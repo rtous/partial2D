@@ -38,6 +38,10 @@ def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, bo
 	keypoint1 = keypoints[keypoint_index_pairs[boneSpineIndex][0]]
 	keypoint2 = keypoints[keypoint_index_pairs[boneSpineIndex][1]]
 
+	scaleFactor = -1
+	x_displacement = -1
+	y_displacement = -1
+
 	if keypoint1[0]!=0 and keypoint1[1]!=0 and keypoint2[0]!=0 and keypoint2[1]!=0:
 
 		x_distance = keypoint1[0]-keypoint2[0]
@@ -68,6 +72,19 @@ def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, bo
 				new_keypoint = (int(k[0]-x_displacement), int(k[1]-y_displacement))
 			keypoints[i] = new_keypoint
 
+	return scaleFactor, x_displacement, y_displacement
+
+def denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, keepThreshold):
+
+	for i, k in enumerate(keypoints):
+		if scaleFactor != -1:
+			if keepThreshold:
+				new_keypoint = (int((k[0]+x_displacement)*scaleFactor), int((k[1]+y_displacement)*scaleFactor), k[2]) 
+			else: 
+				new_keypoint = (int((k[0]+x_displacement)*scaleFactor), int((k[1]+y_displacement)*scaleFactor))	
+		
+			keypoints[i] = new_keypoint
+	
 	return keypoints
 
 def poseIsConfident(keypoints, thresholdNoneBelow, thresholdNotMoreThanNBelow, N):
