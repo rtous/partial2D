@@ -517,6 +517,7 @@ for epoch in range(num_epochs):
 
             #Test over the test image
             keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints("dynamicData/012_keypoints.json")
+            print("scaleFactor=",scaleFactor)
             keypoints_cropped = openPoseUtils.removeConfidence(keypoints_cropped)
             keypoints_cropped = [item for sublist in keypoints_cropped for item in sublist]
             keypoints_cropped = [float(k) for k in keypoints_cropped]
@@ -533,7 +534,7 @@ for epoch in range(num_epochs):
             fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
 
             fakeKeypointsOneImage = fakeReshapedAsKeypoints[0]
-            fakeKeypointsOneImage, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalize(fakeKeypointsOneImage)
+            fakeKeypointsOneImage, dummy, dummy, dummy = openPoseUtils.normalize(fakeKeypointsOneImage)
             fakeKeypointsOneImageInt = poseUtils.keypointsToInteger(fakeKeypointsOneImage)
 
             fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalize(fakeKeypointsOneImageInt, scaleFactor, x_displacement, y_displacement)
