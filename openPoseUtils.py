@@ -100,8 +100,11 @@ def json2Keypoints(path):
      
     # Iterating through the json
     # list
-    person = data['people'][0]
-
+    if len(data['people'])>0:
+        person = data['people'][0]
+    else:
+        raise ValueError("No people in " + path)
+     
     keypointsFlat = person['pose_keypoints_2d']
 
     #keypointsFlat = list(map(int, keypointsFlat))
@@ -202,13 +205,16 @@ def denormalize(keypoints, scaleFactor, x_displacement, y_displacement):
 
 def removeConfidence(keypoints):
     #If confidence below theshold (0.1) the keypoint will be 0,0
+    newKeypoints = []  
+    confidence_values = []
     for i, k in enumerate(keypoints):
-        
         if k[2] > THRESHOLD: 
             new_keypoint = (k[0], k[1])
         else:
             new_keypoint = (0.0, 0.0)
+        newKeypoints.append(new_keypoint)
+        confidence_values.append(k[2])
         #new_keypoint = (k[0], k[1])
-        keypoints[i] = new_keypoint
-    return keypoints
+        #keypoints[i] = new_keypoint
+    return newKeypoints, confidence_values
 

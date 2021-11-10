@@ -84,9 +84,11 @@ def denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, kee
 	for i, k in enumerate(keypoints):
 		if scaleFactor != -1:
 			if keepThreshold:
-				new_keypoint = (int((k[0]+x_displacement)*scaleFactor), int((k[1]+y_displacement)*scaleFactor), k[2]) 
+				#new_keypoint = (int((k[0]+x_displacement)*scaleFactor), int((k[1]+y_displacement)*scaleFactor), k[2]) 
+				new_keypoint = ((k[0]+x_displacement)*scaleFactor, (k[1]+y_displacement)*scaleFactor, k[2]) 
 			else: 
-				new_keypoint = (int((k[0]+x_displacement)*scaleFactor), int((k[1]+y_displacement)*scaleFactor))	
+				#new_keypoint = (int((k[0]+x_displacement)*scaleFactor), int((k[1]+y_displacement)*scaleFactor))	
+				new_keypoint = ((k[0]+x_displacement)*scaleFactor, (k[1]+y_displacement)*scaleFactor)	
 		
 			keypoints[i] = new_keypoint
 	
