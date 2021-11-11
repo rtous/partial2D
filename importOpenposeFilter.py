@@ -14,8 +14,8 @@ HEIGHT = 64
 SPINESIZE = WIDTH/4
 
 HAVETHRESHOLD = True
-INPUTPATH = "dynamicData/H36M_ECCV18"
-OUTPUTPATH = "dynamicData/H36M_ECCV18_FILTERED"
+INPUTPATH = "dynamicData/H36M_ECCV18_CROPPED"
+OUTPUTPATH = "dynamicData/H36M_ECCV18_FILTERED_CROPPED"
 
 pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
 
@@ -112,9 +112,13 @@ for filename in jsonFiles:
 		    list(map(int, keypointsFlat[1::3])), 
 		    list(map(float, keypointsFlat[2::3]))  
 		))
+		#thresholdNoneBelow = 0.0
+		#thresholdNotMoreThanNBelow = 0.5
+		#N = 3
+
 		thresholdNoneBelow = 0.0
 		thresholdNotMoreThanNBelow = 0.5
-		N = 3
+		N = 13
 		if poseUtils.poseIsConfident(keypoints, thresholdNoneBelow, thresholdNotMoreThanNBelow, N):
 
 		    targetFilePath = join(OUTPUTPATH, filename)

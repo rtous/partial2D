@@ -27,12 +27,13 @@ import openPoseUtils
 import poseUtils
 import cv2
 import traceback
+import shutil
 
 CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS = 0.1
 
 # Root directory for dataset
 dataroot_cropped = "dynamicData/H36M_ECCV18_FILTERED_CROPPED"
-dataroot_original = "dynamicData/H36M_ECCV18_FILTERED"
+dataroot_original = "dynamicData/H36M_ECCV18"
 OUTPUTPATH = "data/output"
 pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
 
@@ -515,7 +516,7 @@ for epoch in range(num_epochs):
 
                 scaleFactorOneImage = scaleFactor[idx]
                 x_displacementOneImage = x_displacement[idx]
-                y_displacementOneImage = x_displacement[idx]
+                y_displacementOneImage = y_displacement[idx]
 
                 json_file = batch_of_json_file[idx]
                 #print("fakeKeypointsOneImage:", fakeKeypointsOneImage)
@@ -531,24 +532,26 @@ for epoch in range(num_epochs):
 
                	openPoseUtils.normalizedKeypoints2json(fakeKeypointsOneImageInt, "data/output/"+f"{idx:02d}"+"_img_keypoints.json")
 
-               	#Draw over the image
+               	#Draw result over the original image
                	fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalize(fakeKeypointsOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage)
-               	
-               	#imgWithKyepoints = np.zeros((500, 500, 3), np.uint8)
                	json_file_without_extension = os.path.splitext(json_file)[0]
                	json_file_without_extension = json_file_without_extension.replace('_keypoints', '')
-               	original_image_path = join("data/input/H36M_ECCV18/Train/IMG",json_file_without_extension+".png")
-               	print(original_image_path)
-               	#original_image_path = "dynamicData/02461.jpg"
+               	original_image_path = join("data/H36M_ECCV18/Train/IMG",json_file_without_extension+".jpg")
                	if not os.path.isfile(original_image_path):
                		raise ValueError("ERROR: "+original_image_path+" does not exist.")
-               	#imgWithKyepoints = cv2.imread(original_image_path, cv2.IMREAD_UNCHANGED)
                	imgWithKyepoints = cv2.imread(original_image_path)
-           
-
                	poseUtils.draw_pose(imgWithKyepoints, fakeKeypointsCroppedOneImageIntRescaled, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
                	cv2.imwrite("data/output/"+f"{idx:02d}"+"_img_keypoints.jpg", imgWithKyepoints)
-
+                
+                #Now draw keypoints over cropped image
+                cropped_image_path = join("data/H36M_ECCV18/Train/IMG_CROPPED",json_file_without_extension+".jpg")
+               	imgWithKyepoints = cv2.imread(cropped_image_path)
+               	poseUtils.draw_pose(imgWithKyepoints, fakeKeypointsCroppedOneImageIntRescaled, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+               	cv2.imwrite("data/output/"+f"{idx:02d}"+"_img_cropped_keypoints.jpg", imgWithKyepoints)
+                
+                #Copy openpose result (image) in the results
+                shutil.copyfile(join("data/H36M_ECCV18/Train/result",json_file_without_extension+"_rendered.png"), join("data/output/"+f"{idx:02d}"+"_img_cropped_openpose.png"))
+                
                	#Draw the pairs  
                 try:
                     #print("Drawing fakeKeypointsOneImage:")
