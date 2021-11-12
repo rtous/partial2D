@@ -199,9 +199,9 @@ def denormalize(keypoints, scaleFactor, x_displacement, y_displacement):
 
     boneSpineIndex = findPart('Nose')
 
-    poseUtils.denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, False)
+    newKeypoints = poseUtils.denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, False)
 
-    return keypoints
+    return newKeypoints
 
 def removeConfidence(keypoints):
     #If confidence below theshold (0.1) the keypoint will be 0,0

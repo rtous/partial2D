@@ -80,7 +80,23 @@ def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, bo
 	return scaleFactor, x_displacement, y_displacement
 
 def denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, keepThreshold):
-
+	newKeypoints = [] 
+	for i, k in enumerate(keypoints):
+		if scaleFactor != -1:
+			if keepThreshold:
+				#new_keypoint = (int((k[0]+x_displacement)*scaleFactor), int((k[1]+y_displacement)*scaleFactor), k[2]) 
+				new_keypoint = ((k[0]+x_displacement)*scaleFactor, (k[1]+y_displacement)*scaleFactor, k[2]) 
+			else: 
+				#new_keypoint = (int((k[0]+x_displacement)*scaleFactor), int((k[1]+y_displacement)*scaleFactor))	
+				new_keypoint = ((k[0]+x_displacement)*scaleFactor, (k[1]+y_displacement)*scaleFactor)	
+		
+			#keypoints[i] = new_keypoint
+			newKeypoints.append(new_keypoint)
+	
+	return newKeypoints
+'''
+def denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, keepThreshold):
+	#newKeypoints = [] 
 	for i, k in enumerate(keypoints):
 		if scaleFactor != -1:
 			if keepThreshold:
@@ -91,9 +107,10 @@ def denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, kee
 				new_keypoint = ((k[0]+x_displacement)*scaleFactor, (k[1]+y_displacement)*scaleFactor)	
 		
 			keypoints[i] = new_keypoint
+			#newKeypoints.append(new_keypoint)
 	
 	return keypoints
-
+'''
 def poseIsConfident(keypoints, thresholdNoneBelow, thresholdNotMoreThanNBelow, N):
 	
 	nBelowThreshold = 0
