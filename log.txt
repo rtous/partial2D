@@ -44,4 +44,30 @@ POTENTIAL IMPROVEMENTS:
 08-11-2021: Testing of the pose inpainting network
 
 	WARNING: The normalization takes the spine index, why if it's not present?
+-------------------------------------
+18-11-2021: 
+	- Problem 1: optical flow in video sequences. 
+		- May not be necessary but
+		- Generating animations may be more interesting
+			- [1] Human Action Generation with Generative Adversarial Networks
+			- [2] Generative Model for Skeletal Human Movements Based on Conditional DC-GAN Applied to Pseudo-Images
+	- Problem 2: How to evaluate?
+		- Definie own metric like FID
+		- "FPD" Which "task" model? skeleton based action recognition. scGCN seems ok	
+		- Problem, is for sequences
+		- I have to visualize the poses anyway, to evaluate the metric
+--------------------------------------
+Found this: 
+	3D Human Pose Estimaiton with Lifting Transformer
+	file:///Users/rtous/Downloads/LiftTrans_arXiv.pdf
+
+HEy why not using a video-vased 2D pose detector?
+	Combining detection and tracking for human pose estimation in videos
+	https://arxiv.org/pdf/2003.13743v1.pdf
+--------------------------------------
+22-11-2021:
+	- recordem objectiu: COMPLETAR VIDEOS AMB IMATGE PARCIAL DEL COS
+	- Cal que sigui compatible amb SMPLIFY-X?
+
+
 
