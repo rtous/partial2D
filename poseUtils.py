@@ -4,11 +4,11 @@ import cv2
 import numpy as np
 import math
 
-def draw_part(img, keypoint1, keypoint2, color, keypoint_index_pairs):
+def draw_part(img, keypoint1, keypoint2, color, keypoint_index_pairs, thickness):
 	#img = cv2.line(img, (keypoint1[0], keypoint1[1]), (keypoint2[0], keypoint2[1]), (color[0], color[1], color[2]), 2)
-    img = cv2.line(img, (int(keypoint1[0]), int(keypoint1[1])), (int(keypoint2[0]), int(keypoint2[1])), (color[0], color[1], color[2]), 2)
+    img = cv2.line(img, (int(keypoint1[0]), int(keypoint1[1])), (int(keypoint2[0]), int(keypoint2[1])), (color[0], color[1], color[2]), thickness)
     
-def draw_pose(img, keypoints, threshold, keypoint_index_pairs, colors, haveThreshold):        
+def draw_pose(img, keypoints, threshold, keypoint_index_pairs, colors, haveThreshold, thickness=2):        
 	for boneNumer, bone in enumerate(keypoint_index_pairs):
 		#print("Part: "+str(bone[0])+","+str(bone[1]))
 		keypoint1 = keypoints[bone[0]]
@@ -17,18 +17,10 @@ def draw_pose(img, keypoints, threshold, keypoint_index_pairs, colors, haveThres
 		if haveThreshold:
 			if keypoint1[2] > threshold and keypoint2[2] > threshold:
 				if keypoint1[0] > 0 and keypoint1[1] > 0 and keypoint2[0] > 0 and keypoint2[1] > 0:
-					draw_part(img, keypoint1, keypoint2, color, keypoint_index_pairs)
+					draw_part(img, keypoint1, keypoint2, color, keypoint_index_pairs, thickness)
 		else:
 			if keypoint1[0] > 0 and keypoint1[1] > 0 and keypoint2[0] > 0 and keypoint2[1] > 0:
-				draw_part(img, keypoint1, keypoint2, color, keypoint_index_pairs)
-'''
-def keypointsToInteger(keypoints):
-    intKeypoints = []        
-    for j, k in enumerate(keypoints):
-        new_keypoint = (int(k[0]), int(k[1]))
-        intKeypoints.append(new_keypoint)
-    return intKeypoints
-'''
+				draw_part(img, keypoint1, keypoint2, color, keypoint_index_pairs, thickness)
 
 def draw_keypoints(img, keypoints):        
     for k in keypoints:
