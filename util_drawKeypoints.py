@@ -46,4 +46,3 @@ print("denormalized_keypoints: ", denormalized_keypoints)
 imgWithKyepoints = cv2.imread("dynamicData/012.jpg")
 poseUtils.draw_pose(imgWithKyepoints, denormalized_keypoints, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
 cv2.imwrite("data/output/test_denormalize.jpg", imgWithKyepoints)
-
