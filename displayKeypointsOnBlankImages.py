@@ -18,12 +18,14 @@ SPINESIZE = WIDTH/4
 THRESHOLD = 0.1
 HAVETHRESHOLD = True
 INPUTPATHIMAGES = "/Users/rtous/DockerVolume/charade/input/images"
-INPUTPATHKEYPOINTS = "/Users/rtous/DockerVolume/charade/input/keypoints"
-OUTPUTPATH = "/Users/rtous/DockerVolume/charade/result/2D/blank_images"
+#INPUTPATHKEYPOINTS = "/Users/rtous/DockerVolume/charade/input/keypoints"
+INPUTPATHKEYPOINTS = "/Users/rtous/DockerVolume/charade/input/keypointsHRNET"
+#OUTPUTPATH = "/Users/rtous/DockerVolume/charade/result/2D/blank_images"
+OUTPUTPATH = "/Users/rtous/DockerVolume/charade/result/2D/blank_imagesHRNET"
 
 pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
 
-imageFiles = [f for f in listdir(INPUTPATHIMAGES) if isfile(join(INPUTPATHIMAGES, f)) and f.endswith(".png")]
+imageFiles = [f for f in listdir(INPUTPATHIMAGES) if isfile(join(INPUTPATHIMAGES, f)) and (f.endswith(".png") or f.endswith(".jpg"))]
 for filename_image in imageFiles:
 
     filename_noextension = splitext(filename_image)[0]

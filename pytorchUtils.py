@@ -1,7 +1,26 @@
 import torch.nn as nn
 import sys
 import numpy as np
+from PIL import Image
+import cv2
+from pathlib import Path  
+from os.path import isfile, join, splitext
+from os import listdir
 
+def cv2ReadFile(path):
+    if isfile(path):
+        filename = Path(path).name
+        extension = splitext(filename)[1]
+        if (extension == ".png"):
+            originalImagePIL = Image.open(path)
+            open_cv_image = np.array(originalImagePIL) 
+            image = open_cv_image[:, :, ::-1].copy() # Convert RGB to BGR
+        else:
+            image = cv2.imread(originalImagePath)
+    else:
+        raise Exception('Error opening image file '+path)
+    return image
+         
 
 def explainModel(model, Hin, Win, desiredHout, desiredWout):
     #Hin = input.shape[0]

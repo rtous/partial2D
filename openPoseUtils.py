@@ -11,11 +11,18 @@ import pathlib
 
 WIDTH = 64
 HEIGHT = 64
-SPINESIZE = WIDTH/4
+#SPINESIZE = WIDTH/4
+SPINESIZE = WIDTH/16
 THRESHOLD = 0 #disabled #0.05 #0.05
 HAVETHRESHOLD = True
 INPUTPATH = "dynamicData/H36M_ECCV18"
 OUTPUTPATH = "data/H36M_ECCV18/poselets"
+
+#REFERENCE_BONE_NAME = 'Neck' #Nose
+#REFERENCE_JOINT_PAIR_INDEX = 0
+REFERENCE_JOINT_PAIR_INDEX = 13 # Nose and Neck
+#REFERENCE_JOINT_PAIR_INDEX = 14 # Nose and REye
+
 
 pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
 
@@ -123,7 +130,8 @@ def json2normalizedKeypoints(path):
 
     keypoints = json2Keypoints(path)
 
-    boneSpineIndex = findPart('Nose')
+    #boneSpineIndex = findPart(REFERENCE_BONE_NAME)
+    boneSpineIndex = REFERENCE_JOINT_PAIR_INDEX
 
     scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, POSE_BODY_25_PAIRS_RENDER_GP, SPINESIZE, WIDTH, HEIGHT, boneSpineIndex, HAVETHRESHOLD)
 
@@ -190,7 +198,8 @@ def addConfidenceValue(keypoints):
 
 def normalize(keypoints):
 
-    boneSpineIndex = findPart('Nose')
+    #boneSpineIndex = findPart(REFERENCE_BONE_NAME)
+    boneSpineIndex = REFERENCE_JOINT_PAIR_INDEX
 
     scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, POSE_BODY_25_PAIRS_RENDER_GP, SPINESIZE, WIDTH, HEIGHT, boneSpineIndex, False)
 
@@ -198,7 +207,8 @@ def normalize(keypoints):
 
 def denormalize(keypoints, scaleFactor, x_displacement, y_displacement):
 
-    boneSpineIndex = findPart('Nose')
+    #boneSpineIndex = findPart(REFERENCE_BONE_NAME)
+    boneSpineIndex = REFERENCE_JOINT_PAIR_INDEX
 
     newKeypoints = poseUtils.denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, False)
 

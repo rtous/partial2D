@@ -69,6 +69,10 @@ def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, bo
 				new_keypoint = (k[0]-x_displacement, k[1]-y_displacement)
 			keypoints[i] = new_keypoint
 
+	else:
+		raise Exception('Reference bone keypoints are zero :-(')
+
+
 	return scaleFactor, x_displacement, y_displacement
 
 def denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, keepThreshold):
@@ -84,7 +88,6 @@ def denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, kee
 		
 			#keypoints[i] = new_keypoint
 			newKeypoints.append(new_keypoint)
-	
 	return newKeypoints
 '''
 def denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, keepThreshold):
