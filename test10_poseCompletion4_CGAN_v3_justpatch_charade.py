@@ -32,7 +32,7 @@ import shutil
 CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS = 0.1
 
 # Root directory for dataset
-dataroot_cropped = "dynamicData/H36M_ECCV18_FILTERED_CROPPED"
+dataroot_cropped = "data/H36M_ECCV18_HOLLYWOOD"
 dataroot_original = "dynamicData/H36M_ECCV18"
 
 dataroot_validation = "/Users/rtous/DockerVolume/charade/input/keypoints"
@@ -79,6 +79,8 @@ class JsonDataset(torch.utils.data.IterableDataset):
                 keypoints_cropped = torch.tensor(keypoints_cropped)
                 keypoints_cropped = keypoints_cropped.flatten()
 
+                #filename_without_extension = os.path.splitext(json_file)[0] 
+                json_file = json_file[:5]+"_keypoints.json"  
                 keypoints_original, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(self.inputpath_original, json_file))
                 #print("keypoints_original_raw (1)", keypoints_original_raw)
                 keypoints_original, dummy = openPoseUtils.removeConfidence(keypoints_original)
@@ -401,6 +403,7 @@ def testImage(imagePath, keypointsPath):
     cv2.imwrite("data/output/test_keypoints.jpg", imgWithKyepoints)
 
 def testMany():
+    print('testMany()...')
     batch_of_one_keypoints_cropped = []
     batch_of_one_confidence_values = []
     batch_scaleFactor = []
@@ -411,10 +414,10 @@ def testMany():
     jsonFiles = [f for f in listdir(keypointsPath) if isfile(join(keypointsPath, f))]
     n = 0
     for filename in jsonFiles:
-        print('Testing '+filename)
+        #print('Testing '+filename)
         try:
             keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(keypointsPath, filename))
-            print("obtained scaleFactor=",scaleFactor)
+            #print("obtained scaleFactor=",scaleFactor)
             keypoints_cropped, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
             keypoints_cropped = [item for sublist in keypoints_cropped for item in sublist]
             keypoints_cropped = [float(k) for k in keypoints_cropped]
@@ -454,18 +457,18 @@ def testMany():
         json_file_without_extension = os.path.splitext(batch_filenames[idx])[0]
         json_file_without_extension = json_file_without_extension.replace('_keypoints', '')
         originalImagePath = join(TEST_IMAGES_PATH, json_file_without_extension+".png")
-        print(originalImagePath)
+        #print(originalImagePath)
         #imgWithKyepoints = cv2.imread(originalImagePath)
         imgWithKyepoints = pytorchUtils.cv2ReadFile(originalImagePath)
         
         poseUtils.draw_pose(imgWithKyepoints, fakeKeypointsCroppedOneImageIntRescaled, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
         try:
             cv2.imwrite("data/output/Test/"+json_file_without_extension+".jpg", imgWithKyepoints)
-            print("written data/output/Test/"+json_file_without_extension+".jpg")
+            #print("written data/output/Test/"+json_file_without_extension+".jpg")
         except:
             print("WARNING: Cannot find "+originalImagePath)  
         #shutil.copyfile(join("/Users/rtous/DockerVolume/openpose/data/result", json_file_without_extension+"_rendered.png"), join("data/output/Test/"+json_file_without_extension+"_img_cropped_openpose.png"))
-                      
+    print('testMany() finished.')        
 
 def restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, batch_of_confidence_values):
 	for i, keypoints in enumerate(batch_of_fake_original):

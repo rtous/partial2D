@@ -3,6 +3,7 @@ import json
 import cv2
 import numpy as np
 import math
+import sys
 
 def draw_part(img, keypoint1, keypoint2, color, keypoint_index_pairs, thickness):
 	#img = cv2.line(img, (keypoint1[0], keypoint1[1]), (keypoint2[0], keypoint2[1]), (color[0], color[1], color[2]), 2)
@@ -26,6 +27,11 @@ def draw_keypoints(img, keypoints):
     for k in keypoints:
         cv2.circle(img,(k[0],k[1]), 1, (0,255,0), thickness=5, lineType=8, shift=0)
 
+
+
+
+	
+
 def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, boneSpineIndex, keepThreshold):
 	
 	keypoint1 = keypoints[keypoint_index_pairs[boneSpineIndex][0]]
@@ -42,6 +48,21 @@ def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, bo
 
 		#Compute the length of the spine
 		magnitudeSpine = math.sqrt(pow(x_distance, 2)+pow(y_distance, 2))
+
+		'''
+		print("keypoint1[0]", keypoint1[0])
+		print("keypoint2[0]", keypoint2[0])
+		print("keypoint1[1]", keypoint1[1])
+		print("keypoint2[1]", keypoint2[1])
+		print("keypoint1[2] (confidence) = ", keypoint1[2])
+		print("keypoint2[2] (confidence) = ", keypoint2[2])
+		print("magnitudeSpine = ", magnitudeSpine)
+		
+		if (magnitudeSpine != 0):
+			scaleFactor = magnitudeSpine/spinesize
+		else:
+			#sys.exit()
+		'''
 
 		#Compute scale factor to obtain the desired spine size
 		scaleFactor = magnitudeSpine/spinesize
@@ -133,4 +154,10 @@ def displayImage(image, width, height):
 def concat_tile(im_list_2d):
     return cv2.vconcat([cv2.hconcat(im_list_h) for im_list_h in im_list_2d])
 
-
+'''def copyKeypoints(keypoints):
+	newKeypoints = [] 
+	for i, k in enumerate(keypoints):
+		new_keypoint = (k[0], k[1], k[2])	
+		newKeypoints.append(new_keypoint)
+	return newKeypoints
+'''

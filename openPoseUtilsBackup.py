@@ -7,15 +7,13 @@ import poseUtils
 from os import listdir
 from os.path import isfile, join, splitext
 import pathlib
-import traceback
 
 
 WIDTH = 64
 HEIGHT = 64
 #SPINESIZE = WIDTH/4
 
-#SPINESIZE = WIDTH/16
-SPINESIZE = WIDTH/6
+SPINESIZE = WIDTH/16
 NECKSIZE = SPINESIZE/2.67 #the average in the dataset
 NOSESIZE = SPINESIZE/12.47
 
@@ -162,11 +160,10 @@ def json2normalizedKeypoints(path):
 
     keypoints = json2Keypoints(path)
 
-    #boneSpineIndex = REFERENCE_JOINT_PAIR_INDEX
+    #boneSpineIndex = findPart(REFERENCE_BONE_NAME)
+    boneSpineIndex = REFERENCE_JOINT_PAIR_INDEX
 
-    referenceBoneIndex, referenceBoneSize = reference_bone(keypoints)
-
-    scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, POSE_BODY_25_PAIRS_RENDER_GP, referenceBoneSize, WIDTH, HEIGHT, referenceBoneIndex, HAVETHRESHOLD)
+    scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, POSE_BODY_25_PAIRS_RENDER_GP, SPINESIZE, WIDTH, HEIGHT, boneSpineIndex, HAVETHRESHOLD)
 
     return keypoints, scaleFactor, x_displacement, y_displacement
 
@@ -253,65 +250,44 @@ def addConfidenceValue(keypoints):
         intKeypoints.append(new_keypoint)
     return intKeypoints
 
-
-def magnitude_bone_from_index(keypoints, boneIndex):
-    keypoint1 = keypoints[POSE_BODY_25_PAIRS_RENDER_GP[boneIndex][0]]
-    keypoint2 = keypoints[POSE_BODY_25_PAIRS_RENDER_GP[boneIndex][1]]
-    x_distance = keypoint1[0]-keypoint2[0]
-    y_distance = keypoint1[1]-keypoint2[1]
-    magnitudeSpine = math.sqrt(pow(x_distance, 2)+pow(y_distance, 2))
-    return magnitudeSpine
-
 def magnitude_bone(keypoints, boneName):
     if hasBone(keypoints, boneName):
         boneIndex = findBone(boneName)
-        magnitudeSpine = magnitude_bone_from_index(keypoints, boneIndex)
+        keypoint1 = keypoints[POSE_BODY_25_PAIRS_RENDER_GP[boneIndex][0]]
+        keypoint2 = keypoints[POSE_BODY_25_PAIRS_RENDER_GP[boneIndex][1]]
+        x_distance = keypoint1[0]-keypoint2[0]
+        y_distance = keypoint1[1]-keypoint2[1]
+        magnitudeSpine = math.sqrt(pow(x_distance, 2)+pow(y_distance, 2))
         return magnitudeSpine
     else:
         raise Exception('magnitude_bone: bone not found: ', boneName)
 
+'''
 def reference_bone(keypoints):
-    #PROBLEM: If you choose different reference bones for cropped and original...
-    if hasBone(keypoints, "Neck-Nose"):
+    if hasBone(keypoints, "Neck-MidHip"):
+        return findBone("Neck-MidHip"), NECKSIZE
+    elif hasBone(keypoints, "Neck-Nose"):
         return findBone("Neck-Nose"), NECKSIZE
-    else:
-        raise Exception('No reference bone has been found :-(')
-
-    '''
-    if hasBone(keypoints, "Nose-REye"):
-        return findBone("Nose-REye"), NOSESIZE
-    elif hasBone(keypoints, "Nose-LEye"):
-        return findBone("Nose-LEye"), NOSESIZE
-    else:
-        raise Exception('No reference bone has been found :-(')
-    '''
-
-
-    '''
-    if hasBone(keypoints, "Neck-Nose"):
-        return findBone("Neck-Nose"), NECKSIZE
-    elif hasBone(keypoints, "Neck-MidHip"):
-        #print("Neck-MidHip reference bone selected")
-        return findBone("Neck-MidHip"), SPINESIZE
     elif hasBone(keypoints, "Nose-REye"):
-        #print("Nose-REye reference bone selected")
         return findBone("Nose-REye"), NOSESIZE
     else:
         raise Exception('No reference bone has been found :-(')
-    '''
+'''
 
 
 def normalize(keypoints):
 
-    #boneSpineIndex = REFERENCE_JOINT_PAIR_INDEX
+    #boneSpineIndex = findPart(REFERENCE_BONE_NAME)
+    boneSpineIndex = REFERENCE_JOINT_PAIR_INDEX
 
-    referenceBoneIndex, referenceBoneSize = reference_bone(keypoints)
-
-    scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, POSE_BODY_25_PAIRS_RENDER_GP, referenceBoneSize, WIDTH, HEIGHT, referenceBoneIndex, False)
+    scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, POSE_BODY_25_PAIRS_RENDER_GP, SPINESIZE, WIDTH, HEIGHT, boneSpineIndex, False)
 
     return keypoints, scaleFactor, x_displacement, y_displacement
 
 def denormalize(keypoints, scaleFactor, x_displacement, y_displacement):
+
+    #boneSpineIndex = findPart(REFERENCE_BONE_NAME)
+    boneSpineIndex = REFERENCE_JOINT_PAIR_INDEX
 
     newKeypoints = poseUtils.denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, False)
 
@@ -355,39 +331,37 @@ def removeBones(keypoints, boneNames):
         newKeypoints[boneIndex][2]=0
     return newKeypoints'''
 
-def tryAddingNewCroppedVariation(keypoints, boneNames, variations):
-    #if fails raises exception and continues
-    variation = removeBones(keypoints, boneNames)
-    if variation is not None:
-        try:
-            referenceBoneIndex, referenceBoneSize = reference_bone(variation)
-            magnitude_bone = magnitude_bone_from_index(variation, referenceBoneIndex)
-            if magnitude_bone == 0:
-                raise Exception('magnitude_bone == 0')
-            variations.append(variation)
-        except Exception as e:
-            print("WARNING: Variation not added because the magnitude of reference bone is 0.")
-            traceback.print_stack()
-
 def crop(keypoints):
     variations = []  
     #0) remove knees
-    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle"], variations)
-    
+    variation = removeBones(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle"])
+    if variation is not None:
+        variations.append(variation)
+
     #1) remove legs
-    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee"], variations)
-    
+    variation = removeBones(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee"])
+    if variation is not None:
+        variations.append(variation)
+
     #2) remove spine and wrists
-    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist"], variations)
-    
+    variation = removeBones(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist"])
+    if variation is not None:
+        variations.append(variation)
+
     #3) remove spine and elbows
-    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist", "LElbow", "RElbow"], variations)
+    variation = removeBones(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist", "LElbow", "RElbow"])
+    if variation is not None:
+        variations.append(variation)
 
     #4) remove shoulders
-    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist", "LElbow", "RElbow", "LShoulder", "RShoulder"], variations)
-   
+    variation = removeBones(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist", "LElbow", "RElbow", "LShoulder", "RShoulder"])
+    if variation is not None:
+        variations.append(variation)
+
     #5) remove neck
-    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist", "LElbow", "RElbow", "LShoulder", "RShoulder", "Neck"], variations)
+    variation = removeBones(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist", "LElbow", "RElbow", "LShoulder", "RShoulder", "Neck"])
+    if variation is not None:
+        variations.append(variation)
 
     return variations
 
