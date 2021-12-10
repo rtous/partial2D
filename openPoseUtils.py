@@ -272,19 +272,22 @@ def magnitude_bone(keypoints, boneName):
 
 def reference_bone(keypoints):
     #PROBLEM: If you choose different reference bones for cropped and original...
+
+
+    '''
     if hasBone(keypoints, "Neck-Nose"):
         return findBone("Neck-Nose"), NECKSIZE
     else:
         raise Exception('No reference bone has been found :-(')
-
     '''
+
+    
     if hasBone(keypoints, "Nose-REye"):
         return findBone("Nose-REye"), NOSESIZE
     elif hasBone(keypoints, "Nose-LEye"):
         return findBone("Nose-LEye"), NOSESIZE
     else:
         raise Exception('No reference bone has been found :-(')
-    '''
 
 
     '''

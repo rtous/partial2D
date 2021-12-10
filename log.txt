@@ -68,6 +68,20 @@ HEy why not using a video-vased 2D pose detector?
 22-11-2021:
 	- recordem objectiu: COMPLETAR VIDEOS AMB IMATGE PARCIAL DEL COS
 	- Cal que sigui compatible amb SMPLIFY-X?
+--------------------------------------
+19-12-2021:
+	- He substituit el dataset per un que fa crop automàticament de parts
+	- He canviat el bone de referencia, ara agafo un del cap. La selecció de la referencia depenent del cas ha donat problemes ja que agafa una diferent pel cropped que pel groundtruth. 
+	- Resultats força bons, però falten més dades.
+	- TODO: Ampliar els crops que es fan (un braç, etc.)
+	- TODO: Més dades? COCO? ÉS LA CLAU
+	- IDEA: t-SNE
+	- TODO: Fer el 3D lifting i veure si millora
+	- TODO: Algunes parts que es mostren al "debug_input" no es mostren al "debug". Caldria veure per què.
+	- TODO: Cal revisar alguns criteris:
+		- (sempre) El threshold per mantenir o substituir joints
+		- (al generar el dataset) Mirar la confidence abans d'acceptar el bone de referència
+		
 
 
 
