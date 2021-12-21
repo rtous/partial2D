@@ -452,18 +452,20 @@ def testMany():
         fakeKeypointsOneImage, dummy, dummy, dummy = openPoseUtils.normalize(fakeKeypointsOneImage)
 	   
         fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalize(fakeKeypointsOneImage, batch_scaleFactor[idx], batch_x_displacement[idx], batch_y_displacement[idx])
-	   	
+        openPoseUtils.normalizedKeypoints2json(fakeKeypointsCroppedOneImageIntRescaled, "data/output/Test/keypoints/"+batch_filenames[idx])
+
+
         #imgWithKyepoints = np.zeros((500, 500, 3), np.uint8)
         json_file_without_extension = os.path.splitext(batch_filenames[idx])[0]
         json_file_without_extension = json_file_without_extension.replace('_keypoints', '')
         originalImagePath = join(TEST_IMAGES_PATH, json_file_without_extension+".png")
-        #print(originalImagePath)
+        print(originalImagePath)
         #imgWithKyepoints = cv2.imread(originalImagePath)
         imgWithKyepoints = pytorchUtils.cv2ReadFile(originalImagePath)
         
         poseUtils.draw_pose(imgWithKyepoints, fakeKeypointsCroppedOneImageIntRescaled, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
         try:
-            cv2.imwrite("data/output/Test/"+json_file_without_extension+".jpg", imgWithKyepoints)
+            cv2.imwrite("data/output/Test/images/"+json_file_without_extension+".jpg", imgWithKyepoints)
             #print("written data/output/Test/"+json_file_without_extension+".jpg")
         except:
             print("WARNING: Cannot find "+originalImagePath)  
