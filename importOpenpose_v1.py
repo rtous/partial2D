@@ -115,6 +115,8 @@ boneSpineIndex = findPart('Nose')
 
 poseUtils.normalize_pose(keypoints, POSE_BODY_25_PAIRS_RENDER_GP, SPINESIZE, WIDTH, HEIGHT, boneSpineIndex, HAVETHRESHOLD)
 
+print(keypoints)
+
 poseUtils.draw_pose(blank_image, keypoints, THRESHOLD, POSE_BODY_25_PAIRS_RENDER_GP, POSE_BODY_25_COLORS_RENDER_GPU, HAVETHRESHOLD)
 
 '''

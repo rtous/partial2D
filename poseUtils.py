@@ -12,6 +12,7 @@ def draw_part(img, keypoint1, keypoint2, color, keypoint_index_pairs, thickness)
 def draw_pose(img, keypoints, threshold, keypoint_index_pairs, colors, haveThreshold, thickness=2):        
 	for boneNumer, bone in enumerate(keypoint_index_pairs):
 		#print("Part: "+str(bone[0])+","+str(bone[1]))
+		print(bone)
 		keypoint1 = keypoints[bone[0]]
 		keypoint2 = keypoints[bone[1]]
 		color = colors[boneNumer]
@@ -23,13 +24,32 @@ def draw_pose(img, keypoints, threshold, keypoint_index_pairs, colors, haveThres
 			if keypoint1[0] > 0 and keypoint1[1] > 0 and keypoint2[0] > 0 and keypoint2[1] > 0:
 				draw_part(img, keypoint1, keypoint2, color, keypoint_index_pairs, thickness)
 
-def draw_keypoints(img, keypoints):        
-    for k in keypoints:
-        cv2.circle(img,(k[0],k[1]), 1, (0,255,0), thickness=5, lineType=8, shift=0)
+def draw_keypoints(img, keypoints):   
+	for i, k in enumerate(keypoints):
+		cv2.circle(img,(k[0],k[1]), 1, (0,255,0), thickness=4, lineType=8, shift=0)
+		font                   = cv2.FONT_HERSHEY_SIMPLEX
+		bottomLeftCornerOfText = (k[0],k[1])
+		fontScale              = 0.5
+		fontColor              = (255,255,255)#(124,252,0)
+		thickness              = 1
+		lineType               = 2
+		cv2.putText(img,str(i), 
+		    bottomLeftCornerOfText, 
+		    font, 
+		    fontScale,
+		    fontColor,
+		    thickness,
+		    lineType)
 
 
+def hasBone(keypoints, keypoint_index_pairs, index):
+    keypoint1 = keypoints[keypoint_index_pairs[index][0]]
+    keypoint2 = keypoints[keypoint_index_pairs[index][1]]
 
-
+    if keypoint1[0]!=0 and keypoint1[1]!=0 and keypoint2[0]!=0 and keypoint2[1]!=0:
+        return True
+    else:
+        return False
 	
 
 def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, boneSpineIndex, keepThreshold):

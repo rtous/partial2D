@@ -27,7 +27,7 @@ OUTPUTPATH = "data/H36M_ECCV18/poselets"
 
 #REFERENCE_BONE_NAME = 'Neck' #Nose
 #REFERENCE_JOINT_PAIR_INDEX = 0
-REFERENCE_JOINT_PAIR_INDEX = 13 # Nose and Neck
+#REFERENCE_JOINT_PAIR_INDEX = 13 # Nose and Neck (so neck) <- latest
 #REFERENCE_JOINT_PAIR_INDEX = 14 # Nose and REye
 
 
@@ -123,7 +123,7 @@ def hasBone(keypoints, boneName):
     keypoint1 = keypoints[POSE_BODY_25_PAIRS_RENDER_GP[boneIndex][0]]
     keypoint2 = keypoints[POSE_BODY_25_PAIRS_RENDER_GP[boneIndex][1]]
 
-    if keypoint1[1]!=0 and keypoint1[1]!=0 and keypoint2[0]!=0 and keypoint2[1]!=0:
+    if keypoint1[0]!=0 and keypoint1[1]!=0 and keypoint2[0]!=0 and keypoint2[1]!=0:
         return True
     else:
         return False
@@ -373,23 +373,62 @@ def tryAddingNewCroppedVariation(keypoints, boneNames, variations):
             traceback.print_stack()
 
 def crop(keypoints):
-    variations = []  
-    #0) remove knees
-    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle"], variations)
-    
-    #1) remove legs
-    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee"], variations)
-    
-    #2) remove spine and wrists
-    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist"], variations)
-    
-    #3) remove spine and elbows
-    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist", "LElbow", "RElbow"], variations)
+    variations = [] 
+    #remove below ankle
+    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel"], variations)
+    #just right
+    tryAddingNewCroppedVariation(keypoints, ["RBigToe", "RSmallToe", "RHeel"], variations)  
+    #just left
+    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel"], variations)
+        
+    #remove below knee
+    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle"], variations)   
+    #just right
+    tryAddingNewCroppedVariation(keypoints, ["RBigToe", "RSmallToe", "RHeel", "RAnkle"], variations)
+    #just left
+    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "LAnkle"], variations)
 
-    #4) remove shoulders
+    #remove legs
+    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee"], variations)
+    #just right
+    tryAddingNewCroppedVariation(keypoints, ["RBigToe", "RSmallToe", "RHeel", "RAnkle", "RKnee"], variations)
+    #just left
+    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "LAnkle", "LKnee"], variations)
+    
+    #remove below neck but no arms
+    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip"], variations)
+
+    #remove below neck and wrists
+    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist"], variations)
+    #just below neck and right wrists
+    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "RWrist"], variations)
+    #just below neck and left wrists
+    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist"], variations)
+    
+    #remove below neck and elbows
+    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist", "LElbow", "RElbow"], variations)
+    #just below neck and right elbow
+    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "RWrist", "RElbow"], variations)
+    #just below neck and left elbow
+    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "LElbow"], variations)
+     
+    #remove shoulders
     tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist", "LElbow", "RElbow", "LShoulder", "RShoulder"], variations)
-   
-    #5) remove neck
+    #just right shoulder and left wrist
+    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "RWrist", "RElbow", "RShoulder", "LWrist"], variations)
+    #just right shoulder and left elbow
+    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "RWrist", "RElbow", "RShoulder", "LWrist", "LElbow"], variations)
+    #just right shoulder
+    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "RWrist", "RElbow", "RShoulder"], variations)
+    
+    #just left shoulder
+    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "LElbow", "LShoulder"], variations)
+    #just left shoulder and right wrist
+    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "LElbow", "LShoulder", "RWrist"], variations)
+    #just left shoulder and right elbow
+    tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "LElbow", "LShoulder", "RWrist", "RElbow"], variations)
+    
+    #remove below nose
     tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist", "LElbow", "RElbow", "LShoulder", "RShoulder", "Neck"], variations)
 
     return variations
