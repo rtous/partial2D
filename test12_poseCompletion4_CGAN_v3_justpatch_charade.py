@@ -413,6 +413,10 @@ def testImage(imagePath, keypointsPath):
     batch_of_one_keypoints_cropped = np.reshape(keypoints_cropped, (1, 50))
     batch_of_one_confidence_values = np.reshape(confidence_values, (1, 25))
     fixed_noise_one = torch.randn(1, nz, device=device)
+
+    batch_of_one_keypoints_cropped = batch_of_one_keypoints_cropped.to(device)
+    fixed_noise_one = fixed_noise_one.to(device)
+    
     netG.eval()
     fake = netG(batch_of_one_keypoints_cropped, fixed_noise_one).detach().cpu()
     fake = restoreOriginalKeypoints(fake, batch_of_one_keypoints_cropped, batch_of_one_confidence_values)
@@ -651,7 +655,7 @@ for epoch in range(num_epochs):
                 #print(fakeReshapedAsKeypoints)
 
 
-                
+
 
                 croppedReshapedAsKeypoints = np.reshape(batch_of_keypoints_cropped.cpu(), (64, 25, 2))
                 croppedReshapedAsKeypoints = croppedReshapedAsKeypoints.numpy()
