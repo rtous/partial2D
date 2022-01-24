@@ -543,8 +543,8 @@ for epoch in range(num_epochs):
             print("confidence_values.shape", confidence_values.shape)
             print("Batch size received: ", batch_of_keypoints_cropped.size(0))
 
-        batch_of_keypoints_cropped.to(device)
-        batch_of_keypoints_original.to(device)
+        batch_of_keypoints_cropped = batch_of_keypoints_cropped.to(device)
+        batch_of_keypoints_original = batch_of_keypoints_original.to(device)
         b_size = batch_of_keypoints_cropped.size(0)
 
         ############################
@@ -565,7 +565,7 @@ for epoch in range(num_epochs):
 
         print("batch_of_keypoints_cropped.is_cuda=",batch_of_keypoints_cropped.is_cuda)
         print("batch_of_keypoints_original.is_cuda=",batch_of_keypoints_original.is_cuda)
-        
+
         print("netD=",next(netD.parameters()).is_cuda)
 
         # Forward pass real batch through D
