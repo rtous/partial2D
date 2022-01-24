@@ -464,7 +464,8 @@ def testMany():
             batch_filenames.append(filename)
             n += 1
         except:
-            print('Skipping '+filename)
+            pass
+            #print('Skipping '+filename)
 
 	#batch_of_one_keypoints_cropped = torch.tensor(batch_of_one_keypoints_cropped)
 	#batch_of_one_confidence_values = torch.tensor(batch_of_one_confidence_values)
@@ -571,10 +572,10 @@ for epoch in range(num_epochs):
         #print("***********************")
         #print("***********************")
 
-        print("batch_of_keypoints_cropped.is_cuda=",batch_of_keypoints_cropped.is_cuda)
-        print("batch_of_keypoints_original.is_cuda=",batch_of_keypoints_original.is_cuda)
+        #print("batch_of_keypoints_cropped.is_cuda=",batch_of_keypoints_cropped.is_cuda)
+        #print("batch_of_keypoints_original.is_cuda=",batch_of_keypoints_original.is_cuda)
 
-        print("netD=",next(netD.parameters()).is_cuda)
+        #print("netD=",next(netD.parameters()).is_cuda)
 
         # Forward pass real batch through D
         output = netD(batch_of_keypoints_cropped, batch_of_keypoints_original).view(-1)
