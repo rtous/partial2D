@@ -71,9 +71,10 @@ pathlib.Path(OUTPUTPATH+"/Test/keypoints").mkdir(parents=True, exist_ok=True)
 
 #To avoid parallel error on macos set workers = 0
 # Number of workers for dataloader
-workers = 0 #2
-os.environ['OMP_NUM_THREADS'] = "1" 
-print("WARNING: Disabling paralelism to avoid error in macOS")
+#workers = 0 #2
+workers = 4
+#os.environ['OMP_NUM_THREADS'] = "1" 
+#print("WARNING: Disabling paralelism to avoid error in macOS")
 #Also run export OMP_NUM_THREADS=1 in the terminal
 
 class JsonDataset(torch.utils.data.IterableDataset):
