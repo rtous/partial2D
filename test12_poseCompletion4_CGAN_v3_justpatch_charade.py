@@ -416,7 +416,7 @@ def testImage(imagePath, keypointsPath):
 
     batch_of_one_keypoints_cropped = batch_of_one_keypoints_cropped.to(device)
     fixed_noise_one = fixed_noise_one.to(device)
-    
+
     netG.eval()
     fake = netG(batch_of_one_keypoints_cropped, fixed_noise_one).detach().cpu()
     fake = restoreOriginalKeypoints(fake, batch_of_one_keypoints_cropped, batch_of_one_confidence_values)
@@ -471,6 +471,10 @@ def testMany():
     batch_of_one_keypoints_cropped = torch.stack(batch_of_one_keypoints_cropped)
     batch_of_one_confidence_values = torch.stack(batch_of_one_confidence_values)
     fixed_noise_N = torch.randn(n, nz, device=device)
+
+
+    batch_of_one_keypoints_cropped = batch_of_one_keypoints_cropped.to(device)
+    fixed_noise_N = fixed_noise_N.to(device)
     netG.eval()
     fake = netG(batch_of_one_keypoints_cropped, fixed_noise_N).detach().cpu()
     fake = restoreOriginalKeypoints(fake, batch_of_one_keypoints_cropped, batch_of_one_confidence_values)
