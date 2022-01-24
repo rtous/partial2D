@@ -28,26 +28,44 @@ import poseUtils
 import cv2
 import traceback
 import shutil
+import sys
 
 CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS = 0.1
 
+argv = sys.argv
+try:
+    dataroot_cropped=argv[1]
+    dataroot_original=argv[2]
+    OUTPUTPATH=argv[3]
+    dataroot_validation=argv[4]
+    TEST_IMAGES_PATH=argv[5]
+
+except ValueError:
+    print("Wrong arguments. Expecting two paths.")
+
 # Root directory for dataset
-dataroot_cropped = "/Volumes/ElementsDat/pose/COCO/ruben_structure/keypoints_openpose_format_cropped"
-dataroot_original = "/Volumes/ElementsDat/pose/COCO/ruben_structure/keypoints_openpose_format"
+#dataroot_cropped = "/Volumes/ElementsDat/pose/COCO/ruben_structure/keypoints_openpose_format_cropped"
+#dataroot_original = "/Volumes/ElementsDat/pose/COCO/ruben_structure/keypoints_openpose_format"
 
 
 #For visualizing result
 #(ORIGINAL_IMAGES_PATH = "data/H36M_ECCV18/Train/IMG"
-ORIGINAL_IMAGES_PATH = "/Volumes/ElementsDat/pose/COCO/train2017"
+#ORIGINAL_IMAGES_PATH = "/Volumes/ElementsDat/pose/COCO/train2017"
 
+#CROPPED_IMAGES_PATH = "data/H36M_ECCV18/Train/IMG_CROPPED"
+#CROPPED_IMAGES_PATH = "/Volumes/ElementsDat/pose/H36M/ECCV2018/ECCV18_Challenge/Train/IMG"
 
-OUTPUTPATH = "data/output2"
-pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
-pathlib.Path("data/output2/Test/").mkdir(parents=True, exist_ok=True) 
+#OPENPOSE_IMAGES_KEYPOINTS = "data/H36M_ECCV18/Train/result"
+#OPENPOSE_IMAGES_KEYPOINTS = "/Volumes/ElementsDat/pose/H36M/ECCV2018/keyponts_generated_by_openpose_for_train_images_cropped"
+
+#OUTPUTPATH = "data/output2"
+#pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
+#pathlib.Path(OUTPUTPATH+"/Test/").mkdir(parents=True, exist_ok=True) 
+pathlib.Path(OUTPUTPATH+"/Test/keypoints").mkdir(parents=True, exist_ok=True) 
 
 # Validating with the Charada dataset
-dataroot_validation = "/Users/rtous/DockerVolume/charade/input/keypoints"
-TEST_IMAGES_PATH = "/Users/rtous/DockerVolume/charade/input/images"
+#dataroot_validation = "/Users/rtous/DockerVolume/charade/input/keypoints"
+#TEST_IMAGES_PATH = "/Users/rtous/DockerVolume/charade/input/images"
 
 
 
@@ -410,7 +428,7 @@ def testImage(imagePath, keypointsPath):
    	#imgWithKyepoints = np.zeros((500, 500, 3), np.uint8)
     imgWithKyepoints = cv2.imread(imagePath)
     poseUtils.draw_pose(imgWithKyepoints, fakeKeypointsCroppedOneImageIntRescaled, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
-    cv2.imwrite("data/output/test_keypoints.jpg", imgWithKyepoints)
+    cv2.imwrite(OUTPUTPATH+"/test_keypoints.jpg", imgWithKyepoints)
 
 def testMany():
     print('testMany()...')
@@ -462,7 +480,7 @@ def testMany():
         fakeKeypointsOneImage, dummy, dummy, dummy = openPoseUtils.normalize(fakeKeypointsOneImage)
 	   
         fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalize(fakeKeypointsOneImage, batch_scaleFactor[idx], batch_x_displacement[idx], batch_y_displacement[idx])
-        openPoseUtils.normalizedKeypoints2json(fakeKeypointsCroppedOneImageIntRescaled, "data/output/Test/keypoints/"+batch_filenames[idx])
+        openPoseUtils.normalizedKeypoints2json(fakeKeypointsCroppedOneImageIntRescaled, OUTPUTPATH+"/Test/keypoints/"+batch_filenames[idx])
 
 
         #imgWithKyepoints = np.zeros((500, 500, 3), np.uint8)
@@ -475,7 +493,7 @@ def testMany():
         
         poseUtils.draw_pose(imgWithKyepoints, fakeKeypointsCroppedOneImageIntRescaled, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
         try:
-            cv2.imwrite("data/output/Test/images/"+json_file_without_extension+".jpg", imgWithKyepoints)
+            cv2.imwrite(OUTPUTPATH+"/Test/images/"+json_file_without_extension+".jpg", imgWithKyepoints)
             #print("written data/output/Test/"+json_file_without_extension+".jpg")
         except:
             print("WARNING: Cannot find "+originalImagePath)  
@@ -673,7 +691,7 @@ for epoch in range(num_epochs):
                	fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalize(fakeKeypointsOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage)
                	
                	#FIX: bad name, they are not normalized!
-               	openPoseUtils.normalizedKeypoints2json(fakeKeypointsOneImageInt, "data/output/"+f"{idx:02d}"+"_img_keypoints.json")
+               	openPoseUtils.normalizedKeypoints2json(fakeKeypointsOneImageInt, OUTPUTPATH+"/"+f"{idx:02d}"+"_img_keypoints.json")
 
 
                	json_file_without_extension = os.path.splitext(json_file)[0]
@@ -683,8 +701,8 @@ for epoch in range(num_epochs):
                 try:
                     poseUtils.draw_pose(blank_imageCropped, fakeKeypointsCroppedOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
                     poseUtils.draw_pose(blank_image, fakeKeypointsOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
-                    targetFilePathCropped = "data/output/debug_input"+str(idx)+".jpg"
-                    targetFilePath = "data/output/debug"+str(idx)+".jpg"
+                    targetFilePathCropped = OUTPUTPATH+"/debug_input"+str(idx)+".jpg"
+                    targetFilePath = OUTPUTPATH+"/debug"+str(idx)+".jpg"
                     #cv2.imwrite(targetFilePath, blank_image)
                     imagesCropped[int(idx/NUM_COLS)][int(idx%NUM_COLS)] = blank_imageCropped
                     images[int(idx/NUM_COLS)][int(idx%NUM_COLS)] = blank_image
@@ -695,8 +713,8 @@ for epoch in range(num_epochs):
                 #print("Assigning: images[int("+str(idx)+"/NUM_COLS)][int("+str(idx)+"%NUM_COLS)]")
                 total_imageCropped = poseUtils.concat_tile(imagesCropped)
                 total_image = poseUtils.concat_tile(images)
-                targetFilePathCropped = "data/output/debug_input.jpg"
-                targetFilePath = "data/output/debug.jpg"
+                targetFilePathCropped = OUTPUTPATH+"/debug_input.jpg"
+                targetFilePath = OUTPUTPATH+"/debug.jpg"
                 cv2.imwrite(targetFilePathCropped, total_imageCropped)
                 cv2.imwrite(targetFilePath, total_image)
             except Exception:
