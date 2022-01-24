@@ -565,7 +565,8 @@ for epoch in range(num_epochs):
 
         print("batch_of_keypoints_cropped.is_cuda=",batch_of_keypoints_cropped.is_cuda)
         print("batch_of_keypoints_original.is_cuda=",batch_of_keypoints_original.is_cuda)
-        print("netD=",netD.is_cuda)
+        
+        print("netD=",next(netD.parameters()).is_cuda)
 
         # Forward pass real batch through D
         output = netD(batch_of_keypoints_cropped, batch_of_keypoints_original).view(-1)
