@@ -650,7 +650,10 @@ for epoch in range(num_epochs):
                 
                 #print(fakeReshapedAsKeypoints)
 
-                croppedReshapedAsKeypoints = np.reshape(batch_of_keypoints_cropped, (64, 25, 2))
+
+                
+
+                croppedReshapedAsKeypoints = np.reshape(batch_of_keypoints_cropped.cpu(), (64, 25, 2))
                 croppedReshapedAsKeypoints = croppedReshapedAsKeypoints.numpy()
  
             #%%capture
