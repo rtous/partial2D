@@ -1,5 +1,5 @@
 dataroot_cropped="data/keypoints_openpose_format_cropped_lite"
-dataroot_original="data/ruben_structure/keypoints_openpose_format_lite"
+dataroot_original="data/keypoints_openpose_format_lite"
 #ORIGINAL_IMAGES_PATH = "/Volumes/ElementsDat/pose/COCO/train2017"
 OUTPUTPATH="data/output2"
 dataroot_validation="/home/users/jpoveda/charade/input/keypoints"
