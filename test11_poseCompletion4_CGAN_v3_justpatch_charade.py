@@ -32,34 +32,35 @@ import shutil
 CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS = 0.1
 
 # Root directory for dataset
-dataroot_cropped = "data/H36M_ECCV18_HOLLYWOOD"
-dataroot_original = "dynamicData/H36M_ECCV18"
+dataroot_cropped = "/Volumes/ElementsDat/pose/COCO/ruben_structure/keypoints_openpose_format_cropped"
+dataroot_original = "/Volumes/ElementsDat/pose/COCO/ruben_structure/keypoints_openpose_format"
 
-dataroot_validation = "/Users/rtous/DockerVolume/charade/input/keypoints"
 
 #For visualizing result
 #(ORIGINAL_IMAGES_PATH = "data/H36M_ECCV18/Train/IMG"
-ORIGINAL_IMAGES_PATH = "/Volumes/ElementsDat/pose/H36M/ECCV2018/ECCV18_Challenge/Train/IMG"
+ORIGINAL_IMAGES_PATH = "/Volumes/ElementsDat/pose/COCO/train2017"
 
 #CROPPED_IMAGES_PATH = "data/H36M_ECCV18/Train/IMG_CROPPED"
-CROPPED_IMAGES_PATH = "/Volumes/ElementsDat/pose/H36M/ECCV2018/ECCV18_Challenge/Train/IMG"
+#CROPPED_IMAGES_PATH = "/Volumes/ElementsDat/pose/H36M/ECCV2018/ECCV18_Challenge/Train/IMG"
 
 #OPENPOSE_IMAGES_KEYPOINTS = "data/H36M_ECCV18/Train/result"
-OPENPOSE_IMAGES_KEYPOINTS = "/Volumes/ElementsDat/pose/H36M/ECCV2018/keyponts_generated_by_openpose_for_train_images_cropped"
+#OPENPOSE_IMAGES_KEYPOINTS = "/Volumes/ElementsDat/pose/H36M/ECCV2018/keyponts_generated_by_openpose_for_train_images_cropped"
 
-OUTPUTPATH = "data/output"
+OUTPUTPATH = "data/output2"
 pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
-pathlib.Path("data/output/Test/").mkdir(parents=True, exist_ok=True) 
+pathlib.Path("data/output2/Test/").mkdir(parents=True, exist_ok=True) 
 
-
-#For Validation
+# Validating with the Charada dataset
+dataroot_validation = "/Users/rtous/DockerVolume/charade/input/keypoints"
 TEST_IMAGES_PATH = "/Users/rtous/DockerVolume/charade/input/images"
 
 
 
-#To avoid parallel error on macos (change for )
+#To avoid parallel error on macos set workers = 0
 # Number of workers for dataloader
-workers = 2
+workers = 0 #2
+os.environ['OMP_NUM_THREADS'] = "1" 
+print("WARNING: Disabling paralelism to avoid error in macOS")
 #Also run export OMP_NUM_THREADS=1 in the terminal
 
 class JsonDataset(torch.utils.data.IterableDataset):
@@ -67,11 +68,14 @@ class JsonDataset(torch.utils.data.IterableDataset):
         self.inputpath_cropped = inputpath_cropped
         self.inputpath_original = inputpath_original
         #self.jsonFiles = [f for f in listdir(self.inputpath_cropped) if isfile(join(self.inputpath_cropped, f)) and f.endswith("json") ]
-        self.scandirIterator = os.scandir(self.inputpath_cropped)    
+        
+        #scandir does not need to read the entire file list first
+        #self.scandirIterator = os.scandir(self.inputpath_cropped)
 
     def __iter__(self):
         #jsonFiles = [f for f in listdir(self.inputpath) if isfile(join(self.inputpath, f)) and f.endswith("json") ]
-        #for json_file in self.jsonFiles:
+        #Important, the scandir iterator needs to be created each time
+        self.scandirIterator = os.scandir(self.inputpath_cropped)
         for item in self.scandirIterator:
             json_file = str(item.name)
             try:
@@ -82,19 +86,25 @@ class JsonDataset(torch.utils.data.IterableDataset):
                 keypoints_cropped = torch.tensor(keypoints_cropped)
                 keypoints_cropped = keypoints_cropped.flatten()
 
-                #filename_without_extension = os.path.splitext(json_file)[0] 
-                json_file = json_file[:5]+"_keypoints.json"  
-                keypoints_original, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(self.inputpath_original, json_file))
-                #print("keypoints_original_raw (1)", keypoints_original_raw)
+                #Read the file with the original keypoints
+                #They are normalized
+                #They are used to 1)   2) restore good keypoints in the result
+                indexUnderscore = json_file.find('_')
+                json_file = json_file[:indexUnderscore]+".json"#+"_keypoints.json"  
+                original_keypoints_path = join(self.inputpath_original, json_file)
+                if not os.path.isfile(original_keypoints_path):
+                	print("FATAL ERROR: original keypoints path not found: "+original_keypoints_path)
+                	sys.exit()
+                keypoints_original, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(original_keypoints_path)
                 keypoints_original, dummy = openPoseUtils.removeConfidence(keypoints_original)
                 keypoints_original = [item for sublist in keypoints_original for item in sublist]
                 keypoints_original = [float(k) for k in keypoints_original]
                 keypoints_original = torch.tensor(keypoints_original)
                 keypoints_original = keypoints_original.flatten()
-                #print("keypoints_original_raw (2)", keypoints_original_raw)
                 
                 confidence_values = torch.tensor(confidence_values)
-
+                #print("confidence_values:")
+                #print(confidence_values)
                 yield keypoints_cropped, keypoints_original, confidence_values, scaleFactor, x_displacement, y_displacement, json_file
             except ValueError as ve:
             	print(ve)
@@ -104,6 +114,8 @@ class JsonDataset(torch.utils.data.IterableDataset):
                 print("WARNING: Error reading ", json_file)
                 #print(e)
                 traceback.print_exc()
+        self.scandirIterator.close()
+        print("Closed scandirIterator.")
             
 
     #def __len__(self):
@@ -462,7 +474,7 @@ def testMany():
         json_file_without_extension = os.path.splitext(batch_filenames[idx])[0]
         json_file_without_extension = json_file_without_extension.replace('_keypoints', '')
         originalImagePath = join(TEST_IMAGES_PATH, json_file_without_extension+".png")
-        print(originalImagePath)
+        #print(originalImagePath)
         #imgWithKyepoints = cv2.imread(originalImagePath)
         imgWithKyepoints = pytorchUtils.cv2ReadFile(originalImagePath)
         
@@ -476,22 +488,40 @@ def testMany():
     print('testMany() finished.')        
 
 def restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, batch_of_confidence_values):
-	for i, keypoints in enumerate(batch_of_fake_original):
-		confidence_values = batch_of_confidence_values[i]
-		for c, confidence_value in enumerate(confidence_values):
-			if confidence_value > CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS:
-				batch_of_fake_original[i][c*2] = batch_of_keypoints_cropped[i][c*2]
-				batch_of_fake_original[i][c*2+1] = batch_of_keypoints_cropped[i][c*2+1]
-	return batch_of_fake_original
+    '''
+    print("DEBUGGING restoreOriginalKeypoints...")
+    print("INPUT 1: batch_of_fake_original[0]:")
+    print(batch_of_fake_original[0])
+    print("INPUT 2: batch_of_keypoints_cropped[0]:")
+    print(batch_of_keypoints_cropped[0])
+    print("INPUT 3: batch_of_confidence_values[0]:")
+    print(batch_of_confidence_values[0])
+	'''
+
+    for i, keypoints in enumerate(batch_of_fake_original):
+        confidence_values = batch_of_confidence_values[i]
+        for c, confidence_value in enumerate(confidence_values):
+            if confidence_value > CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS:
+                #As we work with flat values and keypoints have 2 components we need to do this:
+                batch_of_fake_original[i][c*2] = batch_of_keypoints_cropped[i][c*2]
+                batch_of_fake_original[i][c*2+1] = batch_of_keypoints_cropped[i][c*2+1]
+    '''
+    print("OUTPUT: batch_of_fake_original:")
+    print(batch_of_fake_original)
+    '''
+    return batch_of_fake_original
 	
 
 print("Starting Training Loop...")
 # For each epoch
 epoch_idx = 0
-for epoch in range(num_epochs):
+for epoch in range(num_epochs):        
+    print("EPOCH ", epoch)
     # For each batch in the dataloader
     i = 0
     for batch_of_keypoints_cropped, batch_of_keypoints_original, confidence_values, scaleFactor, x_displacement, y_displacement, batch_of_json_file in dataloader:
+        #if i > 1000:
+        #	break
         #print("Training iteration "+str(i))
         if epoch_idx == 0 and i == 0:
             print("INFORMATION FOR THE FIRST BATCH")
@@ -513,18 +543,15 @@ for epoch in range(num_epochs):
      	#Batch of real labels
         label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
         
+        #print("***********************")
+        #print("***********************")
+        #print("batch_of_keypoints_cropped.shape=",batch_of_keypoints_cropped.shape)
+        #print("batch_of_keypoints_original.shape=",batch_of_keypoints_original.shape)
+        #print("***********************")
+        #print("***********************")
+
+
         # Forward pass real batch through D
-
-        print("***********************")
-        print("***********************")
-        print("batch_of_keypoints_cropped.shape=",batch_of_keypoints_cropped.shape)
-        print("batch_of_keypoints_original.shape=",batch_of_keypoints_original.shape)
-        print("***********************")
-        print("***********************")
-
-
-
-
         output = netD(batch_of_keypoints_cropped, batch_of_keypoints_original).view(-1)
         #print("Discriminator output: ", output.shape)
         
@@ -589,20 +616,21 @@ for epoch in range(num_epochs):
         # Output training stats
         if i % 50 == 0:
             print("**************************************************************")
-            #print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f'
-            #      % (epoch, num_epochs, i, len(dataloader),
-            #         errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
             print('[%d/%d][%d/?]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f'
                   % (epoch, num_epochs, i,
                      errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
             with torch.no_grad():
                 fake = netG(batch_of_keypoints_cropped, fixed_noise).detach().cpu()
+                
+                #We restore the original keypoints (before denormalizing)
                 fake = restoreOriginalKeypoints(fake, batch_of_keypoints_cropped, confidence_values)
+                
 
                 print("Shape of fake: ", fake.shape)
 
                 fakeReshapedAsKeypoints = np.reshape(fake, (64, 25, 2))
                 fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
+                
                 #print(fakeReshapedAsKeypoints)
 
                 croppedReshapedAsKeypoints = np.reshape(batch_of_keypoints_cropped, (64, 25, 2))
@@ -617,6 +645,7 @@ for epoch in range(num_epochs):
             imagesCropped = np.empty(shape=(NUM_ROWS, NUM_COLS),dtype='object')
             images = np.empty(shape=(NUM_ROWS, NUM_COLS),dtype='object')
             
+            ####### DRAW DEBUG POSES FOR THE FIRST 64 IMAGES
             for idx in range(NUM_ROWS*NUM_COLS):
                 blank_imageCropped = np.zeros((WIDTH,HEIGHT,3), np.uint8)
                 blank_image = np.zeros((WIDTH,HEIGHT,3), np.uint8)
@@ -628,49 +657,35 @@ for epoch in range(num_epochs):
                 y_displacementOneImage = y_displacement[idx]
 
                 json_file = batch_of_json_file[idx]
-                #print("fakeKeypointsOneImage:", fakeKeypointsOneImage)
+                
+
+                #??????????????????????
+                '''
                 fakeKeypointsOneImage, dummy, dummy, dummy = openPoseUtils.normalize(fakeKeypointsOneImage)
-                #print("normalizedFakeKeypointsOneImage:", fakeKeypointsOneImage)
-                #print("fakeKeypointsCroppedOneImage:",fakeKeypointsCroppedOneImage)
+                if (idx == 0):
+                    print("normalizedFakeKeypointsOneImage (output normalized):", fakeKeypointsOneImage)
+                '''
                 
                 #fakeKeypointsCroppedOneImageInt = poseUtils.keypointsToInteger(fakeKeypointsCroppedOneImage)
                 #fakeKeypointsOneImageInt = poseUtils.keypointsToInteger(fakeKeypointsOneImage)
                 fakeKeypointsCroppedOneImageInt = fakeKeypointsCroppedOneImage
                 fakeKeypointsOneImageInt = fakeKeypointsOneImage
                 
-
-               	openPoseUtils.normalizedKeypoints2json(fakeKeypointsOneImageInt, "data/output/"+f"{idx:02d}"+"_img_keypoints.json")
-
+                
                	#Draw result over the original image
                	
                 
                	fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalize(fakeKeypointsOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage)
+               	
+               	#FIX: bad name, they are not normalized!
+               	openPoseUtils.normalizedKeypoints2json(fakeKeypointsOneImageInt, "data/output/"+f"{idx:02d}"+"_img_keypoints.json")
+
+
                	json_file_without_extension = os.path.splitext(json_file)[0]
                	json_file_without_extension = json_file_without_extension.replace('_keypoints', '')
-               	'''
-                original_image_path = join(ORIGINAL_IMAGES_PATH,json_file_without_extension+".jpg")
-               	if not os.path.isfile(original_image_path):
-               		raise ValueError("ERROR: "+original_image_path+" does not exist.")
-               	imgWithKyepoints = cv2.imread(original_image_path)
-               	poseUtils.draw_pose(imgWithKyepoints, fakeKeypointsCroppedOneImageIntRescaled, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
-               	cv2.imwrite("data/output/"+f"{idx:02d}"+"_img_keypoints.jpg", imgWithKyepoints)
-                '''
-
-                #Now draw keypoints over cropped image
-                '''
-                cropped_image_path = join(CROPPED_IMAGES_PATH,json_file_without_extension+".jpg")
-               	imgWithKyepoints = cv2.imread(cropped_image_path)
-               	poseUtils.draw_pose(imgWithKyepoints, fakeKeypointsCroppedOneImageIntRescaled, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
-               	cv2.imwrite("data/output/"+f"{idx:02d}"+"_img_cropped_keypoints.jpg", imgWithKyepoints)
-                '''
-                
-                #Copy openpose result (image) in the results
-                #shutil.copyfile(join(OPENPOSE_IMAGES_KEYPOINTS, json_file_without_extension+"_rendered.png"), join("data/output/"+f"{idx:02d}"+"_img_cropped_openpose.png"))
-                
+               	
                	#Draw the pairs  
                 try:
-                    #print("Drawing fakeKeypointsOneImage:")
-                    #print(fakeKeypointsOneImageList)
                     poseUtils.draw_pose(blank_imageCropped, fakeKeypointsCroppedOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
                     poseUtils.draw_pose(blank_image, fakeKeypointsOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
                     targetFilePathCropped = "data/output/debug_input"+str(idx)+".jpg"
@@ -703,6 +718,6 @@ for epoch in range(num_epochs):
         iters += 1
         
         i += 1
-
+    print("---- end of epoch "+str(epoch)+"---")
     epoch_idx += 1
-
+print("Finshed. epochs = ", epoch_idx)

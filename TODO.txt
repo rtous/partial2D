@@ -1,0 +1,16 @@
+
+- More data? COCO, PANOPTIC? Projections from 3D datasets?
+- Check ablation
+- Check prefiltering, with wich images are we really training?
+- Review normalization 
+- Us less joints, as in coco?
+- Alternative representation of the data: heatmaps, images, etc.  
+- Improve the model:
+	- the patch part in the context encoder
+	- solve overfitting problem in low dimensional data
+
+-----------------------------------
+ADVANCED:
+
+- Explore deep learning for low dimensional data: overfitting problem
+- Alernatives: Bayesian deep neural (no overfit), radial basis function network

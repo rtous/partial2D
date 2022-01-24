@@ -12,7 +12,7 @@ def draw_part(img, keypoint1, keypoint2, color, keypoint_index_pairs, thickness)
 def draw_pose(img, keypoints, threshold, keypoint_index_pairs, colors, haveThreshold, thickness=2):        
 	for boneNumer, bone in enumerate(keypoint_index_pairs):
 		#print("Part: "+str(bone[0])+","+str(bone[1]))
-		print(bone)
+		#print(bone)
 		keypoint1 = keypoints[bone[0]]
 		keypoint2 = keypoints[bone[1]]
 		color = colors[boneNumer]

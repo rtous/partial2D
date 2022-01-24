@@ -11,9 +11,18 @@ import traceback
 import argparse
 import os
 import openPoseUtils
+import sys
 
-INPUTPATH = "dynamicData/H36M_ECCV18"
-OUTPUTPATH = "data/H36M_ECCV18_HOLLYWOOD"
+#INPUTPATH = "dynamicData/H36M_ECCV18"
+#OUTPUTPATH = "data/H36M_ECCV18_HOLLYWOOD"
+
+argv = sys.argv
+try:
+    INPUTPATH=argv[1]
+    OUTPUTPATH=argv[2]
+
+except ValueError:
+    print("Wrong arguments. Expecting two paths.")
 
 pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True)
 
@@ -22,7 +31,7 @@ pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True)
 #arguments, unparsed = parser.parse_known_args()
 #Access it with arguments.path
 
-jsonFiles = [f for f in listdir(INPUTPATH) if isfile(join(INPUTPATH, f))]
+#jsonFiles = [f for f in listdir(INPUTPATH) if isfile(join(INPUTPATH, f))]
 numOriginallyNotConfident = 0
 numOK = 0
 numDiscardedVariations = 0
@@ -30,7 +39,9 @@ numDiscardedVariations = 0
 numConfident = 0
 sumRatioSpineNeck = 0
 sumRatioSpineREye = 0
-for filename in jsonFiles:
+scandirIterator = os.scandir(INPUTPATH)
+for item in scandirIterator:
+	filename = str(item.name)
 	filename_without_extension = os.path.splitext(filename)[0]
 	try:
 		keypoints = openPoseUtils.json2Keypoints(join(INPUTPATH, filename))
@@ -68,6 +79,7 @@ for filename in jsonFiles:
 		print("WARNING: Error reading ", filename)
         #print(e)
 		traceback.print_exc()
+scandirIterator.close()
 print("numOK = ", numOK)
 print("numOriginallyNotConfident = ", numOriginallyNotConfident)
 print("numDiscardedVariations = ", numDiscardedVariations)

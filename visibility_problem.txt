@@ -1,0 +1,22 @@
+keypoint visibility problem
+
+In COCO, if conf is 0 keypoints are 0. Why then I'm drawing good keypoints that I'm trying to replace?
+
+- I draw pairs of keypoints if they coordinates are different than zero. Not using any confidence value here
+
+- ablation dataset: 
+    openPoseUtils.removeBones:
+        if (hasPart(newKeypoints, "MidHip") and hasPart(newKeypoints, "Neck")) or (hasPart(newKeypoints, "Neck") and hasPart(newKeypoints, "Nose")) or (hasPart(newKeypoints, "Nose") and hasPart(newKeypoints, "REye")):
+        return newKeypoints
+
+    openPoseUtils.hasPart: if keypoints[index][2] > 0 (it's using confidence)
+    
+    tryAddingNewCroppedVariation:
+        magnitude_bone = magnitude_bone_from_index(variation, referenceBoneIndex)
+        if magnitude_bone == 0:
+
+        it's using "hasBone", that do not check confidence
+
+
+-
+

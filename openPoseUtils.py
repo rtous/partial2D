@@ -170,6 +170,7 @@ def json2normalizedKeypoints(path):
 
     return keypoints, scaleFactor, x_displacement, y_displacement
 
+#FIX: bad name, they are not normalized!
 def normalizedKeypoints2json(keypoints, path):
     '''
     output:
@@ -319,9 +320,31 @@ def denormalize(keypoints, scaleFactor, x_displacement, y_displacement):
     newKeypoints = poseUtils.denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, False)
 
     return newKeypoints
+'''
+def removeConfidence(keypoints):
+    #If confidence below theshold (0.1) the keypoint will be 0,0
+    print("DEBUG: removeConfidence...")
+    print("keypoints:")
+    print(keypoints)
+    newKeypoints = []  
+    confidence_values = []
+    for i, k in enumerate(keypoints):
+        if k[2] > THRESHOLD: 
+            new_keypoint = (k[0], k[1])
+        else:
+            new_keypoint = (0.0, 0.0)
+        newKeypoints.append(new_keypoint)
+        confidence_values.append(k[2])
+        #new_keypoint = (k[0], k[1])
+        #keypoints[i] = new_keypoint
+    return newKeypoints, confidence_values
+'''
 
 def removeConfidence(keypoints):
     #If confidence below theshold (0.1) the keypoint will be 0,0
+    #print("DEBUG: removeConfidence...")
+    #print("keypoints:")
+    #print(keypoints)
     newKeypoints = []  
     confidence_values = []
     for i, k in enumerate(keypoints):
