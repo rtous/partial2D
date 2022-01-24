@@ -92,42 +92,44 @@ class JsonDataset(torch.utils.data.IterableDataset):
         self.scandirIterator = os.scandir(self.inputpath_cropped)
         for item in self.scandirIterator:
             json_file = str(item.name)
-            try:
-                keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(self.inputpath_cropped, json_file))
-                keypoints_cropped, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
-                keypoints_cropped = [item for sublist in keypoints_cropped for item in sublist]
-                keypoints_cropped = [float(k) for k in keypoints_cropped]
-                keypoints_cropped = torch.tensor(keypoints_cropped)
-                keypoints_cropped = keypoints_cropped.flatten()
+            if json_file.endswith(".json"):
+                try:
+                    #print("Processing file: "+json_file)
+                    keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(self.inputpath_cropped, json_file))
+                    keypoints_cropped, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
+                    keypoints_cropped = [item for sublist in keypoints_cropped for item in sublist]
+                    keypoints_cropped = [float(k) for k in keypoints_cropped]
+                    keypoints_cropped = torch.tensor(keypoints_cropped)
+                    keypoints_cropped = keypoints_cropped.flatten()
 
-                #Read the file with the original keypoints
-                #They are normalized
-                #They are used to 1)   2) restore good keypoints in the result
-                indexUnderscore = json_file.find('_')
-                json_file = json_file[:indexUnderscore]+".json"#+"_keypoints.json"  
-                original_keypoints_path = join(self.inputpath_original, json_file)
-                if not os.path.isfile(original_keypoints_path):
-                	print("FATAL ERROR: original keypoints path not found: "+original_keypoints_path)
-                	sys.exit()
-                keypoints_original, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(original_keypoints_path)
-                keypoints_original, dummy = openPoseUtils.removeConfidence(keypoints_original)
-                keypoints_original = [item for sublist in keypoints_original for item in sublist]
-                keypoints_original = [float(k) for k in keypoints_original]
-                keypoints_original = torch.tensor(keypoints_original)
-                keypoints_original = keypoints_original.flatten()
-                
-                confidence_values = torch.tensor(confidence_values)
-                #print("confidence_values:")
-                #print(confidence_values)
-                yield keypoints_cropped, keypoints_original, confidence_values, scaleFactor, x_displacement, y_displacement, json_file
-            except ValueError as ve:
-            	print(ve)
-            #except OSError as oe:
-            #	print(oe)
-            except Exception as e:
-                print("WARNING: Error reading ", json_file)
-                #print(e)
-                traceback.print_exc()
+                    #Read the file with the original keypoints
+                    #They are normalized
+                    #They are used to 1)   2) restore good keypoints in the result
+                    indexUnderscore = json_file.find('_')
+                    json_file = json_file[:indexUnderscore]+".json"#+"_keypoints.json"  
+                    original_keypoints_path = join(self.inputpath_original, json_file)
+                    if not os.path.isfile(original_keypoints_path):
+                    	print("FATAL ERROR: original keypoints path not found: "+original_keypoints_path)
+                    	sys.exit()
+                    keypoints_original, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(original_keypoints_path)
+                    keypoints_original, dummy = openPoseUtils.removeConfidence(keypoints_original)
+                    keypoints_original = [item for sublist in keypoints_original for item in sublist]
+                    keypoints_original = [float(k) for k in keypoints_original]
+                    keypoints_original = torch.tensor(keypoints_original)
+                    keypoints_original = keypoints_original.flatten()
+                    
+                    confidence_values = torch.tensor(confidence_values)
+                    #print("confidence_values:")
+                    #print(confidence_values)
+                    yield keypoints_cropped, keypoints_original, confidence_values, scaleFactor, x_displacement, y_displacement, json_file
+                except ValueError as ve:
+                	print(ve)
+                #except OSError as oe:
+                #	print(oe)
+                except Exception as e:
+                    print("WARNING: Error reading ", json_file)
+                    #print(e)
+                    traceback.print_exc()
         self.scandirIterator.close()
         print("Closed scandirIterator.")
             
@@ -189,21 +191,6 @@ beta1 = 0.5
 # Number of GPUs available. Use 0 for CPU mode.
 ngpu = 1
 
-########################## MNIST
-
-# Download training data from open datasets.
-'''
-training_data = dset.FashionMNIST(
-    root="data",
-    train=True,
-    download=True,
-    transform=ToTensor(),
-)
-batch_size = 64
-
-# Create data loaders.
-dataloader = torch.utils.data.DataLoader(training_data, batch_size=batch_size)
-'''
 def prepare_dataset():
   
     '''

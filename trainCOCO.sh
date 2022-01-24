@@ -1,7 +1,7 @@
 dataroot_cropped="/Volumes/ElementsDat/pose/COCO/ruben_structure/keypoints_openpose_format_cropped"
 dataroot_original="/Volumes/ElementsDat/pose/COCO/ruben_structure/keypoints_openpose_format"
 #ORIGINAL_IMAGES_PATH = "/Volumes/ElementsDat/pose/COCO/train2017"
-OUTPUTPATH="data/output2"
+OUTPUTPATH="data/output/COCO"
 dataroot_validation="/Users/rtous/DockerVolume/charade/input/keypoints"
 TEST_IMAGES_PATH="/Users/rtous/DockerVolume/charade/input/images"
 
