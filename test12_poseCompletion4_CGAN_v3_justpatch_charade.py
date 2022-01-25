@@ -725,5 +725,8 @@ for epoch in range(num_epochs):
         
         i += 1
     print("---- end of epoch "+str(epoch)+"---")
+    if batch_of_keypoints_cropped.size(0) < batch_size:
+        print("FATAL ERROR: Batch size = ", batch_of_keypoints_cropped.size(0))
+        sys.exit()
     epoch_idx += 1
 print("Finshed. epochs = ", epoch_idx)
