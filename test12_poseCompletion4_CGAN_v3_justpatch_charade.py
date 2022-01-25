@@ -62,6 +62,7 @@ except ValueError:
 #pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
 #pathlib.Path(OUTPUTPATH+"/Test/").mkdir(parents=True, exist_ok=True) 
 pathlib.Path(OUTPUTPATH+"/Test/keypoints").mkdir(parents=True, exist_ok=True) 
+pathlib.Path(OUTPUTPATH+"/Test/images").mkdir(parents=True, exist_ok=True) 
 
 # Validating with the Charada dataset
 #dataroot_validation = "/Users/rtous/DockerVolume/charade/input/keypoints"
@@ -193,26 +194,14 @@ ngpu = 1
 
 def prepare_dataset():
   
-    '''
-    dataset = dset.ImageFolder(root=dataroot,
-                           transform=transforms.Compose([
-                               transforms.Resize(image_size),
-                               transforms.CenterCrop(image_size),
-                               transforms.ToTensor(),
-                               transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-                           ]))
-    '''
     dataset = JsonDataset(inputpath_cropped=dataroot_cropped, inputpath_original=dataroot_original)
 
-    
-
-    # Create the dataloader
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
                                              num_workers=workers)
 
     # Batch and shuffle data with DataLoader
     #trainloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
-    # Return dataset through DataLoader
+    
     return dataloader
 
 dataloader = prepare_dataset()
