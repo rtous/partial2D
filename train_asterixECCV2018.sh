@@ -6,6 +6,6 @@ dataroot_validation="/home/users/jpoveda/charade/input/keypoints"
 TEST_IMAGES_PATH="/home/users/jpoveda/charade/input/images"
 
 
-
-nohup python test12_poseCompletion4_CGAN_v3_justpatch_charade.py $dataroot_cropped $dataroot_original $OUTPUTPATH $dataroot_validation $TEST_IMAGES_PATH >nohup.out 2>&1 &
+nohup python test12_poseCompletion4_CGAN_v3_justpatch_charade.py $dataroot_cropped $dataroot_original $OUTPUTPATH $dataroot_validation $TEST_IMAGES_PATH
+#nohup python test12_poseCompletion4_CGAN_v3_justpatch_charade.py $dataroot_cropped $dataroot_original $OUTPUTPATH $dataroot_validation $TEST_IMAGES_PATH >nohup.out 2>&1 &
 
