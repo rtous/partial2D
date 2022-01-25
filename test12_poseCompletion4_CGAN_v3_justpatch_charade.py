@@ -78,10 +78,20 @@ workers = 4
 #print("WARNING: Disabling paralelism to avoid error in macOS")
 #Also run export OMP_NUM_THREADS=1 in the terminal
 
+def countFiles(dirpath, endswith):
+    count = 0
+    scandirIterator = os.scandir(dirpath)
+    for item in scandirIterator:
+        if item.name.endswith(endswith):
+            count += 1
+    return count
+    scandirIterator.close()
+
 class JsonDataset(torch.utils.data.IterableDataset):
     def __init__(self, inputpath_cropped, inputpath_original):
         self.inputpath_cropped = inputpath_cropped
         self.inputpath_original = inputpath_original
+        self.count = countFiles(self.inputpath_cropped, ".json")
         #self.jsonFiles = [f for f in listdir(self.inputpath_cropped) if isfile(join(self.inputpath_cropped, f)) and f.endswith("json") ]
         
         #scandir does not need to read the entire file list first
@@ -135,7 +145,8 @@ class JsonDataset(torch.utils.data.IterableDataset):
         print("Closed scandirIterator.")
             
 
-    #def __len__(self):
+    def __len__(self):
+        return self.count
     #    return len(self.jsonFiles)
 '''
 Here I change the nose to be a simple batchsize x 100 tensor.
@@ -518,7 +529,7 @@ for epoch in range(num_epochs):
     print("EPOCH ", epoch)
     # For each batch in the dataloader
     i = 0
-    for batch_of_keypoints_cropped, batch_of_keypoints_original, confidence_values, scaleFactor, x_displacement, y_displacement, batch_of_json_file in enumerate(dataloader):
+    for batch_of_keypoints_cropped, batch_of_keypoints_original, confidence_values, scaleFactor, x_displacement, y_displacement, batch_of_json_file in dataloader:
         #if i > 1000:
         #	break
         #print("Training iteration "+str(i))
@@ -619,8 +630,8 @@ for epoch in range(num_epochs):
         # Output training stats
         if i % 50 == 0:
             print("**************************************************************")
-            print('[%d/%d][%d/?]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f'
-                  % (epoch, num_epochs, i,
+            print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f'
+                  % (epoch, num_epochs, i, len(dataloader),
                      errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
             with torch.no_grad():
                 fake = netG(batch_of_keypoints_cropped, fixed_noise).detach().cpu()
