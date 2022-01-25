@@ -518,7 +518,7 @@ for epoch in range(num_epochs):
     print("EPOCH ", epoch)
     # For each batch in the dataloader
     i = 0
-    for batch_of_keypoints_cropped, batch_of_keypoints_original, confidence_values, scaleFactor, x_displacement, y_displacement, batch_of_json_file in dataloader:
+    for batch_of_keypoints_cropped, batch_of_keypoints_original, confidence_values, scaleFactor, x_displacement, y_displacement, batch_of_json_file in enumerate(dataloader):
         #if i > 1000:
         #	break
         #print("Training iteration "+str(i))
@@ -725,8 +725,10 @@ for epoch in range(num_epochs):
         
         i += 1
     print("---- end of epoch "+str(epoch)+"---")
+    '''
     if batch_of_keypoints_cropped.size(0) < batch_size:
         print("FATAL ERROR: Batch size = ", batch_of_keypoints_cropped.size(0))
         sys.exit()
+    '''
     epoch_idx += 1
 print("Finshed. epochs = ", epoch_idx)
