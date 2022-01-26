@@ -81,7 +81,44 @@ HEy why not using a video-vased 2D pose detector?
 	- TODO: Cal revisar alguns criteris:
 		- (sempre) El threshold per mantenir o substituir joints
 		- (al generar el dataset) Mirar la confidence abans d'acceptar el bone de referència
-		
+-----------------------------------------------
+25-01-2021
+	- He preparat el dataset de COCO
+	- He començat a entrenar a asterix
+	- Començo per entrenar amb ECCV2018, hi ha moltes dades! però en acabar la primera epoch (unes 3-4 hores) peta:
+
+**************************************************************
+[0/100][29000/?]	Loss_D: 1.3104	Loss_G: 0.9758	D(x): 0.5982	D(G(z)): 0.4730 / 0.4090
+Shape of fake:  torch.Size([64, 50])
+scaleFactor= 21.492952555903354
+keypoints_cropped.shape =  torch.Size([50])
+testMany()...
+**********************************************
+**********************************************
+testMany() finished.
+Closed scandirIterator.
+Closed scandirIterator.
+Closed scandirIterator.
+Closed scandirIterator.
+Traceback (most recent call last):
+  File "test12_poseCompletion4_CGAN_v3_justpatch_charade.py", line 573, in <module>
+    batch_of_fake_original = netG(batch_of_keypoints_cropped, noise)
+  File "/home/users/jpoveda/partial2D/myvenv/lib/python3.7/site-packages/torch/nn/modules/module.py", line 547, in __call__
+    result = self.forward(*input, **kwargs)
+  File "test12_poseCompletion4_CGAN_v3_justpatch_charade.py", line 262, in forward
+    return self.main(input)
+  File "/home/users/jpoveda/partial2D/myvenv/lib/python3.7/site-packages/torch/nn/modules/module.py", line 547, in __call__
+    result = self.forward(*input, **kwargs)
+  File "/home/users/jpoveda/partial2D/myvenv/lib/python3.7/site-packages/torch/nn/modules/container.py", line 92, in forward
+    input = module(input)
+  File "/home/users/jpoveda/partial2D/myvenv/lib/python3.7/site-packages/torch/nn/modules/module.py", line 547, in __call__
+    result = self.forward(*input, **kwargs)
+  File "/home/users/jpoveda/partial2D/myvenv/lib/python3.7/site-packages/torch/nn/modules/batchnorm.py", line 81, in forward
+    exponential_average_factor, self.eps)
+  File "/home/users/jpoveda/partial2D/myvenv/lib/python3.7/site-packages/torch/nn/functional.py", line 1652, in batch_norm
+    raise ValueError('Expected more than 1 value per channel when training, got input size {}'.format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 512])
+
 
 
 
