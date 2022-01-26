@@ -527,7 +527,7 @@ def restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped,
 print("Starting Training Loop...")
 # For each epoch
 epoch_idx = 0
-MAX_BATCHES = 100
+MAX_BATCHES = 25000
 for epoch in range(num_epochs):        
     print("EPOCH ", epoch)
     # For each batch in the dataloader
