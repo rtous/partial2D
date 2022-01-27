@@ -29,6 +29,7 @@ import cv2
 import traceback
 import shutil
 import sys
+from torch.utils.tensorboard import SummaryWriter
 
 CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS = 0.1
 
@@ -523,6 +524,7 @@ def restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped,
     '''
     return batch_of_fake_original
 	
+tb = SummaryWriter()
 
 print("Starting Training Loop...")
 # For each epoch
@@ -634,12 +636,17 @@ for epoch in range(num_epochs):
         # Update G
         optimizerG.step()
 
+        tb.add_scalar("Loss", errG.item(), i)
+
         # Output training stats
         if i % 50 == 0:
             print("**************************************************************")
             print('[%d/%d][%d/?]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f'
                   % (epoch, num_epochs, i, #len(dataloader),
                      errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
+            
+            
+
             with torch.no_grad():
                 fake = netG(batch_of_keypoints_cropped, fixed_noise).detach().cpu()
                 
@@ -749,4 +756,5 @@ for epoch in range(num_epochs):
         sys.exit()
     '''
     epoch_idx += 1
+tb.close()
 print("Finshed. epochs = ", epoch_idx)
