@@ -709,7 +709,8 @@ for epoch in range(num_epochs):
                	fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalize(fakeKeypointsOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage)
                	
                	#FIX: bad name, they are not normalized!
-               	openPoseUtils.normalizedKeypoints2json(fakeKeypointsOneImageInt, OUTPUTPATH+"/"+f"{idx:02d}"+"_img_keypoints.json")
+               	##########
+                openPoseUtils.normalizedKeypoints2json(fakeKeypointsOneImageInt, OUTPUTPATH+"/"+f"{idx:02d}"+"_img_keypoints.json")
 
 
                	json_file_without_extension = os.path.splitext(json_file)[0]
