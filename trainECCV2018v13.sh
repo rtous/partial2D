@@ -1,11 +1,10 @@
-dataroot_cropped="data/H36M_ECCV18_HOLLYWOOD"
-dataroot_original="/Volumes/ElementsDat/pose/H36M/ECCV2018/keyponts_generated_by_openpose_for_train_images_no_sufix"
-#dataroot_original="/Volumes/ElementsDat/pose/H36M/ECCV2018/keyponts_generated_by_openpose_for_train_images"
-
-
+DATASET_CROPPED="data/H36M_ECCV18_HOLLYWOOD"
+DATASET_ORIGINAL="/Volumes/ElementsDat/pose/H36M/ECCV2018/keyponts_generated_by_openpose_for_train_images_no_sufix"
 OUTPUTPATH="data/output/ECCV2018v13"
-dataroot_validation="/Users/rtous/DockerVolume/charade/input/keypoints"
-TEST_IMAGES_PATH="/Users/rtous/DockerVolume/charade/input/images"
+DATASET_CHARADE="/Users/rtous/DockerVolume/charade/input/keypoints"
+DATASET_CHARADE_IMAGES="/Users/rtous/DockerVolume/charade/input/images"
+DATASET_TEST="dynamicData/H36M_ECCV18_HOLLYWOOD_test"
+DATASET_TEST_IMAGES="/Volumes/ElementsDat/pose/H36M/ECCV2018/ECCV18_Challenge/Train/IMG/"
 
-python test13_plus_regression_like_context_encoder.py $dataroot_cropped $dataroot_original $OUTPUTPATH $dataroot_validation $TEST_IMAGES_PATH
+python test13_plus_regression_like_context_encoder.py $DATASET_CROPPED $DATASET_ORIGINAL $OUTPUTPATH $DATASET_CHARADE $DATASET_CHARADE_IMAGES $DATASET_TEST $DATASET_TEST_IMAGES
 

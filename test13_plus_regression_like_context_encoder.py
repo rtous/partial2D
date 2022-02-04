@@ -35,11 +35,13 @@ CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS = 0.1
 
 argv = sys.argv
 try:
-    dataroot_cropped=argv[1]
-    dataroot_original=argv[2]
+    DATASET_CROPPED=argv[1]
+    DATASET_ORIGINAL=argv[2]
     OUTPUTPATH=argv[3]
-    dataroot_validation=argv[4]
-    TEST_IMAGES_PATH=argv[5]
+    DATASET_CHARADE=argv[4]
+    DATASET_CHARADE_IMAGES=argv[5]
+    DATASET_TEST=argv[6]
+    DATASET_TEST_IMAGES=argv[7]
 
 except ValueError:
     print("Wrong arguments. Expecting two paths.")
@@ -62,8 +64,8 @@ except ValueError:
 #OUTPUTPATH = "data/output2"
 #pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
 #pathlib.Path(OUTPUTPATH+"/Test/").mkdir(parents=True, exist_ok=True) 
-pathlib.Path(OUTPUTPATH+"/Test/keypoints").mkdir(parents=True, exist_ok=True) 
-pathlib.Path(OUTPUTPATH+"/Test/images").mkdir(parents=True, exist_ok=True) 
+#pathlib.Path(OUTPUTPATH+"/Test/keypoints").mkdir(parents=True, exist_ok=True) 
+#pathlib.Path(OUTPUTPATH+"/Test/images").mkdir(parents=True, exist_ok=True) 
 
 # Validating with the Charada dataset
 #dataroot_validation = "/Users/rtous/DockerVolume/charade/input/keypoints"
@@ -208,7 +210,7 @@ ngpu = 1
 
 def prepare_dataset():
   
-    dataset = JsonDataset(inputpath_cropped=dataroot_cropped, inputpath_original=dataroot_original)
+    dataset = JsonDataset(inputpath_cropped=DATASET_CROPPED, inputpath_original=DATASET_ORIGINAL)
 
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
                                              num_workers=workers)
@@ -426,15 +428,17 @@ def testImage(imagePath, keypointsPath):
     poseUtils.draw_pose(imgWithKyepoints, fakeKeypointsCroppedOneImageIntRescaled, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
     cv2.imwrite(OUTPUTPATH+"/test_keypoints.jpg", imgWithKyepoints)
 
-def testMany():
-    print('testMany()...')
+def testMany(keypointsPath, imagesPath, outputSubpath, imageExtension):
+    print('testMany('+keypointsPath+')')
+    pathlib.Path(OUTPUTPATH+outputSubpath+"/images").mkdir(parents=True, exist_ok=True)
+    pathlib.Path(OUTPUTPATH+outputSubpath+"/keypoints").mkdir(parents=True, exist_ok=True)
+    
     batch_of_one_keypoints_cropped = []
     batch_of_one_confidence_values = []
     batch_scaleFactor = []
     batch_x_displacement = []
     batch_y_displacement = []
     batch_filenames = []
-    keypointsPath = dataroot_validation
     jsonFiles = [f for f in listdir(keypointsPath) if isfile(join(keypointsPath, f))]
     n = 0
     for filename in jsonFiles:
@@ -474,32 +478,33 @@ def testMany():
     netG.train()
     fakeReshapedAsKeypoints = np.reshape(fake, (n, 25, 2))
     fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
-    print("**********************************************")
-    print("**********************************************")
+    
     for idx in range(len(fakeReshapedAsKeypoints)):
+        #Write keypoints to a file
         fakeKeypointsOneImage = fakeReshapedAsKeypoints[idx]
         fakeKeypointsOneImage, dummy, dummy, dummy = openPoseUtils.normalize(fakeKeypointsOneImage)
 	   
         fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalize(fakeKeypointsOneImage, batch_scaleFactor[idx], batch_x_displacement[idx], batch_y_displacement[idx])
-        openPoseUtils.normalizedKeypoints2json(fakeKeypointsCroppedOneImageIntRescaled, OUTPUTPATH+"/Test/keypoints/"+batch_filenames[idx])
+        openPoseUtils.normalizedKeypoints2json(fakeKeypointsCroppedOneImageIntRescaled, OUTPUTPATH+outputSubpath+"/keypoints/"+batch_filenames[idx])
 
+        #Draw over image file
+        #fileName = batch_filenames[idx]
+        #indexUnderscore = fileName.find('_')
+        #json_file_without_extension = fileName[:indexUnderscore] 
 
-        #imgWithKyepoints = np.zeros((500, 500, 3), np.uint8)
         json_file_without_extension = os.path.splitext(batch_filenames[idx])[0]
         json_file_without_extension = json_file_without_extension.replace('_keypoints', '')
-        originalImagePath = join(TEST_IMAGES_PATH, json_file_without_extension+".png")
-        #print(originalImagePath)
-        #imgWithKyepoints = cv2.imread(originalImagePath)
+        originalImagePath = join(imagesPath, json_file_without_extension+imageExtension)
+        #print("originalImagePath="+originalImagePath)
         imgWithKyepoints = pytorchUtils.cv2ReadFile(originalImagePath)
-        
         poseUtils.draw_pose(imgWithKyepoints, fakeKeypointsCroppedOneImageIntRescaled, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
         try:
-            cv2.imwrite(OUTPUTPATH+"/Test/images/"+json_file_without_extension+".jpg", imgWithKyepoints)
+            cv2.imwrite(OUTPUTPATH+outputSubpath+"/images/"+json_file_without_extension+".jpg", imgWithKyepoints)
             #print("written data/output/Test/"+json_file_without_extension+".jpg")
         except:
             print("WARNING: Cannot find "+originalImagePath)  
         #shutil.copyfile(join("/Users/rtous/DockerVolume/openpose/data/result", json_file_without_extension+"_rendered.png"), join("data/output/Test/"+json_file_without_extension+"_img_cropped_openpose.png"))
-    print('testMany() finished.')        
+    print('testMany() finished. Output written to '+OUTPUTPATH+outputSubpath)        
 
 def restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, batch_of_confidence_values):
     '''
@@ -749,7 +754,9 @@ for epoch in range(num_epochs):
                 traceback.print_exc()
 
             testImage("dynamicData/012.jpg", "dynamicData/012_keypoints.json")
-            testMany()
+            testMany(DATASET_CHARADE, DATASET_CHARADE_IMAGES, "/CHARADE", ".png")
+            testMany(DATASET_TEST, DATASET_TEST_IMAGES, "/TEST", ".jpg")
+            #testMany("dynamicData/testImagesECCV18/keypoints", "dynamicData/testImagesECCV18/images")
 
         # Save Losses for plotting later
         G_losses.append(errG.item())

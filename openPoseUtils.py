@@ -128,8 +128,7 @@ def hasBone(keypoints, boneName):
     else:
         return False
 
-def json2Keypoints(path):
-
+def json2KeypointsFlat(path):
     # Opening JSON file
     f = open(path)
      
@@ -145,6 +144,12 @@ def json2Keypoints(path):
         raise ValueError("No people in " + path)
      
     keypointsFlat = person['pose_keypoints_2d']
+
+    return keypointsFlat
+
+def json2Keypoints(path):
+     
+    keypointsFlat = json2KeypointsFlat(path)
 
     #keypointsFlat = list(map(int, keypointsFlat))
 

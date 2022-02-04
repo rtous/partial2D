@@ -2,9 +2,21 @@ import pathlib
 import os
 from shutil import copyfile
 from os.path import isfile, join, splitext
+import sys
 
 
+argv = sys.argv
+try:
+    INPUTPATH=argv[1]
+    OUTPUTPATH=argv[2]
+    INPUTPATH_ORIGINAL=argv[3]
+    OUTPUTPATH_ORIGINAL=argv[4]
+    MAX=int(argv[5])
 
+except ValueError:
+    print("Wrong arguments. Expecting two paths.")
+
+'''
 INPUTPATH = "/Volumes/ElementsDat/pose/COCO/ruben_structure/keypoints_openpose_format_cropped"
 OUTPUTPATH = "/Volumes/ElementsDat/pose/COCO/ruben_structure/keypoints_openpose_format_cropped_lite"
 
@@ -12,6 +24,7 @@ INPUTPATH_ORIGINAL = "/Volumes/ElementsDat/pose/COCO/ruben_structure/keypoints_o
 OUTPUTPATH_ORIGINAL = "/Volumes/ElementsDat/pose/COCO/ruben_structure/keypoints_openpose_format_lite"
 
 MAX = 1024
+'''
 
 pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
 pathlib.Path(OUTPUTPATH_ORIGINAL).mkdir(parents=True, exist_ok=True) 

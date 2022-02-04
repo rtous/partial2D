@@ -16,7 +16,7 @@ def cv2ReadFile(path):
             open_cv_image = np.array(originalImagePIL) 
             image = open_cv_image[:, :, ::-1].copy() # Convert RGB to BGR
         else:
-            image = cv2.imread(originalImagePath)
+            image = cv2.imread(path)
     else:
         raise Exception('Error opening image file '+path)
     return image
