@@ -1,0 +1,8 @@
+#datasetECCV2018
+
+INPUTPATH_CROPPED="data/H36M_ECCV18_HOLLYWOOD"
+INPUTPATH_ORIGINAL="/Volumes/ElementsDat/pose/H36M/ECCV2018/keyponts_generated_by_openpose_for_train_images_no_sufix"
+OUTPUTPATH="data/H36M_ECCV18_HOLLYWOOD_ORIGINAL_ONLY_THE_CROPPED"
+
+python datasetOriginalButJustTheOnesCropped.py $INPUTPATH_CROPPED $INPUTPATH_ORIGINAL $OUTPUTPATH
+

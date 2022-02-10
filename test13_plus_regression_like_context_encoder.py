@@ -31,7 +31,9 @@ import shutil
 import sys
 from torch.utils.tensorboard import SummaryWriter
 
-CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS = 0.1
+VERSION="13"
+NORMALIZATION="SCALE"
+CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS = 0.1 
 
 argv = sys.argv
 try:
@@ -62,10 +64,18 @@ except ValueError:
 #OPENPOSE_IMAGES_KEYPOINTS = "/Volumes/ElementsDat/pose/H36M/ECCV2018/keyponts_generated_by_openpose_for_train_images_cropped"
 
 #OUTPUTPATH = "data/output2"
-#pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
-#pathlib.Path(OUTPUTPATH+"/Test/").mkdir(parents=True, exist_ok=True) 
-#pathlib.Path(OUTPUTPATH+"/Test/keypoints").mkdir(parents=True, exist_ok=True) 
-#pathlib.Path(OUTPUTPATH+"/Test/images").mkdir(parents=True, exist_ok=True) 
+pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
+pathlib.Path(OUTPUTPATH+"/Test/").mkdir(parents=True, exist_ok=True) 
+pathlib.Path(OUTPUTPATH+"/Test/keypoints").mkdir(parents=True, exist_ok=True) 
+pathlib.Path(OUTPUTPATH+"/Test/images").mkdir(parents=True, exist_ok=True) 
+
+run_info_file_path = "/run_info.json"
+
+def writeRunInfoFile(run_info_json):
+    run_info_file = open(OUTPUTPATH+run_info_file_path, 'w')
+    json.dump(run_info_json, run_info_file)
+    run_info_file.flush()
+    run_info_file.close()
 
 # Validating with the Charada dataset
 #dataroot_validation = "/Users/rtous/DockerVolume/charade/input/keypoints"
@@ -492,8 +502,16 @@ def testMany(keypointsPath, imagesPath, outputSubpath, imageExtension):
         #indexUnderscore = fileName.find('_')
         #json_file_without_extension = fileName[:indexUnderscore] 
 
+        #Prpeare image file path.
+        #Remove "_keypoints" and anyghing else till the .
+        #WANRING: CHARADE and TEST keypoints have slightly different names
+        #CHARADE has other "_" that have to be preserved
         json_file_without_extension = os.path.splitext(batch_filenames[idx])[0]
-        json_file_without_extension = json_file_without_extension.replace('_keypoints', '')
+
+        indexFromRemove = json_file_without_extension.find('_keypoints')
+        json_file_without_extension = json_file_without_extension[:indexFromRemove]
+
+        #json_file_without_extension = json_file_without_extension.replace('_keypoints', '')
         originalImagePath = join(imagesPath, json_file_without_extension+imageExtension)
         #print("originalImagePath="+originalImagePath)
         imgWithKyepoints = pytorchUtils.cv2ReadFile(originalImagePath)
@@ -531,6 +549,16 @@ def restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped,
     return batch_of_fake_original
 	
 tb = SummaryWriter()
+log_dir = tb.get_logdir()
+run_info_json = {}
+run_info_json["id"] = log_dir
+run_info_json["DATASET_CROPPED"] = DATASET_CROPPED
+run_info_json["DATASET_ORIGINAL"] = DATASET_ORIGINAL
+run_info_json["normalization"] = NORMALIZATION
+run_info_json["model version"] = VERSION
+run_info_json["batch size"] = str(batch_size)
+run_info_json["results"] = []
+writeRunInfoFile(run_info_json)
 
 print("Starting Training Loop...")
 # For each epoch
@@ -682,7 +710,12 @@ for epoch in range(num_epochs):
                 croppedReshapedAsKeypoints = croppedReshapedAsKeypoints.numpy()
  
             #%%capture
-        if i % 1000 == 0:  
+        if i % 1000 == 0: 
+            torch.save(netG.state_dict(), OUTPUTPATH+"/model_epoch"+str(epoch)+"_batch"+str(i)+".pt")
+
+            run_info_json["results"].append({'epoch': epoch, 'batch': i, 'lossG':errG.item()})
+            writeRunInfoFile(run_info_json)
+
             NUM_ROWS = 8
             NUM_COLS = 8
             WIDTH = 64

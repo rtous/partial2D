@@ -5,6 +5,27 @@ import numpy as np
 import math
 import sys
 
+def keypointsListFlatten(keypoints):
+	keypointsNP = np.vstack(keypoints)
+	keypointsNPflat = keypointsNP.flatten()
+	return keypointsNPflat
+
+def geJointIndexFromName(jointName, jointNamesDict):
+    idx = list(jointNamesDict.keys())[list(jointNamesDict.values()).index(jointName)]
+    return idx 
+
+def computeMiddleJoint(keypoints, joint1name, joint2name, DICT):
+    #Middle point between shoulders
+    keypoint1 = keypoints[geJointIndexFromName(joint1name, DICT)]
+    keypoint2 = keypoints[geJointIndexFromName(joint2name, DICT)]
+    if keypoint1[2] > 0 and keypoint2[2] > 0:
+        middle_keypoint_x = int((keypoint1[0]+keypoint2[0])/2.)
+        middle_keypoint_y = int((keypoint1[1]+keypoint2[1])/2.)
+        new_keypoint = (int(middle_keypoint_x), int(middle_keypoint_y), 1)
+    else:
+        new_keypoint = (0, 0, 0)
+    return new_keypoint
+
 def draw_part(img, keypoint1, keypoint2, color, keypoint_index_pairs, thickness):
 	#img = cv2.line(img, (keypoint1[0], keypoint1[1]), (keypoint2[0], keypoint2[1]), (color[0], color[1], color[2]), 2)
     img = cv2.line(img, (int(keypoint1[0]), int(keypoint1[1])), (int(keypoint2[0]), int(keypoint2[1])), (color[0], color[1], color[2]), thickness)

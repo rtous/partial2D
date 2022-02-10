@@ -132,6 +132,21 @@ SOLVED: Limit number of batches to 25000
 - DONE: Created a small test set from hollywood (ECCV18). Tested! meshes seem ok, some poses are not processed. Scale problems
 - INFO: Seems that prediction of real values gives problems to DL. Maybe I can try heatmaps or a VAE-GAN, or a Wasserstein GAN
 --------------------------------------
-
+02-02-2022: 
+- Testing Frechet distance. 
+- Tried 3d_pose_baseline to get intermediate embedings but complex.
+- I don't need that, frechet is computationally costly but I work with 
+low dimensional data
+- It seems to work (FPD.py)
+- Approach
+	- Select baseline dataset
+	- Compare slices of baseline data against dataset
+	- Compare test dataset against dataset
+	- Compare reconstructed test dataset againts dataset
+- TODO! WARNING! I'm comparing with the confidence value!
+--------------------------------------
+08-02-2022: 
+- TODO: The ECCV18OP dataset has many undetected poses, this is why it's so different from the ECCV18OP_crop_orig dataset. Maybe I should use the original ECCV18 dataset, but how to obtain the 2D poses? 
+- Discovered project_point_radial in H36M software
 
 
