@@ -41,6 +41,7 @@ try:
     DATASET_CHARADE_IMAGES=argv[5]
     DATASET_TEST=argv[6]
     DATASET_TEST_IMAGES=argv[7]
+    MODELPATH=argv[8]
 
 except ValueError:
     print("Wrong arguments. Expecting two paths.")
@@ -84,7 +85,6 @@ beta1 = 0.5
 ngpu = 0
 
 
-MODELPATH = "data/output/ECCV18OD/model_epoch0_batch2000.pt"
 netG = models.Generator(ngpu)
 netG.load_state_dict(torch.load(MODELPATH))
 #model.eval()

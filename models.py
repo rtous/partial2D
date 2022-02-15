@@ -65,15 +65,18 @@ class Discriminator(nn.Module):
             # input is (nc) x 64 x 64
             #nn.Conv2d(in_channels=nc, out_channels=ndf, kernel_size=(16,16), stride=2, padding=1, bias=False),
             nn.Linear(50*2, NEURONS_PER_LAYER_DISCRIMINATOR, bias=False),
+            nn.BatchNorm1d(NEURONS_PER_LAYER_DISCRIMINATOR, 0.8),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf) x 32 x 32
             #nn.Conv2d(in_channels=ndf, out_channels=ndf * 2, kernel_size=4, stride=2, padding=1, bias=False),
             nn.Linear(NEURONS_PER_LAYER_DISCRIMINATOR, NEURONS_PER_LAYER_DISCRIMINATOR, bias=False),
+            nn.BatchNorm1d(NEURONS_PER_LAYER_DISCRIMINATOR, 0.8),
             #nn.BatchNorm2d(ndf * 2),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*2) x 16 x 16
             #nn.Conv2d(in_channels=ndf * 2, out_channels=ndf * 8, kernel_size=4, stride=2, padding=1, bias=False),
             nn.Linear(NEURONS_PER_LAYER_DISCRIMINATOR, NEURONS_PER_LAYER_DISCRIMINATOR, bias=False),
+            nn.BatchNorm1d(NEURONS_PER_LAYER_DISCRIMINATOR, 0.8),
             #nn.BatchNorm2d(ndf * 8),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*4) x 8 x 8

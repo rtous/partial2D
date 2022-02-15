@@ -190,7 +190,7 @@ torch.manual_seed(manualSeed)
 # Batch size during training
 #batch_size = 128
 #batch_size = 64
-batch_size = 64
+batch_size = 128#128#64
 
 # Spatial size of training images. All images will be resized to this
 #   size using a transformer.
@@ -462,6 +462,8 @@ for epoch in range(num_epochs):
         g_pixel = pixelwise_loss(batch_of_fake_original, batch_of_keypoints_original) #pixel loss
 
         errG = 0.001 * g_adv + 0.999 * g_pixel
+        #errG = 0.01 * g_adv + 0.99 * g_pixel
+        #errG = 0 * g_adv + 1 * g_pixel
         ###############
 
         # Calculate gradients for G
@@ -480,6 +482,11 @@ for epoch in range(num_epochs):
             print('[%d/%d][%d/?]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f'
                   % (epoch, num_epochs, i, #len(dataloader),
                      errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
+            print('errD_real: %.4f, errD_fake: %.4f\t'
+                  % (errD_real.item(), errD_fake.item()))
+
+            print('loss g_adv: %.4f, loss g_pixel: %.4f\t'
+                  % (g_adv.item(), g_pixel.item()))
 
         # Save model and display the first 64 results each 1000 batches
         if i % 1000 == 0: 
@@ -493,10 +500,10 @@ for epoch in range(num_epochs):
                 #We restore the original keypoints (before denormalizing)
                 fake = models.restoreOriginalKeypoints(fake, batch_of_keypoints_cropped, confidence_values)
                 print("Shape of fake: ", fake.shape)
-                fakeReshapedAsKeypoints = np.reshape(fake, (64, 25, 2))
+                fakeReshapedAsKeypoints = np.reshape(fake, (batch_size, 25, 2))
                 fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
-                originalReshapedAsKeypoints = np.reshape(batch_of_keypoints_original.cpu(), (64, 25, 2))
-                croppedReshapedAsKeypoints = np.reshape(batch_of_keypoints_cropped.cpu(), (64, 25, 2))
+                originalReshapedAsKeypoints = np.reshape(batch_of_keypoints_original.cpu(), (batch_size, 25, 2))
+                croppedReshapedAsKeypoints = np.reshape(batch_of_keypoints_cropped.cpu(), (batch_size, 25, 2))
                 croppedReshapedAsKeypoints = croppedReshapedAsKeypoints.numpy()
 
             NUM_ROWS = 8

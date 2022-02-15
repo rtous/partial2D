@@ -148,5 +148,12 @@ low dimensional data
 08-02-2022: 
 - TODO: The ECCV18OP dataset has many undetected poses, this is why it's so different from the ECCV18OP_crop_orig dataset. Maybe I should use the original ECCV18 dataset, but how to obtain the 2D poses? 
 - Discovered project_point_radial in H36M software
+--------------------------------------
+1-02-2022: 
+- DONE: Refactoring
+- DONE: Generation of crop images on-the-fly
+- DONE: Test H36M
+- PROBLEM: H36M discriminator collapses. Also generator errors are strange.
+	- Maybe inputs are too similar. Tried increassing buffer without success
 
 

@@ -71,8 +71,59 @@ def hasBone(keypoints, keypoint_index_pairs, index):
         return True
     else:
         return False
-	
 
+def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, boneSpineIndex, keepThreshold):
+	
+	normalized_keypoints = keypoints.copy()
+
+	keypoint1 = normalized_keypoints[keypoint_index_pairs[boneSpineIndex][0]]
+	keypoint2 = normalized_keypoints[keypoint_index_pairs[boneSpineIndex][1]]
+
+	scaleFactor = -1
+	x_displacement = -1
+	y_displacement = -1
+
+	if keypoint1[0]!=0 and keypoint1[1]!=0 and keypoint2[0]!=0 and keypoint2[1]!=0:
+
+		x_distance = keypoint1[0]-keypoint2[0]
+		y_distance = keypoint1[1]-keypoint2[1]
+
+		#Compute the length of the spine
+		magnitudeSpine = math.sqrt(pow(x_distance, 2)+pow(y_distance, 2))
+
+		#Compute scale factor to obtain the desired spine size
+		scaleFactor = magnitudeSpine/spinesize
+
+		#Scale: dividing any keypoint by the scale factor
+		for i, k in enumerate(normalized_keypoints):
+			if keepThreshold:
+				#new_keypoint = (int(k[0]/scaleFactor), int(k[1]/scaleFactor), k[2]) 
+				new_keypoint = (k[0]/scaleFactor, k[1]/scaleFactor, k[2]) 
+			else: 
+				#new_keypoint = (int(k[0]/scaleFactor), int(k[1]/scaleFactor)) 
+				new_keypoint = (k[0]/scaleFactor, k[1]/scaleFactor) 
+			normalized_keypoints[i] = new_keypoint
+
+		#Center to the top of the spine
+		keypoint1 = normalized_keypoints[keypoint_index_pairs[boneSpineIndex][1]]
+		x_displacement = keypoint1[0] - width/2
+		y_displacement = keypoint1[1] - height/2
+		for i, k in enumerate(normalized_keypoints):
+			if keepThreshold:
+				#new_keypoint = (int(k[0]-x_displacement), int(k[1]-y_displacement), k[2]) 
+				new_keypoint = (k[0]-x_displacement, k[1]-y_displacement, k[2]) 
+			else:
+				#new_keypoint = (int(k[0]-x_displacement), int(k[1]-y_displacement))
+				new_keypoint = (k[0]-x_displacement, k[1]-y_displacement)
+			normalized_keypoints[i] = new_keypoint
+
+	else:
+		raise Exception('Reference bone keypoints are zero :-(')
+
+
+	return normalized_keypoints, scaleFactor, x_displacement, y_displacement
+
+'''
 def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, boneSpineIndex, keepThreshold):
 	
 	keypoint1 = keypoints[keypoint_index_pairs[boneSpineIndex][0]]
@@ -89,21 +140,6 @@ def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, bo
 
 		#Compute the length of the spine
 		magnitudeSpine = math.sqrt(pow(x_distance, 2)+pow(y_distance, 2))
-
-		'''
-		print("keypoint1[0]", keypoint1[0])
-		print("keypoint2[0]", keypoint2[0])
-		print("keypoint1[1]", keypoint1[1])
-		print("keypoint2[1]", keypoint2[1])
-		print("keypoint1[2] (confidence) = ", keypoint1[2])
-		print("keypoint2[2] (confidence) = ", keypoint2[2])
-		print("magnitudeSpine = ", magnitudeSpine)
-		
-		if (magnitudeSpine != 0):
-			scaleFactor = magnitudeSpine/spinesize
-		else:
-			#sys.exit()
-		'''
 
 		#Compute scale factor to obtain the desired spine size
 		scaleFactor = magnitudeSpine/spinesize
@@ -136,6 +172,7 @@ def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, bo
 
 
 	return scaleFactor, x_displacement, y_displacement
+'''
 
 def denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, keepThreshold):
 	newKeypoints = [] 

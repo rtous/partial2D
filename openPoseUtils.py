@@ -208,9 +208,9 @@ def json2normalizedKeypoints(path):
 
     referenceBoneIndex, referenceBoneSize = reference_bone(keypoints)
 
-    scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, POSE_BODY_25_PAIRS_RENDER_GP, referenceBoneSize, WIDTH, HEIGHT, referenceBoneIndex, HAVETHRESHOLD)
+    normalized_keypoints, scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, POSE_BODY_25_PAIRS_RENDER_GP, referenceBoneSize, WIDTH, HEIGHT, referenceBoneIndex, HAVETHRESHOLD)
 
-    return keypoints, scaleFactor, x_displacement, y_displacement
+    return normalized_keypoints, scaleFactor, x_displacement, y_displacement
 
 #old normalizedKeypoints2json
 def keypoints2json(keypoints, path):
@@ -328,47 +328,78 @@ def magnitude_bone(keypoints, boneName):
 
 def reference_bone(keypoints):
     #PROBLEM: If you choose different reference bones for cropped and original...
-
-
-    '''
-    if hasBone(keypoints, "Neck-Nose"):
-        return findBone("Neck-Nose"), NECKSIZE
-    else:
-        raise Exception('No reference bone has been found :-(')
-    '''
-
+ 
     
+    #Allways same bones (small ones)
+    '''
     if hasBone(keypoints, "Nose-REye"):
         return findBone("Nose-REye"), NOSESIZE
     elif hasBone(keypoints, "Nose-LEye"):
         return findBone("Nose-LEye"), NOSESIZE
     else:
         raise Exception('No reference bone has been found :-(')
-
-
     '''
+
+
+    
+    #Allways same bones (big ones ones)
     if hasBone(keypoints, "Neck-Nose"):
         return findBone("Neck-Nose"), NECKSIZE
+    else:
+        raise Exception('No reference bone has been found :-(')
+    
+
+    '''
+    #Small bones first
+    if hasBone(keypoints, "Nose-REye"):
+        return findBone("Nose-REye"), NOSESIZE
+    elif hasBone(keypoints, "Nose-LEye"):
+        return findBone("Nose-LEye"), NOSESIZE
+    elif hasBone(keypoints, "Neck-Nose"):
+        return findBone("Neck-Nose"), NECKSIZE
     elif hasBone(keypoints, "Neck-MidHip"):
+        return findBone("Neck-MidHip"), SPINESIZE
+    else:
+        raise Exception('No reference bone has been found :-(')
+    '''
+    
+    '''
+    #Big bones first
+    if hasBone(keypoints, "Neck-MidHip"):
         #print("Neck-MidHip reference bone selected")
         return findBone("Neck-MidHip"), SPINESIZE
+    elif hasBone(keypoints, "Neck-Nose"):
+        return findBone("Neck-Nose"), NECKSIZE
     elif hasBone(keypoints, "Nose-REye"):
         #print("Nose-REye reference bone selected")
         return findBone("Nose-REye"), NOSESIZE
+    elif hasBone(keypoints, "Nose-LEye"):
+        return findBone("Nose-LEye"), NOSESIZE
     else:
         raise Exception('No reference bone has been found :-(')
     '''
 
-
+'''
 def normalize(keypoints, keepConfidence=False):
 
     #boneSpineIndex = REFERENCE_JOINT_PAIR_INDEX
 
     referenceBoneIndex, referenceBoneSize = reference_bone(keypoints)
 
-    scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, POSE_BODY_25_PAIRS_RENDER_GP, referenceBoneSize, WIDTH, HEIGHT, referenceBoneIndex, keepConfidence)
+    normalized_keypoints, scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, POSE_BODY_25_PAIRS_RENDER_GP, referenceBoneSize, WIDTH, HEIGHT, referenceBoneIndex, keepConfidence)
 
-    return keypoints, scaleFactor, x_displacement, y_displacement
+    return normalized_keypoints, scaleFactor, x_displacement, y_displacement
+'''
+def normalize(keypoints, keepConfidence=False):
+
+    #boneSpineIndex = REFERENCE_JOINT_PAIR_INDEX
+
+    referenceBoneIndex, referenceBoneSize = reference_bone(keypoints)
+
+    keypoints_normalized, scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, POSE_BODY_25_PAIRS_RENDER_GP, referenceBoneSize, WIDTH, HEIGHT, referenceBoneIndex, keepConfidence)
+
+    return keypoints_normalized, scaleFactor, x_displacement, y_displacement
+
 
 def denormalize(keypoints, scaleFactor, x_displacement, y_displacement):
 
@@ -457,6 +488,7 @@ def tryAddingNewCroppedVariation(keypoints, boneNames, variations):
             traceback.print_stack()
 
 def crop(keypoints):
+
     variations = [] 
     #remove below ankle
     tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel"], variations)

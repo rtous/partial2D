@@ -52,26 +52,16 @@ class JsonDataset(torch.utils.data.IterableDataset):
             json_file = str(item.name)
             if json_file.endswith(".json"):
                 try:
-                    keypoints_original = openPoseUtils.json2Keypoints(join(self.inputpath_original, json_file))
-                    
-                    keypoints_original_norm, dummy, dummy, dummy = openPoseUtils.normalize(keypoints_original, keepConfidence=False)
-                    #keypoints_original_norm_noconfidence, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalize(keypoints_original, keepConfidence=False)                    
-                    #keypoints_original_ = keypoints_original.copy()
-                    #keypoints_original_norm, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalize(keypoints_original, keepConfidence=False)                    
-
-                    #keypoints_original_norm_noconfidence, dummy = openPoseUtils.removeConfidence(keypoints_original_norm)             
-                    keypoints_original_norm_noconfidence_flat = [item for sublist in keypoints_original_norm for item in sublist]
-                    keypoints_original_flat = torch.tensor(keypoints_original_norm_noconfidence_flat)
+                	#Normalize over the original
+                    keypoints_original, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(self.inputpath_original, json_file))
+                    keypoints_original_noconfidence, dummy = openPoseUtils.removeConfidence(keypoints_original)
+                    keypoints_original_flat = [item for sublist in keypoints_original_noconfidence for item in sublist]
+                    keypoints_original_flat = torch.tensor(keypoints_original_flat)
                     #keypoints_original_flat = keypoints_original_flat.flatten()
                     
                     variations = openPoseUtils.crop(keypoints_original)               
-                    for v_idx, keypoints_cropped in enumerate(variations):    
-                        #The normalization is performed over the cropped skeleton
-                        keypoints_cropped_norm, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalize(keypoints_cropped, keepConfidence=True)              
-                        #keypoints_cropped_norm, dummy, dummy, dummy = openPoseUtils.normalize(keypoints_cropped, keepConfidence=True)             
-                        #dummy, dummy, dummy = openPoseUtils.normalize(keypoints_cropped, keepConfidence=True)             
-                        
-                        keypoints_croppedNoConf, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped_norm)
+                    for v_idx, keypoints_cropped in enumerate(variations):                       
+                        keypoints_croppedNoConf, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
                         keypoints_croppedFlat = [item for sublist in keypoints_croppedNoConf for item in sublist]
                         keypoints_croppedFlatFloat = [float(k) for k in keypoints_croppedFlat]
                         keypoints_croppedFlatFloatTensor = torch.tensor(keypoints_croppedFlatFloat)
@@ -81,7 +71,7 @@ class JsonDataset(torch.utils.data.IterableDataset):
                         
                         #Buffer some to sort them before yielding
                         buffer.append((keypoints_croppedFlatFloatTensor, keypoints_original_flat, confidence_values, scaleFactor, x_displacement, y_displacement, json_file))
-                        if len(buffer) == 65536:#1024 #65536:
+                        if len(buffer) == 2048:
                             random.shuffle(buffer)
                             for tup in buffer:
                                 yield tup[0], tup[1], tup[2], tup[3], tup[4], tup[5], tup[6]

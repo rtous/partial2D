@@ -22,11 +22,12 @@ import scipy.stats as stats
 
 #DATASET1="dynamicData/H36M_ECCV18"
 #DATASET1="/Volumes/ElementsDat/pose/H36M/ECCV2018/keyponts_generated_by_openpose_for_train_images_no_sufix"
-DATASET1="data/H36M_ECCV18_HOLLYWOOD_ORIGINAL_ONLY_THE_CROPPED"
+#DATASET1="data/H36M_ECCV18_HOLLYWOOD_ORIGINAL_ONLY_THE_CROPPED"
+DATASET1="/Volumes/ElementsDat/pose/H36M/H36M/H36M/"
 
 #DATASET2="/Volumes/ElementsDat/pose/H36M/ECCV2018/keyponts_generated_by_openpose_for_train_images_no_sufix"
-DATASET2="dynamicData/H36M_ECCV18_HOLLYWOOD_original_test"
-DATASET3="dynamicData/H36M_ECCV18_HOLLYWOOD_test"
+DATASET2="dynamicData/ECCV18OP_onlyused"
+DATASET3="dynamicData/ECCV18OP_test"
 DATASET4="data/output/ECCV2018v13/TEST/keypoints"
 
 #DATASET2="/Volumes/ElementsDat/pose/COCO/ruben_structure/keypoints_openpose_format"
