@@ -96,6 +96,5 @@ def h36m2openpose(h36m_keypoints_flat):
         resulting_keypoints.append(new_keypoint)
     
     return resulting_keypoints
-
-
+    
 

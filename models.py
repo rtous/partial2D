@@ -86,7 +86,8 @@ class Discriminator(nn.Module):
             # state size. (ndf*8) x 4 x 4
             #nn.Conv2d(in_channels=ndf * 8, out_channels=1, kernel_size=2, stride=1, padding=0, bias=False),
             nn.Linear(NEURONS_PER_LAYER_DISCRIMINATOR, 1, bias=False),
-            nn.Sigmoid()
+            nn.Sigmoid() 
+            #idea: supress sigmoid from https://github.com/soumith/ganhacks/issues/36
         )
 
     def forward(self, batch_of_keypoints_cropped, batch_of_keypoints_original):
@@ -105,14 +106,24 @@ def restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped,
     print("INPUT 3: batch_of_confidence_values[0]:")
     print(batch_of_confidence_values[0])
     '''
-
     for i, keypoints in enumerate(batch_of_fake_original):
+        #if i == 0:
+        #    print("received batch_of_fake_original[i]: ", keypoints)
+        #    print("received batch_of_keypoints_cropped[i]: ", batch_of_keypoints_cropped[i])
+        #    print("received batch_of_confidence_values[i]: ", batch_of_confidence_values[i])
         confidence_values = batch_of_confidence_values[i]
+        #print("len(confidence_values)=",len(confidence_values))
+        #print("batch_of_keypoints_cropped[i](inner):", batch_of_keypoints_cropped[i])
+        #print("fake before restoring(inner):", keypoints)
         for c, confidence_value in enumerate(confidence_values):
             if confidence_value > CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS:
                 #As we work with flat values and keypoints have 2 components we need to do this:
+                #print("Restoring idx "+str(c)+" with confidence_value "+str(confidence_value))
                 batch_of_fake_original[i][c*2] = batch_of_keypoints_cropped[i][c*2]
                 batch_of_fake_original[i][c*2+1] = batch_of_keypoints_cropped[i][c*2+1]
+        #if i == 0:
+        #    print("resulting keypoints: ", batch_of_fake_original[i])
+        #print("fake after restoring(inner):", keypoints)
     '''
     print("OUTPUT: batch_of_fake_original:")
     print(batch_of_fake_original)

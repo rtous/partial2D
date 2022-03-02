@@ -23,7 +23,9 @@ HEIGHT = 64
 #SPINESIZE = WIDTH/4
 
 #SPINESIZE = WIDTH/16
-SPINESIZE = WIDTH/6
+#SPINESIZE = WIDTH/6
+#SPINESIZE = WIDTH/6
+SPINESIZE = 0.5
 NECKSIZE = SPINESIZE/2.67 #the average in the dataset
 NOSESIZE = SPINESIZE/12.47
 
@@ -165,6 +167,7 @@ def hasBone(keypoints, boneName):
     else:
         return False
 
+    
 def json2KeypointsFlat(path):
     # Opening JSON file
     f = open(path)
@@ -490,20 +493,24 @@ def tryAddingNewCroppedVariation(keypoints, boneNames, variations):
 def crop(keypoints):
 
     variations = [] 
+
+    #DEBUG ONLY no ablation
+    #tryAddingNewCroppedVariation(keypoints, [], variations)
+    
     #remove below ankle
     tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel"], variations)
     #just right
     tryAddingNewCroppedVariation(keypoints, ["RBigToe", "RSmallToe", "RHeel"], variations)  
     #just left
     tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel"], variations)
-        
+    
     #remove below knee
     tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle"], variations)   
     #just right
     tryAddingNewCroppedVariation(keypoints, ["RBigToe", "RSmallToe", "RHeel", "RAnkle"], variations)
     #just left
     tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "LAnkle"], variations)
-
+    
     #remove legs
     tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee"], variations)
     #just right

@@ -47,9 +47,9 @@ except ValueError:
     print("Wrong arguments. Expecting two paths.")
 
 pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
-pathlib.Path(OUTPUTPATH+"/Test/").mkdir(parents=True, exist_ok=True) 
-pathlib.Path(OUTPUTPATH+"/Test/keypoints").mkdir(parents=True, exist_ok=True) 
-pathlib.Path(OUTPUTPATH+"/Test/images").mkdir(parents=True, exist_ok=True) 
+#pathlib.Path(OUTPUTPATH+"/Test/").mkdir(parents=True, exist_ok=True) 
+#pathlib.Path(OUTPUTPATH+"/Test/keypoints").mkdir(parents=True, exist_ok=True) 
+#pathlib.Path(OUTPUTPATH+"/Test/images").mkdir(parents=True, exist_ok=True) 
 
 
 batch_size = 64
@@ -91,7 +91,7 @@ netG.load_state_dict(torch.load(MODELPATH))
 
 
 
-def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageExtension):
+def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageExtension, saveImages=True):
     print('testMany('+keypointsPath+')')
     pathlib.Path(outputPath+outputSubpath+"/images").mkdir(parents=True, exist_ok=True)
     pathlib.Path(outputPath+outputSubpath+"/keypoints").mkdir(parents=True, exist_ok=True)
@@ -108,6 +108,7 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
         #print('Testing '+filename)
         try:
             keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(keypointsPath, filename))
+            #print("normalized keypoints_cropped=", keypoints_cropped)
             #print("obtained scaleFactor=",scaleFactor)
             keypoints_cropped, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
             keypoints_cropped = [item for sublist in keypoints_cropped for item in sublist]
@@ -138,7 +139,13 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
     #fixed_noise_N = fixed_noise_N.to(device)
     netG.eval()
     fake = netG(batch_of_one_keypoints_cropped, fixed_noise_N).detach().cpu()
+    #fake = batch_of_one_keypoints_cropped # DEBUG DOING NOTHING
+
+    #print("cropped before restoring:", batch_of_one_keypoints_cropped[0])
+    #print("fake before restoring:", fake[0])
+    #print("batch_of_one_confidence_values:", batch_of_one_confidence_values[0])
     fake = models.restoreOriginalKeypoints(fake, batch_of_one_keypoints_cropped, batch_of_one_confidence_values)
+    #print("after restoring:", fake[0])
     netG.train()
     fakeReshapedAsKeypoints = np.reshape(fake, (n, 25, 2))
     fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
@@ -146,9 +153,15 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
     for idx in range(len(fakeReshapedAsKeypoints)):
         #Write keypoints to a file
         fakeKeypointsOneImage = fakeReshapedAsKeypoints[idx]
-        fakeKeypointsOneImage, dummy, dummy, dummy = openPoseUtils.normalize(fakeKeypointsOneImage)
-	   
+        
+        #???? this was here before
+        #fakeKeypointsOneImage, dummy, dummy, dummy = openPoseUtils.normalize(fakeKeypointsOneImage)
+        #print("before denormalize: ", fakeKeypointsOneImage)
         fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalize(fakeKeypointsOneImage, batch_scaleFactor[idx], batch_x_displacement[idx], batch_y_displacement[idx])
+        #print("after denormalize: ", fakeKeypointsCroppedOneImageIntRescaled)
+        #if idx == 0:
+        #    print("writing: ", batch_filenames[idx])
+        #    print("written: ", fakeKeypointsCroppedOneImageIntRescaled)
         openPoseUtils.keypoints2json(fakeKeypointsCroppedOneImageIntRescaled, outputPath+outputSubpath+"/keypoints/"+batch_filenames[idx])
 
         #Draw over image file
@@ -160,6 +173,8 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
         #Remove "_keypoints" and anyghing else till the .
         #WANRING: CHARADE and TEST keypoints have slightly different names
         #CHARADE has other "_" that have to be preserved
+        
+        
         json_file_without_extension = os.path.splitext(batch_filenames[idx])[0]
 
         indexFromRemove = json_file_without_extension.find('_keypoints')
@@ -168,14 +183,19 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
         #json_file_without_extension = json_file_without_extension.replace('_keypoints', '')
         originalImagePath = join(imagesPath, json_file_without_extension+imageExtension)
         #print("originalImagePath="+originalImagePath)
-        imgWithKyepoints = pytorchUtils.cv2ReadFile(originalImagePath)
-        poseUtils.draw_pose(imgWithKyepoints, fakeKeypointsCroppedOneImageIntRescaled, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
-        try:
-            cv2.imwrite(outputPath+outputSubpath+"/images/"+json_file_without_extension+".jpg", imgWithKyepoints)
-            #print("written data/output/Test/"+json_file_without_extension+".jpg")
-        except:
-            print("WARNING: Cannot find "+originalImagePath)  
-        #shutil.copyfile(join("/Users/rtous/DockerVolume/openpose/data/result", json_file_without_extension+"_rendered.png"), join("data/output/Test/"+json_file_without_extension+"_img_cropped_openpose.png"))
+            
+        if saveImages:
+            imgWithKyepoints = pytorchUtils.cv2ReadFile(originalImagePath)
+            poseUtils.draw_pose(imgWithKyepoints, fakeKeypointsCroppedOneImageIntRescaled, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+            try:
+                cv2.imwrite(outputPath+outputSubpath+"/images/"+json_file_without_extension+".jpg", imgWithKyepoints)
+                #print("written data/output/Test/"+json_file_without_extension+".jpg")
+            except:
+                print("WARNING: Cannot find "+originalImagePath)  
+            #shutil.copyfile(join("/Users/rtous/DockerVolume/openpose/data/result", json_file_without_extension+"_rendered.png"), join("data/output/Test/"+json_file_without_extension+"_img_cropped_openpose.png"))
+        else:
+            blank_image = np.zeros((1000,1000,3), np.uint8)
+            cv2.imwrite(outputPath+outputSubpath+"/images/"+json_file_without_extension+".jpg", blank_image)
     print('testMany() finished. Output written to '+outputPath+outputSubpath)        
 
 def testImage(netG, outputPath, imagePath, keypointsPath):
@@ -215,8 +235,11 @@ def testImage(netG, outputPath, imagePath, keypointsPath):
     cv2.imwrite(outputPath+"/test_keypoints.jpg", imgWithKyepoints)
 
 	
-
+#CHARADE DATASET
 testMany(netG, DATASET_CHARADE, DATASET_CHARADE_IMAGES, OUTPUTPATH, "/CHARADE", ".png")
-testMany(netG, DATASET_TEST, DATASET_TEST_IMAGES, OUTPUTPATH, "/TEST", ".jpg")
+
+testMany(netG, DATASET_TEST, DATASET_TEST_IMAGES, OUTPUTPATH, "/TEST", ".jpg", False)
+
+#testMany(netG, DATASET_TEST, DATASET_TEST_IMAGES, OUTPUTPATH, "/TEST", ".jpg")
 
         

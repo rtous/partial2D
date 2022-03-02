@@ -31,9 +31,10 @@ import shutil
 import sys
 from torch.utils.tensorboard import SummaryWriter
 
-import models
+import models_heatmaps
 import dataset
-import datasetH36M
+import datasetH36M_heatmaps
+import normalization
 
 VERSION="13"
 NORMALIZATION="SCALE"
@@ -126,14 +127,14 @@ torch.manual_seed(manualSeed)
 # Batch size during training
 #batch_size = 128
 #batch_size = 64
-batch_size = 128#128#64
+batch_size = 64#128#64
 
 # Spatial size of training images. All images will be resized to this
 #   size using a transformer.
 image_size = 50
 
 # Number of channels in the training images. For color images this is 3
-nc = 1
+nc = 25
 
 # Size of z latent vector (i.e. size of generator input)
 nz = 100
@@ -162,7 +163,7 @@ def prepare_dataset():
   
     #jsonDataset = dataset.JsonDataset(inputpath_cropped=DATASET_CROPPED, inputpath_original=DATASET_ORIGINAL)
 
-    jsonDataset = datasetH36M.JsonDataset(inputpath_cropped=DATASET_CROPPED, inputpath_original=DATASET_ORIGINAL)
+    jsonDataset = datasetH36M_heatmaps.JsonDataset(inputpath_cropped=DATASET_CROPPED, inputpath_original=DATASET_ORIGINAL)
 
     dataloader = torch.utils.data.DataLoader(jsonDataset, batch_size=batch_size, 
                                              num_workers=workers)
@@ -203,7 +204,7 @@ def weights_init(m):
 
 
 # Create the generator
-netG_ = models.Generator(ngpu)
+netG_ = models_heatmaps.Generator(channels=nc)
 netG = netG_.to(device)
 
 #Register my debug hook
@@ -220,11 +221,11 @@ netG.apply(weights_init)
 
 # Print the model
 print(netG)
-pytorchUtils.explainModel(netG, 1, 1, 28, 28)
+#pytorchUtils.explainModel(netG, 1, 1, 28, 28)
 #pytorchUtils.computeModel(netG, 1, [{"layer":0, "output":7},{"layer":6, "output":14},{"layer":9, "output":28}])
 
 # Create the Discriminator
-netD_ = models.Discriminator(ngpu)
+netD_ = models_heatmaps.Discriminator(ngpu)
 netD = netD_.to(device)
 
 #Register my debug hook
@@ -346,8 +347,12 @@ for epoch in range(num_epochs):
         #print("netD=",next(netD.parameters()).is_cuda)
 
         # Forward pass real batch through D
+        # In a conditional GAN the input of the Discriminator not just the ouput, is a valid pair (condition-output)
+        
         output = netD(batch_of_keypoints_cropped, batch_of_keypoints_original).view(-1)
-        #print("Discriminator output: ", output.shape)
+        #output = netD(batch_of_keypoints_cropped, batch_of_keypoints_original)
+        
+        print("Discriminator output: ", output.shape)
         
         # Calculate loss on all-real batch
         errD_real = lossFunctionD(output, label)
@@ -361,15 +366,19 @@ for epoch in range(num_epochs):
         #print("Noise shape: ", noise.shape)
         
         # Generate fake image batch with G
-        batch_of_fake_original = netG(batch_of_keypoints_cropped, noise)
+        #batch_of_fake_original = netG(batch_of_keypoints_cropped, noise)
+        batch_of_fake_original = netG(batch_of_keypoints_cropped)
+        print("Generator output shape: ", batch_of_fake_original.shape)
 
         #Restore the original keypoints with confidence > CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS
-        batch_of_fake_original = models.restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, confidence_values)
+        #This is done over normalized keypoints
+        batch_of_fake_original = models_heatmaps.restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, confidence_values)
 
         #As they are fake images let's prepare a batch of labels FAKE
         label.fill_(fake_label)
        
         # Classify all fake batch with D
+        # In a conditional GAN the input of the Discriminator not just the ouput, is a valid pair (condition-output)
         output = netD(batch_of_keypoints_cropped, batch_of_fake_original.detach()).view(-1)
         
         # Calculate D's loss on the all-fake batch
@@ -429,6 +438,7 @@ for epoch in range(num_epochs):
 
         # Output training stats each 50 batches
         if i % 50 == 0:
+            print("WARNING: generator noise disabled")
             print("**************************************************************")
             print('[%d/%d][%d/?]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f'
                   % (epoch, num_epochs, i, #len(dataloader),
@@ -447,15 +457,20 @@ for epoch in range(num_epochs):
             writeRunInfoFile(run_info_json)
 
             with torch.no_grad():
-                fake = netG(batch_of_keypoints_cropped, fixed_noise).detach().cpu()
+                #fake = netG(batch_of_keypoints_cropped, fixed_noise).detach().cpu()
+                fake = netG(batch_of_keypoints_cropped).detach().cpu()
                 #We restore the original keypoints (before denormalizing)
-                fake = models.restoreOriginalKeypoints(fake, batch_of_keypoints_cropped, confidence_values)
-                print("Shape of fake: ", fake.shape)
-                fakeReshapedAsKeypoints = np.reshape(fake, (batch_size, 25, 2))
-                fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
-                originalReshapedAsKeypoints = np.reshape(batch_of_keypoints_original.cpu(), (batch_size, 25, 2))
-                croppedReshapedAsKeypoints = np.reshape(batch_of_keypoints_cropped.cpu(), (batch_size, 25, 2))
-                croppedReshapedAsKeypoints = croppedReshapedAsKeypoints.numpy()
+                fake = models_heatmaps.restoreOriginalKeypoints(fake, batch_of_keypoints_cropped, confidence_values)
+                
+                #print("Shape of fake: ", fake.shape)
+                #fakeReshapedAsKeypoints = np.reshape(fake, (batch_size, 25, 2))
+                #fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
+                #originalReshapedAsKeypoints = np.reshape(batch_of_keypoints_original.cpu(), (batch_size, 25, 2))
+                #croppedReshapedAsKeypoints = np.reshape(batch_of_keypoints_cropped.cpu(), (batch_size, 25, 2))
+                #croppedReshapedAsKeypoints = croppedReshapedAsKeypoints.numpy()
+                originalReshapedAsKeypoints = normalization.denormalizeBatch(batch_of_keypoints_original.cpu(), scaleFactor, x_displacement, y_displacement)
+                croppedReshapedAsKeypoints = normalization.denormalizeBatch(batch_of_keypoints_cropped.cpu(), scaleFactor, x_displacement, y_displacement)
+                fakeReshapedAsKeypoints = normalization.denormalizeBatch(fake.cpu(), scaleFactor, x_displacement, y_displacement)
 
             NUM_ROWS = 8
             NUM_COLS = 8
@@ -497,7 +512,8 @@ for epoch in range(num_epochs):
                 
                 
                	#Draw result over the original image
-                fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalize(fakeKeypointsOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage)
+                fakeKeypointsCroppedOneImageIntRescaled = fakeKeypointsOneImageInt
+                #fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalize(fakeKeypointsOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage)
                	
                	#If we want to save the .json files of the batch
                 #openPoseUtils.keypoints2json(fakeKeypointsOneImageInt, OUTPUTPATH+"/"+f"{idx:02d}"+"_img_keypoints.json")

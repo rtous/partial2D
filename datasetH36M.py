@@ -32,6 +32,7 @@ import sys
 from torch.utils.tensorboard import SummaryWriter
 import models
 import random
+import h36mIterator
 
 class JsonDataset(torch.utils.data.IterableDataset):
     def __init__(self, inputpath_cropped, inputpath_original):
@@ -46,26 +47,29 @@ class JsonDataset(torch.utils.data.IterableDataset):
     def __iter__(self):
         #jsonFiles = [f for f in listdir(self.inputpath) if isfile(join(self.inputpath, f)) and f.endswith("json") ]
         #Important, the scandir iterator needs to be created each time
-        buffer = []
-        self.scandirIterator = os.scandir(self.inputpath_original)
-    
-        for item in self.scandirIterator:
-            json_file = str(item.name)
-            if json_file.endswith(".json"):
-                try:
-                    keypoints_original = openPoseUtils.json2Keypoints(join(self.inputpath_original, json_file))
-                    
-                    keypoints_original_norm, dummy, dummy, dummy = openPoseUtils.normalize(keypoints_original, keepConfidence=False)
-                    #keypoints_original_norm_noconfidence, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalize(keypoints_original, keepConfidence=False)                    
-                    #keypoints_original_ = keypoints_original.copy()
-                    #keypoints_original_norm, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalize(keypoints_original, keepConfidence=False)                    
+        #buffer = []
+        #self.scandirIterator = os.scandir(self.inputpath_original)
+        buffer_originals = []
+        buffer_variations = []
+        self.scandirIterator = h36mIterator.iterator()
+        for keypoints_original in self.scandirIterator:
+            #We fill first a buffer of originals
+            buffer_originals.append(keypoints_original)
+            len_buffer_originals = len(buffer_originals)
+            if len_buffer_originals == 65536:
+                #Once the buffer is filled, we shuffle and obtain variations
+                print("shuffle buffer original full: ", len_buffer_originals)
+                print("sorting buffer originals...")
+                random.shuffle(buffer_originals)
+                print("generating variations...")
 
-                    #keypoints_original_norm_noconfidence, dummy = openPoseUtils.removeConfidence(keypoints_original_norm)             
+                for buffered_keypoints_original in buffer_originals:
+
+                    keypoints_original_norm, dummy, dummy, dummy = openPoseUtils.normalize(buffered_keypoints_original, keepConfidence=False)
                     keypoints_original_norm_noconfidence_flat = [item for sublist in keypoints_original_norm for item in sublist]
                     keypoints_original_flat = torch.tensor(keypoints_original_norm_noconfidence_flat)
-                    #keypoints_original_flat = keypoints_original_flat.flatten()
                     
-                    variations = openPoseUtils.crop(keypoints_original)               
+                    variations = openPoseUtils.crop(buffered_keypoints_original)               
                     for v_idx, keypoints_cropped in enumerate(variations):    
                         #The normalization is performed over the cropped skeleton
                         keypoints_cropped_norm, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalize(keypoints_cropped, keepConfidence=True)              
@@ -79,24 +83,22 @@ class JsonDataset(torch.utils.data.IterableDataset):
                         
                         #The confidence_values of the cropped skeletons signal which bones to fake and which to keep
                         confidence_values = torch.tensor(confidence_values)
+
+                        buffer_variations.append((keypoints_croppedFlatFloatTensor, keypoints_original_flat, confidence_values, scaleFactor, x_displacement, y_displacement, "unknown file"))
                         
-                        #Buffer some to sort them before yielding
-                        buffer.append((keypoints_croppedFlatFloatTensor, keypoints_original_flat, confidence_values, scaleFactor, x_displacement, y_displacement, json_file))
-                        if len(buffer) == 65536:#1024 #65536:
-                            random.shuffle(buffer)
-                            for tup in buffer:
-                                yield tup[0], tup[1], tup[2], tup[3], tup[4], tup[5], tup[6]
-                            buffer = []
-                except ValueError as ve:
-                    print(ve)
-                #except OSError as oe:
-                #   print(oe)
-                except Exception as e:
-                    print("WARNING: Error reading ", json_file)
-                    #print(e)
-                    traceback.print_exc()
+                len_variations = len(buffer_variations)
+                print("Variations generated: ", len_variations)
+                print("Shuffling variations...")
+                random.shuffle(buffer_variations)
+                print("Yielding variations...")
+                for tup in buffer_variations:
+                    yield tup[0], tup[1], tup[2], tup[3], tup[4], tup[5], tup[6]
+                print(str(len_variations)+" variations yield.")
+                buffer_variations = []
+                buffer_originals = [] 
+                    
         self.scandirIterator.close()
-        print("Closed scandirIterator.")
+        print("Closed h36mIterator.")
             
 
     #def __len__(self):
