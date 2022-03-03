@@ -136,6 +136,7 @@ def denormalize(heatmaps, scaleFactor, x_displacement, y_displacement):
 def denormalizeBatch(batch, scaleFactor, x_displacement, y_displacement):
 	denormalized = []
 	for i in range(batch.shape[0]):
+		#print("batch[i].shape: ", batch[i].shape)
 		denormalized.append(denormalize(batch[i], scaleFactor[i], x_displacement[i], y_displacement[i]))
 	return denormalized
 			
@@ -160,6 +161,7 @@ print("poseHeatmaps shape: ",poseHeatmaps.shape)
 cv2.imshow("hm"+str(0), poseHeatmaps[0])
 
 #DENORMALIZED
+print(poseHeatmaps.shape)
 keypoints = denormalize(poseHeatmaps, scaleFactor, x_displacement, y_displacement)
 visualize(keypoints, 1000, 1000)
 '''

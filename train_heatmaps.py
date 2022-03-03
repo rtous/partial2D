@@ -468,9 +468,9 @@ for epoch in range(num_epochs):
                 #originalReshapedAsKeypoints = np.reshape(batch_of_keypoints_original.cpu(), (batch_size, 25, 2))
                 #croppedReshapedAsKeypoints = np.reshape(batch_of_keypoints_cropped.cpu(), (batch_size, 25, 2))
                 #croppedReshapedAsKeypoints = croppedReshapedAsKeypoints.numpy()
-                originalReshapedAsKeypoints = normalization.denormalizeBatch(batch_of_keypoints_original.cpu(), scaleFactor, x_displacement, y_displacement)
-                croppedReshapedAsKeypoints = normalization.denormalizeBatch(batch_of_keypoints_cropped.cpu(), scaleFactor, x_displacement, y_displacement)
-                fakeReshapedAsKeypoints = normalization.denormalizeBatch(fake.cpu(), scaleFactor, x_displacement, y_displacement)
+                originalReshapedAsKeypoints = normalization.denormalizeBatch(batch_of_keypoints_original.cpu().numpy(), scaleFactor, x_displacement, y_displacement)
+                croppedReshapedAsKeypoints = normalization.denormalizeBatch(batch_of_keypoints_cropped.cpu().numpy(), scaleFactor, x_displacement, y_displacement)
+                fakeReshapedAsKeypoints = normalization.denormalizeBatch(fake.cpu().numpy(), scaleFactor, x_displacement, y_displacement)
 
             NUM_ROWS = 8
             NUM_COLS = 8
