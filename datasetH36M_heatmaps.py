@@ -57,7 +57,7 @@ class JsonDataset(torch.utils.data.IterableDataset):
             #We fill first a buffer of originals
             buffer_originals.append(keypoints_original)
             len_buffer_originals = len(buffer_originals)
-            if len_buffer_originals == 1024:#65536:
+            if len_buffer_originals == 2048:#1024:#65536:
                 #Once the buffer is filled, we shuffle and obtain variations
                 print("shuffle buffer original full: ", len_buffer_originals)
                 print("sorting buffer originals...")

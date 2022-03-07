@@ -352,7 +352,7 @@ for epoch in range(num_epochs):
         output = netD(batch_of_keypoints_cropped, batch_of_keypoints_original).view(-1)
         #output = netD(batch_of_keypoints_cropped, batch_of_keypoints_original)
         
-        print("Discriminator output: ", output.shape)
+        #print("Discriminator output: ", output.shape)
         
         # Calculate loss on all-real batch
         errD_real = lossFunctionD(output, label)
@@ -368,7 +368,7 @@ for epoch in range(num_epochs):
         # Generate fake image batch with G
         #batch_of_fake_original = netG(batch_of_keypoints_cropped, noise)
         batch_of_fake_original = netG(batch_of_keypoints_cropped)
-        print("Generator output shape: ", batch_of_fake_original.shape)
+        #print("Generator output shape: ", batch_of_fake_original.shape)
 
         #Restore the original keypoints with confidence > CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS
         #This is done over normalized keypoints

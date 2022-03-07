@@ -29,7 +29,7 @@ ngf = 16
 
 # Size of feature maps in discriminator
 #ndf = 64
-ndf = 4#16
+ndf = 16
 
 NEURONS_PER_LAYER_GENERATOR = 512
 '''
@@ -67,37 +67,39 @@ class Generator(nn.Module):
     def __init__(self, channels=nc):
         super(Generator, self).__init__()
 
-        def downsample(in_feat, out_feat, normalize=True, relu=True):
-            layers = [nn.Conv2d(in_channels=in_feat, out_channels=out_feat, kernel_size=4, stride=2, padding=1)]
+        def downsample(in_feat, out_feat, normalize=True):
+            layers = [nn.Conv2d(in_feat, out_feat, 4, stride=2, padding=1)]
             if normalize:
                 layers.append(nn.BatchNorm2d(out_feat, 0.8))
-            if relu:
-                layers.append(nn.LeakyReLU(0.2))
+            layers.append(nn.LeakyReLU(0.2))
             return layers
 
-        def upsample(in_feat, out_feat, normalize=True, relu=True):
-            layers = [nn.ConvTranspose2d(in_channels=in_feat, out_channels=out_feat, kernel_size=4, stride=2, padding=1)]
+        def upsample(in_feat, out_feat, normalize=True):
+            layers = [nn.ConvTranspose2d(in_feat, out_feat, 4, stride=2, padding=1)]
             if normalize:
                 layers.append(nn.BatchNorm2d(out_feat, 0.8))
-            if relu:
-                layers.append(nn.ReLU())
+            layers.append(nn.ReLU())
             return layers
 
         self.model = nn.Sequential(
             *downsample(channels, 64, normalize=False),
+            *downsample(64, 64),
             *downsample(64, 128),
-            *downsample(128, 1000, normalize=False, relu=False),
-            #nn.Conv2d(128, 1000, kernel_size=4, stride=2, padding=1),
-            *upsample(1000, 128),
+            *downsample(128, 256),
+            *downsample(256, 512),
+            #*downsample(512, 1024),
+            nn.Conv2d(512, 4000, 1),
+            *upsample(4000, 1024),
+            *upsample(1024, 512),
+            *upsample(512, 256),
+            *upsample(256, 128),
             *upsample(128, 64),
-            *upsample(64, channels, normalize=False, relu=False),
-            #nn.Conv2d(in_channels=64, out_channels=channels, kernel_size=4, stride=2, padding=1),
+            nn.Conv2d(64, channels, 3, 1, 1),
             nn.Tanh()
         )
 
     def forward(self, x):
         #print("Generator received: ", x.shape)
-        #print("Generator...")
         return self.model(x)
 
 
@@ -109,31 +111,34 @@ class Discriminator(nn.Module):
         self.main = nn.Sequential(
             # input is (nc) x 64 x 64
             # input is (nc) x 64 x 64
-            nn.Conv2d(in_channels=nc * 2, out_channels=ndf, kernel_size=(16,16), stride=2, padding=1, bias=False),
+            nn.Conv2d(in_channels=nc*2, out_channels=ndf, kernel_size=(16,16), stride=2, padding=1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf) x 32 x 32
             nn.Conv2d(in_channels=ndf, out_channels=ndf * 2, kernel_size=(8,8), stride=2, padding=1, bias=False),
             nn.BatchNorm2d(ndf * 2),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*2) x 16 x 16
-            nn.Conv2d(in_channels=ndf * 2, out_channels=ndf * 4, kernel_size=(8,8), stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(ndf * 4),
+            nn.Conv2d(in_channels=ndf * 2, out_channels=ndf * 8, kernel_size=(8,8), stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(ndf * 8),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*4) x 8 x 8
-            nn.Conv2d(in_channels=ndf * 4, out_channels=1, kernel_size=(2,2), stride=2, padding=0, bias=False),
+            #nn.Conv2d(in_channels=ndf * 4, out_channels=ndf * 8, kernel_size=4, stride=2, padding=1, bias=False),
+            #nn.BatchNorm2d(ndf * 8),
+            #nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*8) x 4 x 4
+            nn.Conv2d(in_channels=ndf * 8, out_channels=1, kernel_size=(2,2), stride=2, padding=0, bias=False),
             nn.Sigmoid()
         )
 
     def forward(self, batch_of_keypoints_cropped, batch_of_keypoints_original):
-        #print("Discriminator input shape befor concat: batch_of_keypoints_cropped.shape=",batch_of_keypoints_cropped.shape)
-        #print("Discriminator input shape befor concat: batch_of_keypoints_original.shape=",batch_of_keypoints_original.shape)
+        print("Discriminator input shape befor concat: batch_of_keypoints_cropped.shape=",batch_of_keypoints_cropped.shape)
+        print("Discriminator input shape befor concat: batch_of_keypoints_original.shape=",batch_of_keypoints_original.shape)
         
         #Mirar això: https://www.tensorflow.org/tutorials/generative/pix2pix
         input = torch.cat((batch_of_keypoints_cropped, batch_of_keypoints_original), -3)  
-        #print("Discriminator input shape:",input.shape)
+        print("Discriminator input shape:",input.shape)
         # Hauria de ser (batch_size, 128, 128, channels*2)
         #print("Discriminator input[0] after concat:",input[0][0])
-        #print("Discriminator...")
         return self.main(input)
 
 def restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, batch_of_confidence_values):
