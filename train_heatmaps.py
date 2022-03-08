@@ -460,7 +460,17 @@ for epoch in range(num_epochs):
                 #fake = netG(batch_of_keypoints_cropped, fixed_noise).detach().cpu()
                 fake = netG(batch_of_keypoints_cropped).detach().cpu()
                 #We restore the original keypoints (before denormalizing)
+                
+                #fake = torch.tensor(normalization.nullPoseBatch(len(batch_of_keypoints_cropped), normalization.HEATMAP_WIDTH, batch_size))
+                #onesConfidentValuesBatch = normalization.onesConfidentValuesBatch(len(batch_of_keypoints_cropped[0]), batch_size)
+                
+                #fake = models_heatmaps.restoreOriginalKeypoints(fake, batch_of_keypoints_cropped, onesConfidentValuesBatch)
                 fake = models_heatmaps.restoreOriginalKeypoints(fake, batch_of_keypoints_cropped, confidence_values)
+                
+                #print(fake[0][0])
+                #print(batch_of_keypoints_cropped[0][0])
+                #print(confidence_values[0])
+                #fake = models_heatmaps.restoreOriginalKeypoints(batch_of_keypoints_cropped, batch_of_keypoints_cropped, confidence_values)
                 
                 #print("Shape of fake: ", fake.shape)
                 #fakeReshapedAsKeypoints = np.reshape(fake, (batch_size, 25, 2))
@@ -523,9 +533,9 @@ for epoch in range(num_epochs):
                	
                	#Draw the pairs  
                 try:
-                    poseUtils.draw_pose(blank_imageOriginal, originalReshapedAsKeypointsOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
-                    poseUtils.draw_pose(blank_imageCropped, fakeKeypointsCroppedOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
-                    poseUtils.draw_pose(blank_image, fakeKeypointsOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+                    poseUtils.draw_pose_scale(blank_imageOriginal, originalReshapedAsKeypointsOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+                    poseUtils.draw_pose_scale(blank_imageCropped, fakeKeypointsCroppedOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+                    poseUtils.draw_pose_scale(blank_image, fakeKeypointsOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
                     targetFilePathCropped = OUTPUTPATH+"/debug_input"+str(idx)+".jpg"
                     targetFilePath = OUTPUTPATH+"/debug"+str(idx)+".jpg"
                     #cv2.imwrite(targetFilePath, blank_image)

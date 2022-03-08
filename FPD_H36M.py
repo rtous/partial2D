@@ -45,7 +45,9 @@ DATASET4="data/H36Mtest_original_noreps"
 
 SIZE1 = 200000
 SIZE2 = 35000
-DIMENSIONS = 50
+#DIMENSIONS = 50
+numJoints = 15 #25
+DIMENSIONS = numJoints*2
 
 '''
 argv = sys.argv

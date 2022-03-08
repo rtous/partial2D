@@ -56,7 +56,8 @@ batch_size = 64
 
 # Spatial size of training images. All images will be resized to this
 #   size using a transformer.
-image_size = 50
+numJoints = 15#25
+image_size = numJoints*2
 
 # Number of channels in the training images. For color images this is 3
 nc = 1
@@ -147,7 +148,7 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
     fake = models.restoreOriginalKeypoints(fake, batch_of_one_keypoints_cropped, batch_of_one_confidence_values)
     #print("after restoring:", fake[0])
     netG.train()
-    fakeReshapedAsKeypoints = np.reshape(fake, (n, 25, 2))
+    fakeReshapedAsKeypoints = np.reshape(fake, (n, numJoints, 2))
     fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
     
     for idx in range(len(fakeReshapedAsKeypoints)):
@@ -210,8 +211,8 @@ def testImage(netG, outputPath, imagePath, keypointsPath):
     keypoints_cropped = keypoints_cropped.flatten()
     print("keypoints_cropped.shape = ", keypoints_cropped.shape)
 
-    batch_of_one_keypoints_cropped = np.reshape(keypoints_cropped, (1, 50))
-    batch_of_one_confidence_values = np.reshape(confidence_values, (1, 25))
+    batch_of_one_keypoints_cropped = np.reshape(keypoints_cropped, (1, numJoints*2))
+    batch_of_one_confidence_values = np.reshape(confidence_values, (1, numJoints))
     fixed_noise_one = torch.randn(1, nz, device=device)
 
     batch_of_one_keypoints_cropped = batch_of_one_keypoints_cropped.to(device)
@@ -221,7 +222,7 @@ def testImage(netG, outputPath, imagePath, keypointsPath):
     fake = netG(batch_of_one_keypoints_cropped, fixed_noise_one).detach().cpu()
     fake = restoreOriginalKeypoints(fake, batch_of_one_keypoints_cropped, batch_of_one_confidence_values)
     netG.train()
-    fakeReshapedAsKeypoints = np.reshape(fake, (1, 25, 2))
+    fakeReshapedAsKeypoints = np.reshape(fake, (1, numJoints, 2))
     fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
 
     fakeKeypointsOneImage = fakeReshapedAsKeypoints[0]
@@ -236,7 +237,7 @@ def testImage(netG, outputPath, imagePath, keypointsPath):
 
 	
 #CHARADE DATASET
-testMany(netG, DATASET_CHARADE, DATASET_CHARADE_IMAGES, OUTPUTPATH, "/CHARADE", ".png")
+#testMany(netG, DATASET_CHARADE, DATASET_CHARADE_IMAGES, OUTPUTPATH, "/CHARADE", ".png")
 
 testMany(netG, DATASET_TEST, DATASET_TEST_IMAGES, OUTPUTPATH, "/TEST", ".jpg", False)
 

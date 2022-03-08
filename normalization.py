@@ -145,6 +145,17 @@ def visualize(keypoints, width, height):
 	poseUtils.draw_pose(blank_image, keypoints, 0.1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
 	poseUtils.displayImage(blank_image, width, height)
 
+#Useful for debugging
+def nullPoseBatch(nJoints, outputRes, batchsize):
+	nullPoseBatch = np.zeros((batchsize, nJoints, outputRes, outputRes), dtype="float32")
+	return nullPoseBatch
+
+#Useful for debugging
+def onesConfidentValuesBatch(nJoints, batchsize):
+	onesConfidentValuesBatch = np.ones((batchsize, nJoints), dtype="float32")
+	return onesConfidentValuesBatch
+
+
 
 '''
 #ORIGINAL	

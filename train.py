@@ -130,7 +130,9 @@ batch_size = 128#128#64
 
 # Spatial size of training images. All images will be resized to this
 #   size using a transformer.
-image_size = 50
+
+numJoints = 15#25
+image_size = numJoints*2
 
 # Number of channels in the training images. For color images this is 3
 nc = 1
@@ -451,10 +453,10 @@ for epoch in range(num_epochs):
                 #We restore the original keypoints (before denormalizing)
                 fake = models.restoreOriginalKeypoints(fake, batch_of_keypoints_cropped, confidence_values)
                 print("Shape of fake: ", fake.shape)
-                fakeReshapedAsKeypoints = np.reshape(fake, (batch_size, 25, 2))
+                fakeReshapedAsKeypoints = np.reshape(fake, (batch_size, numJoints, 2))
                 fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
-                originalReshapedAsKeypoints = np.reshape(batch_of_keypoints_original.cpu(), (batch_size, 25, 2))
-                croppedReshapedAsKeypoints = np.reshape(batch_of_keypoints_cropped.cpu(), (batch_size, 25, 2))
+                originalReshapedAsKeypoints = np.reshape(batch_of_keypoints_original.cpu(), (batch_size, numJoints, 2))
+                croppedReshapedAsKeypoints = np.reshape(batch_of_keypoints_cropped.cpu(), (batch_size, numJoints, 2))
                 croppedReshapedAsKeypoints = croppedReshapedAsKeypoints.numpy()
 
             NUM_ROWS = 8
@@ -467,6 +469,7 @@ for epoch in range(num_epochs):
             
             
             ####### DRAW DEBUG POSES FOR THE FIRST 64 IMAGES
+            print("Draw debug poses for the batch")
             for idx in range(NUM_ROWS*NUM_COLS):
                 blank_imageOriginal = np.zeros((WIDTH,HEIGHT,3), np.uint8)
                 blank_imageCropped = np.zeros((WIDTH,HEIGHT,3), np.uint8)
@@ -510,6 +513,9 @@ for epoch in range(num_epochs):
                     poseUtils.draw_pose(blank_imageOriginal, originalReshapedAsKeypointsOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
                     poseUtils.draw_pose(blank_imageCropped, fakeKeypointsCroppedOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
                     poseUtils.draw_pose(blank_image, fakeKeypointsOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+                    #poseUtils.draw_pose_scale(blank_imageOriginal, originalReshapedAsKeypointsOneImageInt.numpy(), -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+                    #poseUtils.draw_pose_scale(blank_imageCropped, fakeKeypointsCroppedOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+                    #poseUtils.draw_pose_scale(blank_image, fakeKeypointsOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
                     targetFilePathCropped = OUTPUTPATH+"/debug_input"+str(idx)+".jpg"
                     targetFilePath = OUTPUTPATH+"/debug"+str(idx)+".jpg"
                     #cv2.imwrite(targetFilePath, blank_image)
@@ -527,6 +533,7 @@ for epoch in range(num_epochs):
                 targetFilePathOriginal = OUTPUTPATH+"/debug_original.jpg"
                 targetFilePathCropped = OUTPUTPATH+"/debug_input.jpg"
                 targetFilePath = OUTPUTPATH+"/debug.jpg"
+                print("Writting into ", targetFilePathOriginal)
                 cv2.imwrite(targetFilePathCropped, total_imageCropped)
                 cv2.imwrite(targetFilePath, total_image)
                 cv2.imwrite(targetFilePathOriginal, total_imageOriginal)

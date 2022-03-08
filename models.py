@@ -12,7 +12,8 @@ import torchvision.utils as vutils
 CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS = 0.1 
 
 #   size using a transformer.
-image_size = 50
+numjoints = 15#25
+image_size = numjoints*2
 
 # Number of channels in the training images. For color images this is 3
 nc = 1
@@ -36,7 +37,7 @@ class Generator(nn.Module):
         self.ngpu = ngpu
         self.main = nn.Sequential(
           # First upsampling
-          nn.Linear(50+nz, NEURONS_PER_LAYER_GENERATOR, bias=False),
+          nn.Linear(image_size+nz, NEURONS_PER_LAYER_GENERATOR, bias=False),
           nn.BatchNorm1d(NEURONS_PER_LAYER_GENERATOR, 0.8),
           nn.LeakyReLU(0.25),
           # Second upsampling
@@ -48,7 +49,7 @@ class Generator(nn.Module):
           nn.BatchNorm1d(NEURONS_PER_LAYER_GENERATOR, 0.8),
           nn.LeakyReLU(0.25),
           # Final upsampling
-          nn.Linear(NEURONS_PER_LAYER_GENERATOR, 50, bias=False),
+          nn.Linear(NEURONS_PER_LAYER_GENERATOR, image_size, bias=False),
           #nn.Tanh()
         )
 
@@ -64,7 +65,7 @@ class Discriminator(nn.Module):
         self.main = nn.Sequential(
             # input is (nc) x 64 x 64
             #nn.Conv2d(in_channels=nc, out_channels=ndf, kernel_size=(16,16), stride=2, padding=1, bias=False),
-            nn.Linear(50*2, NEURONS_PER_LAYER_DISCRIMINATOR, bias=False),
+            nn.Linear(image_size*2, NEURONS_PER_LAYER_DISCRIMINATOR, bias=False),
             nn.BatchNorm1d(NEURONS_PER_LAYER_DISCRIMINATOR, 0.8),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf) x 32 x 32
@@ -90,10 +91,11 @@ class Discriminator(nn.Module):
             #idea: supress sigmoid from https://github.com/soumith/ganhacks/issues/36
         )
 
-    def forward(self, batch_of_keypoints_cropped, batch_of_keypoints_original):
-        #print("Discriminator input:",input)
-        #print("Discriminator input shape:",input.shape)
+    def forward(self, batch_of_keypoints_cropped, batch_of_keypoints_original): 
+        #print("Discriminator batch_of_keypoints_cropped shape:",batch_of_keypoints_cropped.shape)
+        #print("Discriminator batch_of_keypoints_original shape:",batch_of_keypoints_original.shape)
         input = torch.cat((batch_of_keypoints_cropped, batch_of_keypoints_original), -1)  
+        #print("Discriminator input:",input.shape)
         return self.main(input)
 
 def restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, batch_of_confidence_values):

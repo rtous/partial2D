@@ -47,7 +47,36 @@ pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True)
 
 #25 May 2019
 #https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/include/openpose/pose/poseParametersRender.hpp
- 
+
+POSE_BODY_25_BODY_PARTS = [
+    "Nose",
+    "Neck",
+    "RShoulder",
+    "RElbow",
+    "RWrist",
+    "LShoulder",
+    "LElbow",
+    "LWrist",
+    "MidHip",
+    "RHip",
+    "RKnee",
+    "RAnkle",
+    "LHip",
+    "LKnee",
+    "LAnkle",
+    #"REye",
+    #"LEye",
+    #"REar",
+    #"LEar",
+    #"LBigToe",
+    #"LSmallToe",
+    #"LHeel",
+    #"RBigToe",
+    #"RSmallToe",
+    #"RHeel",
+    #"Background"
+]
+''' 
 POSE_BODY_25_BODY_PARTS = [
     "Nose",
     "Neck",
@@ -76,7 +105,26 @@ POSE_BODY_25_BODY_PARTS = [
     "RHeel",
     #"Background"
 ]
+'''
 
+POSE_BODY_25_BODY_PARTS_DICT = {
+    0:"Nose",
+    1:"Neck",
+    2:"RShoulder",
+    3:"RElbow",
+    4:"RWrist",
+    5:"LShoulder",
+    6:"LElbow",
+    7:"LWrist",
+    8:"MidHip",
+    9:"RHip",
+    10:"RKnee",
+    11:"RAnkle",
+    12:"LHip",
+    13:"LKnee",
+    14:"LAnkle",
+}
+'''
 POSE_BODY_25_BODY_PARTS_DICT = {
     0:"Nose",
     1:"Neck",
@@ -105,6 +153,7 @@ POSE_BODY_25_BODY_PARTS_DICT = {
     24:"RHeel",
     #25:"Background"
 }
+'''
 
 POSE_BODY_25_COLORS_RENDER_GPU =[
         [255,     0,    85],
@@ -134,7 +183,11 @@ POSE_BODY_25_COLORS_RENDER_GPU =[
           [0,   255,   255]
 ]
 
-POSE_BODY_25_PAIRS_RENDER_GP = [[1,8],   [1,2],   [1,5],   [2,3],   [3,4],   [5,6],   [6,7],   [8,9],   [9,10],  [10,11], [8,12],  [12,13], [13,14],  [1,0],   [0,15], [15,17],  [0,16], [16,18],   [14,19],[19,20],[14,21], [11,22],[22,23],[11,24]]
+
+#POSE_BODY_25_PAIRS_RENDER_GP = [[1,8],   [1,2],   [1,5],   [2,3],   [3,4],   [5,6],   [6,7],   [8,9],   [9,10],  [10,11], [8,12],  [12,13], [13,14],  [1,0],   [0,15], [15,17],  [0,16], [16,18],   [14,19],[19,20],[14,21], [11,22],[22,23],[11,24]]
+POSE_BODY_25_PAIRS_RENDER_GP = [[1,8],   [1,2],   [1,5],   [2,3],   [3,4],   [5,6],   [6,7],   [8,9],   [9,10],  [10,11], [8,12],  [12,13], [13,14],  [1,0]]
+
+
 POSE_BODY_25_PAIRS_RENDER_GP_NAMES = ["Neck-MidHip", "Neck-RShoulder", "Neck-LShoulder", "RShoulder-RElbow", "RElbow-RWrist", "LShoulder-LElbow", "LElbow-LWrist", "MidHip-RHip", "RHip-RKnee", "RKnee-RAnkle", "MidHip-LHip", "LHip-LKnee", "LKnee-LAnkle", "Neck-Nose", "Nose-REye", "REye-REar", "Nose-LEye", "LEye-LEar", "LAnkle-LBigToe", "LBigToe-LSmallToe", "LAnkle-LHeel", "RAnkle-RBigToe", "RBigToe-RSmallToe", "RAnkle-RHeel"]
 
 def findPart(partName):
@@ -497,6 +550,65 @@ def crop(keypoints):
     #DEBUG ONLY no ablation
     #tryAddingNewCroppedVariation(keypoints, [], variations)
     
+    #remove below knee
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle"], variations)   
+    #just right
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle"], variations)
+    #just left
+    tryAddingNewCroppedVariation(keypoints, ["LAnkle"], variations)
+    
+    #remove legs
+    tryAddingNewCroppedVariation(keypoints, [ "RAnkle","LAnkle", "LKnee", "RKnee"], variations)
+    #just right
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle", "RKnee"], variations)
+    #just left
+    tryAddingNewCroppedVariation(keypoints, ["LAnkle", "LKnee"], variations)
+    
+    #remove below neck but no arms
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip"], variations)
+
+    #remove below neck and wrists
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist"], variations)
+    #just below neck and right wrists
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "RWrist"], variations)
+    #just below neck and left wrists
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist"], variations)
+    
+    #remove below neck and elbows
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist", "LElbow", "RElbow"], variations)
+    #just below neck and right elbow
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "RWrist", "RElbow"], variations)
+    #just below neck and left elbow
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "LElbow"], variations)
+     
+    #remove shoulders
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist", "LElbow", "RElbow", "LShoulder", "RShoulder"], variations)
+    #just right shoulder and left wrist
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "RWrist", "RElbow", "RShoulder", "LWrist"], variations)
+    #just right shoulder and left elbow
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "RWrist", "RElbow", "RShoulder", "LWrist", "LElbow"], variations)
+    #just right shoulder
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "RWrist", "RElbow", "RShoulder"], variations)
+    
+    #just left shoulder
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "LElbow", "LShoulder"], variations)
+    #just left shoulder and right wrist
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "LElbow", "LShoulder", "RWrist"], variations)
+    #just left shoulder and right elbow
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "LElbow", "LShoulder", "RWrist", "RElbow"], variations)
+    
+    #remove below nose
+    #tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist", "LElbow", "RElbow", "LShoulder", "RShoulder", "Neck"], variations)
+    
+    return variations
+'''
+def crop(keypoints):
+
+    variations = [] 
+
+    #DEBUG ONLY no ablation
+    #tryAddingNewCroppedVariation(keypoints, [], variations)
+    
     #remove below ankle
     tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel"], variations)
     #just right
@@ -555,6 +667,8 @@ def crop(keypoints):
     tryAddingNewCroppedVariation(keypoints, ["LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist", "LElbow", "RElbow", "LShoulder", "RShoulder", "Neck"], variations)
     
     return variations
+'''
+
 
 
 

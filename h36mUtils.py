@@ -84,14 +84,23 @@ def h36m2openpose(h36m_keypoints_flat):
             h36mIndex = poseUtils.geJointIndexFromName(resultingKeypointName, H36M_JOINTS)
             h36mKeypoint = h36m_keypoints[h36mIndex]
             new_keypoint = (h36mKeypoint[0], h36mKeypoint[1], 1.0)
+            #print(resultingKeypointName)
         except ValueError:
+            #print("discarded:",resultingKeypointName)
             #print("Cannot find keypoint ", resultingKeypointName)
             #if resultingKeypointName=="Spine1":
             #    new_keypoint = computeSpine(openpose_keypoints)
             #    new_keypoint = (new_keypoint[0], new_keypoint[1])
             #else:
             #    new_keypoint = (0,0)
-            new_keypoint = (0,0,0.0)
+            
+            #We are not going to work with all the 25 openpose joints
+            #We will discard joints not present in H36M
+            #LEye/REye, LEar/REar, LBigToe/RBigToe, LSmallToe/RSmallToe, LHeel/RHeel
+            #only 15
+
+            #new_keypoint = (0,0,0.0)
+            pass
 
         resulting_keypoints.append(new_keypoint)
     

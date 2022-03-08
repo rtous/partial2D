@@ -49,6 +49,11 @@ def draw_pose(img, keypoints, threshold, keypoint_index_pairs, colors, haveThres
 			if keypoint1[0] > 0 and keypoint1[1] > 0 and keypoint2[0] > 0 and keypoint2[1] > 0:
 				draw_part(img, keypoint1, keypoint2, color, keypoint_index_pairs, thickness)
 
+def draw_pose_scale(img, keypoints, threshold, keypoint_index_pairs, colors, haveThreshold, thickness=2):        	
+	height, width = img.shape[:2]
+	keypoints_scaled = scale(keypoints, width/4)
+	draw_pose(img, keypoints_scaled, threshold, keypoint_index_pairs, colors, haveThreshold, thickness)        
+
 def draw_keypoints(img, keypoints):   
 	for i, k in enumerate(keypoints):
 		cv2.circle(img,(k[0],k[1]), 1, (0,255,0), thickness=4, lineType=8, shift=0)
