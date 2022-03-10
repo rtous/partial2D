@@ -29,7 +29,7 @@ ngf = 16
 #ndf = 64
 ndf = 16
 
-NEURONS_PER_LAYER_GENERATOR = 256
+NEURONS_PER_LAYER_GENERATOR = 512
 class Generator(nn.Module):
     #Receives a noise vector (nz dims) + keypoints cropped (50 dims)
     def __init__(self, ngpu):
@@ -57,7 +57,7 @@ class Generator(nn.Module):
         input = torch.cat((batch_of_keypoints_cropped, noise), -1)
         return self.main(input)
 
-NEURONS_PER_LAYER_DISCRIMINATOR = 256
+NEURONS_PER_LAYER_DISCRIMINATOR = 512
 class Discriminator(nn.Module):
     def __init__(self, ngpu):
         super(Discriminator, self).__init__()

@@ -1,3 +1,6 @@
+#https://agustinus.kristia.de/techblog/2017/02/04/wasserstein-gan/
+#https://github.com/eriklindernoren/PyTorch-GAN/blob/master/implementations/wgan/wgan.py
+
 from __future__ import print_function
 #%matplotlib inline
 import argparse
@@ -31,7 +34,7 @@ import shutil
 import sys
 from torch.utils.tensorboard import SummaryWriter
 
-import models
+import models_wasserstein as models
 import dataset
 import datasetH36M
 
@@ -262,9 +265,11 @@ real_label = 1.
 fake_label = 0.
 
 # Setup Adam optimizers for both G and D
-optimizerD = optim.Adam(netD.parameters(), lr=lr, betas=(beta1, 0.999))
-optimizerG = optim.Adam(netG.parameters(), lr=lr, betas=(beta1, 0.999))
+#optimizerD = optim.Adam(netD.parameters(), lr=lr, betas=(beta1, 0.999))
+#optimizerG = optim.Adam(netG.parameters(), lr=lr, betas=(beta1, 0.999))
 
+optimizerG = torch.optim.RMSprop(netG.parameters(), lr=lr)
+optimizerD = torch.optim.RMSprop(netD.parameters(), lr=lr)
 
 # Training Loop
 
@@ -331,117 +336,53 @@ for epoch in range(num_epochs):
         ###########################
         ## Train with all-real batch
         netD.zero_grad()
-     
-     	#Batch of real labels
-        label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
-        
-        #print("***********************")
-        #print("***********************")
-        #print("batch_of_keypoints_cropped.shape=",batch_of_keypoints_cropped.shape)
-        #print("batch_of_keypoints_original.shape=",batch_of_keypoints_original.shape)
-        #print("***********************")
-        #print("***********************")
 
-        #print("batch_of_keypoints_cropped.is_cuda=",batch_of_keypoints_cropped.is_cuda)
-        #print("batch_of_keypoints_original.is_cuda=",batch_of_keypoints_original.is_cuda)
-
-        #print("netD=",next(netD.parameters()).is_cuda)
-
-        # Forward pass real batch through D
-        output = netD(batch_of_keypoints_cropped, batch_of_keypoints_original).view(-1)
-        #print("Discriminator output: ", output.shape)
-        
-        # Calculate loss on all-real batch
-        errD_real = lossFunctionD(output, label)
-        # Calculate gradients for D in backward pass
-        errD_real.backward()
-        D_x = output.mean().item()
-
-        ## Train with all-fake batch
+        # Generate fake image batch with G
         # Generate batch of latent vectors
         noise = torch.randn(b_size, nz, device=device)
-        #print("Noise shape: ", noise.shape)
-        
-        # Generate fake image batch with G
         batch_of_fake_original = netG(batch_of_keypoints_cropped, noise)
-
         #Restore the original keypoints with confidence > CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS
         batch_of_fake_original = models.restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, confidence_values)
 
-        #As they are fake images let's prepare a batch of labels FAKE
-        label.fill_(fake_label)
-       
+        # Forward pass real batch through D
+        D_real = netD(batch_of_keypoints_cropped, batch_of_keypoints_original).view(-1)
         # Classify all fake batch with D
-        output = netD(batch_of_keypoints_cropped, batch_of_fake_original.detach()).view(-1)
+        D_fake = netD(batch_of_keypoints_cropped, batch_of_fake_original.detach()).view(-1)
         
-        # Calculate D's loss on the all-fake batch
-        errD_fake = lossFunctionD(output, label)
-        
-        # Calculate the gradients for this batch, accumulated (summed) with previous gradients
-        errD_fake.backward()
-        
-        D_G_z1 = output.mean().item()
-        
-        # Compute error of D as sum over the fake and the real batches
-        errD = errD_real + errD_fake
-        
-        # Update D
+         # Compute error of D as sum over the fake and the real batches
+        errD = -(torch.mean(D_real) - torch.mean(D_fake))
+        errD.backward()
         optimizerD.step()
 
-        ############################
-        # (2) Update G network: maximize log(D(G(z)))
-        ###########################
-        netG.zero_grad()
-        
-        label.fill_(real_label)  # fake labels are real for generator cost
-        
-        # Since we just updated D, perform another forward pass of all-fake batch through D
-        output = netD(batch_of_keypoints_cropped, batch_of_fake_original).view(-1)
-        
-        # Calculate G's loss based on this output
-        #errG = criterion(output, label)
+        # Clip weights of discriminator
+        for p in netD.parameters():
+            p.data.clamp_(-0.01, 0.01)
 
-        ##############
-
-        g_adv = lossFunctionG_adversarial(output, label) #adversarial loss
-        g_pixel = lossFunctionG_regression(batch_of_fake_original, batch_of_keypoints_original) #pixel loss
-
-        #errG = 0.25 * g_adv + 0.75 * g_pixel
-
-        #errG = 0 * g_adv + 1 * g_pixel
-
-        errG = 1 * g_adv + 0 * g_pixel
-
-        #errG = 0.001 * g_adv + 0.999 * g_pixel
-        
-        ###############
-
-        # Calculate gradients for G
-        errG.backward()
-        
-        D_G_z2 = output.mean().item()
-        
-        # Update G
-        optimizerG.step()
+        # Train the generator every 5 iterations
+        if i % 5 == 0:
+            print("training generator")
+            netG.zero_grad()
+            noise = torch.randn(b_size, nz, device=device)
+            batch_of_fake_original = netG(batch_of_keypoints_cropped, noise)
+            #Restore the original keypoints with confidence > CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS
+            batch_of_fake_original = models.restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, confidence_values)
+            errG = -torch.mean(netD(batch_of_keypoints_cropped, batch_of_fake_original))
+            errG.backward()
+            optimizerG.step()
 
         tb.add_scalar("LossG", errG.item(), step_absolute)
-        tb.add_scalar("g_adv", g_adv.item(), step_absolute)
-        tb.add_scalar("g_pixel", g_pixel.item(), step_absolute)
+        #tb.add_scalar("g_adv", g_adv.item(), step_absolute)
+        #tb.add_scalar("g_pixel", g_pixel.item(), step_absolute)
         tb.add_scalar("LossD", errD.item(), step_absolute)
-        tb.add_scalar("errD_real", errD_real.item(), step_absolute)
-        tb.add_scalar("errD_fake", errD_fake.item(), step_absolute)
+        #tb.add_scalar("errD_real", errD_real.item(), step_absolute)
+        #tb.add_scalar("errD_fake", errD_fake.item(), step_absolute)
 
         # Output training stats each 50 batches
         if i % 50 == 0:
             print("**************************************************************")
-            print('[%d/%d][%d/?]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f'
+            print('[%d/%d][%d/?]\tLoss_D: %.4f\tLoss_G: %.4f\t'
                   % (epoch, num_epochs, i, #len(dataloader),
-                     errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
-            print('errD_real: %.4f, errD_fake: %.4f\t'
-                  % (errD_real.item(), errD_fake.item()))
-
-            print('loss g_adv: %.4f, loss g_pixel: %.4f\t'
-                  % (g_adv.item(), g_pixel.item()))
+                     errD.item(), errG.item()))            
 
         # Save model and display the first 64 results each 1000 batches
         if i % 1000 == 0: 

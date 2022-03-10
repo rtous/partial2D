@@ -87,7 +87,7 @@ class Discriminator(nn.Module):
             # state size. (ndf*8) x 4 x 4
             #nn.Conv2d(in_channels=ndf * 8, out_channels=1, kernel_size=2, stride=1, padding=0, bias=False),
             nn.Linear(NEURONS_PER_LAYER_DISCRIMINATOR, 1, bias=False),
-            nn.Sigmoid() 
+            #nn.Sigmoid() 
             #idea: supress sigmoid from https://github.com/soumith/ganhacks/issues/36
         )
 
