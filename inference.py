@@ -30,7 +30,8 @@ import traceback
 import shutil
 import sys
 from torch.utils.tensorboard import SummaryWriter
-import models
+import importlib
+#import models
 
 argv = sys.argv
 try:
@@ -42,9 +43,13 @@ try:
     DATASET_TEST=argv[6]
     DATASET_TEST_IMAGES=argv[7]
     MODELPATH=argv[8]
+    MODEL=argv[9]
 
 except ValueError:
     print("Wrong arguments. Expecting two paths.")
+
+
+models = importlib.import_module(MODEL)
 
 pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
 #pathlib.Path(OUTPUTPATH+"/Test/").mkdir(parents=True, exist_ok=True) 

@@ -29,7 +29,7 @@ ngf = 16
 #ndf = 64
 ndf = 16
 
-NEURONS_PER_LAYER_GENERATOR = 256
+NEURONS_PER_LAYER_GENERATOR = 512
 class Generator(nn.Module):
     #Receives a noise vector (nz dims) + keypoints cropped (50 dims)
     def __init__(self, ngpu):
@@ -57,7 +57,43 @@ class Generator(nn.Module):
         input = torch.cat((batch_of_keypoints_cropped, noise), -1)
         return self.main(input)
 
-NEURONS_PER_LAYER_DISCRIMINATOR = 256
+NEURONS_PER_LAYER_DISCRIMINATOR = 512
+DISCRIMINATOR_OUTPUT_SIZE = 1
+class Discriminator(nn.Module):
+    def __init__(self, ngpu):
+        super(Discriminator, self).__init__()
+        self.ngpu = ngpu
+        self.main = nn.Sequential(
+            # input is (nc) x 64 x 64
+            #nn.Conv2d(in_channels=nc, out_channels=ndf, kernel_size=(16,16), stride=2, padding=1, bias=False),
+            nn.Linear(image_size*2, NEURONS_PER_LAYER_DISCRIMINATOR, bias=False),
+            #nn.BatchNorm1d(NEURONS_PER_LAYER_DISCRIMINATOR, 0.8),
+            nn.LeakyReLU(0.2, inplace=True),
+
+            nn.Linear(NEURONS_PER_LAYER_DISCRIMINATOR, NEURONS_PER_LAYER_DISCRIMINATOR, bias=False),
+            #nn.BatchNorm1d(DISCRIMINATOR_OUTPUT_SIZE, 0.8),
+            nn.LeakyReLU(0.2, inplace=True),
+
+            #nn.Linear(NEURONS_PER_LAYER_DISCRIMINATOR, NEURONS_PER_LAYER_DISCRIMINATOR, bias=False),
+            #nn.BatchNorm1d(DISCRIMINATOR_OUTPUT_SIZE, 0.8),
+            #nn.LeakyReLU(0.2, inplace=True),
+
+
+            # state size. (ndf) x 32 x 32
+            #nn.Conv2d(in_channels=ndf, out_channels=ndf * 2, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.Linear(NEURONS_PER_LAYER_DISCRIMINATOR, DISCRIMINATOR_OUTPUT_SIZE, bias=False),
+            #nn.BatchNorm1d(DISCRIMINATOR_OUTPUT_SIZE, 0.8),
+            #nn.LeakyReLU(0.2, inplace=True)
+        )
+
+    def forward(self, batch_of_keypoints_cropped, batch_of_keypoints_original): 
+        #print("Discriminator batch_of_keypoints_cropped shape:",batch_of_keypoints_cropped.shape)
+        #print("Discriminator batch_of_keypoints_original shape:",batch_of_keypoints_original.shape)
+        input = torch.cat((batch_of_keypoints_cropped, batch_of_keypoints_original), -1)  
+        #print("Discriminator input:",input.shape)
+        #print("D input: ", input[0])
+        return self.main(input)
+'''
 class Discriminator(nn.Module):
     def __init__(self, ngpu):
         super(Discriminator, self).__init__()
@@ -96,8 +132,9 @@ class Discriminator(nn.Module):
         #print("Discriminator batch_of_keypoints_original shape:",batch_of_keypoints_original.shape)
         input = torch.cat((batch_of_keypoints_cropped, batch_of_keypoints_original), -1)  
         #print("Discriminator input:",input.shape)
+        print("D input: ", input[0])
         return self.main(input)
-
+'''
 def restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, batch_of_confidence_values):
     '''
     print("DEBUGGING restoreOriginalKeypoints...")

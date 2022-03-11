@@ -155,7 +155,7 @@ ndf = 16
 num_epochs = 100
 
 # Learning rate for optimizers
-lr = 0.0002
+lr = 0.0002 #0.0002
 
 # Beta1 hyperparam for Adam optimizers
 beta1 = 0.5
@@ -341,14 +341,19 @@ for epoch in range(num_epochs):
         # Generate batch of latent vectors
         noise = torch.randn(b_size, nz, device=device)
         batch_of_fake_original = netG(batch_of_keypoints_cropped, noise)
+        #print("batch_of_fake_original[0]:", batch_of_fake_original[0])
         #Restore the original keypoints with confidence > CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS
         batch_of_fake_original = models.restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, confidence_values)
+        #print("batch_of_fake_original[0] restored:", batch_of_fake_original[0])
 
         # Forward pass real batch through D
         D_real = netD(batch_of_keypoints_cropped, batch_of_keypoints_original).view(-1)
         # Classify all fake batch with D
         D_fake = netD(batch_of_keypoints_cropped, batch_of_fake_original.detach()).view(-1)
         
+        #print("D_real", D_real.detach())
+        #print("D_fake", D_fake.detach())
+
          # Compute error of D as sum over the fake and the real batches
         errD = -(torch.mean(D_real) - torch.mean(D_fake))
         errD.backward()
@@ -359,7 +364,7 @@ for epoch in range(num_epochs):
             p.data.clamp_(-0.01, 0.01)
 
         # Train the generator every 5 iterations
-        if i % 5 == 0:
+        if i % 7 == 0:
             print("training generator")
             netG.zero_grad()
             noise = torch.randn(b_size, nz, device=device)
