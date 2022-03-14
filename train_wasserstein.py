@@ -360,18 +360,20 @@ for epoch in range(num_epochs):
         optimizerD.step()
 
         # Clip weights of discriminator
+        '''
         for p in netD.parameters():
             p.data.clamp_(-0.01, 0.01)
+        '''
 
         # Train the generator every 5 iterations
-        if i % 7 == 0:
+        if i % 10 == 0:
             print("training generator")
             netG.zero_grad()
             noise = torch.randn(b_size, nz, device=device)
             batch_of_fake_original = netG(batch_of_keypoints_cropped, noise)
             #Restore the original keypoints with confidence > CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS
             batch_of_fake_original = models.restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, confidence_values)
-            errG = -torch.mean(netD(batch_of_keypoints_cropped, batch_of_fake_original))
+            errG = -torch.mean(netD(batch_of_keypoints_cropped, batch_of_fake_original))           
             errG.backward()
             optimizerG.step()
 

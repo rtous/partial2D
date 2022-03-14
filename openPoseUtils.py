@@ -8,6 +8,7 @@ from os import listdir
 from os.path import isfile, join, splitext
 import pathlib
 import traceback
+import poseUtilsBaseline
 
 '''
 OPENPOSE INFO
@@ -256,9 +257,13 @@ def json2Keypoints(path):
 
     return keypoints
 
-def json2normalizedKeypoints(path):
+def json2normalizedKeypoints(path, only15joints=False):
 
     keypoints = json2Keypoints(path)
+
+    if only15joints:
+        keypoints = poseUtilsBaseline.first15Keypoints(keypoints)
+
 
     #boneSpineIndex = REFERENCE_JOINT_PAIR_INDEX
 

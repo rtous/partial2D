@@ -44,6 +44,7 @@ try:
     DATASET_TEST_IMAGES=argv[7]
     MODELPATH=argv[8]
     MODEL=argv[9]
+    ONLY15=bool(argv[10])
 
 except ValueError:
     print("Wrong arguments. Expecting two paths.")
@@ -113,7 +114,11 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
     for filename in jsonFiles:
         #print('Testing '+filename)
         try:
-            keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(keypointsPath, filename))
+            if ONLY15:
+                only15joints=True
+            else:
+                only15joints=False
+            keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(keypointsPath, filename), only15joints)
             #print("normalized keypoints_cropped=", keypoints_cropped)
             #print("obtained scaleFactor=",scaleFactor)
             keypoints_cropped, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
@@ -242,7 +247,7 @@ def testImage(netG, outputPath, imagePath, keypointsPath):
 
 	
 #CHARADE DATASET
-#testMany(netG, DATASET_CHARADE, DATASET_CHARADE_IMAGES, OUTPUTPATH, "/CHARADE", ".png")
+testMany(netG, DATASET_CHARADE, DATASET_CHARADE_IMAGES, OUTPUTPATH, "/CHARADE", ".png")
 
 testMany(netG, DATASET_TEST, DATASET_TEST_IMAGES, OUTPUTPATH, "/TEST", ".jpg", False)
 

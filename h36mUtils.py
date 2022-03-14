@@ -73,6 +73,8 @@ def openpose2H36M(openpose_keypoints):
     return h36m_keypoints
 
 def h36m2openpose(h36m_keypoints_flat):
+    #Only generate joints that exist in h36m, eyes, etc. are not generated
+    #and the resulting vector has just 15 joints instead of 25 
     h36m_keypoints = list(zip(
         list(map(int, h36m_keypoints_flat[0::2])), 
         list(map(int, h36m_keypoints_flat[1::2]))

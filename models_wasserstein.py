@@ -74,9 +74,9 @@ class Discriminator(nn.Module):
             #nn.BatchNorm1d(DISCRIMINATOR_OUTPUT_SIZE, 0.8),
             nn.LeakyReLU(0.2, inplace=True),
 
-            #nn.Linear(NEURONS_PER_LAYER_DISCRIMINATOR, NEURONS_PER_LAYER_DISCRIMINATOR, bias=False),
+            nn.Linear(NEURONS_PER_LAYER_DISCRIMINATOR, NEURONS_PER_LAYER_DISCRIMINATOR, bias=False),
             #nn.BatchNorm1d(DISCRIMINATOR_OUTPUT_SIZE, 0.8),
-            #nn.LeakyReLU(0.2, inplace=True),
+            nn.LeakyReLU(0.2, inplace=True),
 
 
             # state size. (ndf) x 32 x 32
