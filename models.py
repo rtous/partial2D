@@ -50,7 +50,7 @@ class Generator(nn.Module):
           nn.LeakyReLU(0.25),
           # Final upsampling
           nn.Linear(NEURONS_PER_LAYER_GENERATOR, image_size, bias=False),
-          #nn.Tanh()
+          #nn.Tanh() # result in [-1,1] 
         )
 
     def forward(self, batch_of_keypoints_cropped, noise):
@@ -68,18 +68,21 @@ class Discriminator(nn.Module):
             nn.Linear(image_size*2, NEURONS_PER_LAYER_DISCRIMINATOR, bias=False),
             nn.BatchNorm1d(NEURONS_PER_LAYER_DISCRIMINATOR, 0.8),
             nn.LeakyReLU(0.2, inplace=True),
+            #nn.LeakyReLU(0.2),
             # state size. (ndf) x 32 x 32
             #nn.Conv2d(in_channels=ndf, out_channels=ndf * 2, kernel_size=4, stride=2, padding=1, bias=False),
             nn.Linear(NEURONS_PER_LAYER_DISCRIMINATOR, NEURONS_PER_LAYER_DISCRIMINATOR, bias=False),
             nn.BatchNorm1d(NEURONS_PER_LAYER_DISCRIMINATOR, 0.8),
             #nn.BatchNorm2d(ndf * 2),
             nn.LeakyReLU(0.2, inplace=True),
+            #nn.LeakyReLU(0.2),
             # state size. (ndf*2) x 16 x 16
             #nn.Conv2d(in_channels=ndf * 2, out_channels=ndf * 8, kernel_size=4, stride=2, padding=1, bias=False),
             nn.Linear(NEURONS_PER_LAYER_DISCRIMINATOR, NEURONS_PER_LAYER_DISCRIMINATOR, bias=False),
             nn.BatchNorm1d(NEURONS_PER_LAYER_DISCRIMINATOR, 0.8),
             #nn.BatchNorm2d(ndf * 8),
             nn.LeakyReLU(0.2, inplace=True),
+            #nn.LeakyReLU(0.2),
             # state size. (ndf*4) x 8 x 8
             #nn.Conv2d(in_channels=ndf * 4, out_channels=ndf * 8, kernel_size=4, stride=2, padding=1, bias=False),
             #nn.BatchNorm2d(ndf * 8),
@@ -87,7 +90,7 @@ class Discriminator(nn.Module):
             # state size. (ndf*8) x 4 x 4
             #nn.Conv2d(in_channels=ndf * 8, out_channels=1, kernel_size=2, stride=1, padding=0, bias=False),
             nn.Linear(NEURONS_PER_LAYER_DISCRIMINATOR, 1, bias=False),
-            nn.Sigmoid() 
+            nn.Sigmoid() #result in [0,1]
             #idea: supress sigmoid from https://github.com/soumith/ganhacks/issues/36
         )
 
@@ -108,6 +111,9 @@ def restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped,
     print("INPUT 3: batch_of_confidence_values[0]:")
     print(batch_of_confidence_values[0])
     '''
+
+    batch_of_fake_original = batch_of_fake_original.clone()
+
     for i, keypoints in enumerate(batch_of_fake_original):
         #if i == 0:
         #    print("received batch_of_fake_original[i]: ", keypoints)

@@ -8,10 +8,6 @@ import torchvision.datasets as dset
 import torchvision.transforms as transforms
 from torchvision.transforms import ToTensor, Lambda, Compose
 import torchvision.utils as vutils
-import numpy as np
-
-#pix2pix: https://github.com/znxlwm/pytorch-pix2pix/blob/master/network.py
-
 
 #in PyTorch the format is "Batch Size x Channel x Height x Width"
 # (al revés que a Tesnsorflow)
@@ -67,22 +63,9 @@ class Generator(nn.Module):
         input = batch_of_keypoints_cropped
         return self.main(input)
 '''
-
-def noiseSquareBatch(outputRes, batchsize):
-    #noiseSquareBatch = np.zeros((batchsize, 1, outputRes, outputRes), dtype="float32")
-    noiseSquareBatch = np.random.random_sample((batchsize, 1, outputRes, outputRes)).astype('float32')
-    return noiseSquareBatch
-
 class Generator(nn.Module):
-    #Channels = nc + 1 (1 for the noise)
-    def __init__(self, channels, addNoise=False):
+    def __init__(self, channels=nc):
         super(Generator, self).__init__()
-        self.channels = channels
-        self.addNoise = addNoise
-        if self.addNoise:
-            self.input_channels = self.channels+1
-        else:
-            self.input_channels = self.channels  
 
         def downsample(in_feat, out_feat, normalize=True, relu=True):
             layers = [nn.Conv2d(in_channels=in_feat, out_channels=out_feat, kernel_size=4, stride=2, padding=1)]
@@ -99,17 +82,16 @@ class Generator(nn.Module):
             if relu:
                 layers.append(nn.ReLU())
             return layers
-
         self.model = nn.Sequential(
-            *downsample(self.input_channels, 32, normalize=True),
-            *downsample(32, 64),
-            *downsample(64, 1000, normalize=True, relu=True),
+            *downsample(channels, 8, normalize=False),
+            *downsample(8, 16),
+            *downsample(16, 100, normalize=False, relu=False),
             #nn.Conv2d(128, 1000, kernel_size=4, stride=2, padding=1),
-            *upsample(1000, 64),
-            *upsample(64, 32),
-            *upsample(32, self.channels, normalize=False, relu=False),
+            *upsample(100, 16),
+            *upsample(16, 8),
+            *upsample(8, channels, normalize=False, relu=False),
             #nn.Conv2d(in_channels=64, out_channels=channels, kernel_size=4, stride=2, padding=1),
-            nn.Tanh() 
+            nn.Tanh()
         )
         '''
         self.model = nn.Sequential(
@@ -124,21 +106,11 @@ class Generator(nn.Module):
             nn.Tanh()
         )
         '''
-    #About noise in cGAN: https://arxiv.org/pdf/1905.02135.pdf
-    def forward(self, input):
+
+    def forward(self, x):
         #print("Generator received: ", x.shape)
         #print("Generator...")
-        batchsize = input.shape[0]
-        #channels = x.shape[1]
-        outputRes = input.shape[2]
-        print("batchsize=", batchsize)
-        print("outputRes=", outputRes)
-        if self.addNoise:
-            noise = torch.tensor(noiseSquareBatch(outputRes, batchsize))
-            input = torch.cat((input, noise), -3) 
-        else:
-            print("WARING: Not adding noise to the input.") 
-        return self.model(input)
+        return self.model(x)
 
 '''
 NEURONS_PER_LAYER_DISCRIMINATOR = 16

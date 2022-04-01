@@ -155,5 +155,11 @@ low dimensional data
 - DONE: Test H36M
 - PROBLEM: H36M discriminator collapses. Also generator errors are strange.
 	- Maybe inputs are too similar. Tried increassing buffer without success
+--------------------------------------
+14-03-2022: 
+- Tried with heatmaps. PROBLEM: too slow (PENDING)
+- DONE: Tried with only joints that are in H36M and openpose (15). Great
+improvement of FPD!
+- Tried with wasserstein GAN. Unstable training. FPD results seems ok but around 15000
 
 

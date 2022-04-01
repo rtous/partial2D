@@ -129,7 +129,7 @@ torch.manual_seed(manualSeed)
 # Batch size during training
 #batch_size = 128
 #batch_size = 64
-batch_size = 128#128#64
+batch_size = 64#128#64
 
 # Spatial size of training images. All images will be resized to this
 #   size using a transformer.
@@ -364,9 +364,9 @@ for epoch in range(num_epochs):
         for p in netD.parameters():
             p.data.clamp_(-0.01, 0.01)
         '''
-
+	
         # Train the generator every 5 iterations
-        if i % 10 == 0:
+        if i % 3 == 0:
             print("training generator")
             netG.zero_grad()
             noise = torch.randn(b_size, nz, device=device)

@@ -31,7 +31,7 @@ import shutil
 import sys
 from torch.utils.tensorboard import SummaryWriter
 
-import models_heatmaps
+import models_heatmaps_DCGAN
 import dataset
 import datasetH36M_heatmaps
 import normalization
@@ -206,7 +206,7 @@ def weights_init(m):
 
 
 # Create the generator
-netG_ = models_heatmaps.Generator(channels=nc)
+netG_ = models_heatmaps_DCGAN.Generator(ngpu)
 netG = netG_.to(device)
 
 #Register my debug hook
@@ -223,11 +223,11 @@ netG.apply(weights_init)
 
 # Print the model
 print(netG)
-#pytorchUtils.explainModel(netG, 1, 1, 28, 28)
+pytorchUtils.explainModel(netG, 1, 1, 128, 128)
 #pytorchUtils.computeModel(netG, 1, [{"layer":0, "output":7},{"layer":6, "output":14},{"layer":9, "output":28}])
 
 # Create the Discriminator
-netD_ = models_heatmaps.Discriminator(ngpu)
+netD_ = models_heatmaps_DCGAN.Discriminator(ngpu)
 netD = netD_.to(device)
 
 #Register my debug hook
@@ -244,7 +244,9 @@ netD.apply(weights_init)
 
 # Print the model
 print(netD)
-pytorchUtils.explainModel(netD, 28, 28, 1, 1)
+pytorchUtils.explainModel(netD, 128, 128, 1, 1)
+#pytorchUtils.computeModel(netD, 1, [{"layer":0, "output":7},{"layer":6, "output":14},{"layer":9, "output":28}])
+
 
 # Initialize BCELoss function
 #criterion = nn.BCELoss() according to https://github.com/soumith/ganhacks/issues/363
@@ -256,7 +258,8 @@ lossFunctionG_regression = torch.nn.L1Loss()
 
 # Create batch of latent vectors that we will use to visualize
 #  the progression of the generator
-fixed_noise = torch.randn(batch_size, nz, device=device)
+#fixed_noise = torch.randn(batch_size, nz, device=device)
+fixed_noise = torch.randn(batch_size, nz, 1, 1, device=device)
 
 # Establish convention for real and fake labels during training
 real_label = 1.
@@ -336,7 +339,7 @@ for epoch in range(num_epochs):
      
      	#Batch of real labels
         label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
-        
+        print("b_size=",b_size)
         #print("***********************")
         #print("***********************")
         #print("batch_of_keypoints_cropped.shape=",batch_of_keypoints_cropped.shape)
@@ -352,12 +355,13 @@ for epoch in range(num_epochs):
         # Forward pass real batch through D
         # In a conditional GAN the input of the Discriminator not just the ouput, is a valid pair (condition-output)
         startD = time.time()
+        print("Discriminator input: ", batch_of_keypoints_cropped.shape)
         output = netD(batch_of_keypoints_cropped, batch_of_keypoints_original).view(-1)
         endD = time.time()
         print(f"Discriminator took {endD - startD}")
         #output = netD(batch_of_keypoints_cropped, batch_of_keypoints_original)
         
-        #print("Discriminator output: ", output.shape)
+        print("Discriminator output: ", output.shape)
         
         # Calculate loss on all-real batch
         errD_real = lossFunctionD(output, label)
@@ -367,27 +371,29 @@ for epoch in range(num_epochs):
 
         ## Train with all-fake batch
         # Generate batch of latent vectors
-        noise = torch.randn(b_size, nz, device=device)
+        noise = torch.randn(b_size, nz, 1, 1, device=device)
         #print("Noise shape: ", noise.shape)
         
         # Generate fake image batch with G
         #batch_of_fake_original = netG(batch_of_keypoints_cropped, noise)
         startG = time.time()
         #batch_of_fake_original = netG(batch_of_keypoints_cropped, noise)
-        batch_of_fake_original = netG(batch_of_keypoints_cropped)
+        #batch_of_fake_original = netG(batch_of_keypoints_cropped)
+        batch_of_fake_original = netG(noise)
         endG = time.time()
         print(f"Generator took {endG - startG}")
         #print("Generator output shape: ", batch_of_fake_original.shape)
 
         #Restore the original keypoints with confidence > CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS
         #This is done over normalized keypoints
-        batch_of_fake_original = models_heatmaps.restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, confidence_values)
+        #batch_of_fake_original = models_heatmaps.restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, confidence_values)
 
         #As they are fake images let's prepare a batch of labels FAKE
         label.fill_(fake_label)
        
         # Classify all fake batch with D
         # In a conditional GAN the input of the Discriminator not just the ouput, is a valid pair (condition-output)
+        print(f"Discriminator second input", batch_of_fake_original.shape)
         output = netD(batch_of_keypoints_cropped, batch_of_fake_original.detach()).view(-1)
         
         # Calculate D's loss on the all-fake batch
@@ -474,14 +480,14 @@ for epoch in range(num_epochs):
 
             with torch.no_grad():
                 #fake = netG(batch_of_keypoints_cropped, fixed_noise).detach().cpu()
-                fake = netG(batch_of_keypoints_cropped).detach().cpu()
+                fake = netG(fixed_noise).detach().cpu()
                 #We restore the original keypoints (before denormalizing)
                 
                 #fake = torch.tensor(normalization.nullPoseBatch(len(batch_of_keypoints_cropped), normalization.HEATMAP_WIDTH, batch_size))
                 #onesConfidentValuesBatch = normalization.onesConfidentValuesBatch(len(batch_of_keypoints_cropped[0]), batch_size)
                 
                 #fake = models_heatmaps.restoreOriginalKeypoints(fake, batch_of_keypoints_cropped, onesConfidentValuesBatch)
-                fake = models_heatmaps.restoreOriginalKeypoints(fake, batch_of_keypoints_cropped, confidence_values)
+                #fake = models_heatmaps.restoreOriginalKeypoints(fake, batch_of_keypoints_cropped, confidence_values)
                 
                 #print(fake[0][0])
                 #print(batch_of_keypoints_cropped[0][0])

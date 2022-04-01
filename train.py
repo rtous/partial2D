@@ -34,6 +34,7 @@ from torch.utils.tensorboard import SummaryWriter
 import models
 import dataset
 import datasetH36M
+import time
 
 VERSION="13"
 NORMALIZATION="SCALE"
@@ -297,6 +298,7 @@ run_info_json["DATASET_ORIGINAL"] = DATASET_ORIGINAL
 run_info_json["normalization"] = NORMALIZATION
 run_info_json["model version"] = VERSION
 run_info_json["batch size"] = str(batch_size)
+run_info_json["lr"] = str(lr)
 run_info_json["results"] = []
 writeRunInfoFile(run_info_json)
 
@@ -310,6 +312,7 @@ for epoch in range(num_epochs):
     # For each batch in the dataloader
     i = 0
     for batch_of_keypoints_cropped, batch_of_keypoints_original, confidence_values, scaleFactor, x_displacement, y_displacement, batch_of_json_file in dataloader:
+        start = time.time()
         if epoch_idx == 0 and i == 0:
             print("INFORMATION FOR THE FIRST BATCH")
             print("batch_of_keypoints_cropped.shape", batch_of_keypoints_cropped.shape)
@@ -555,6 +558,9 @@ for epoch in range(num_epochs):
         
         i += 1
         step_absolute += 1
+        end = time.time()
+        print(f"Training step took {end - start}")
+                   
     print("---- end of epoch "+str(epoch)+"---")
     '''
     if batch_of_keypoints_cropped.size(0) < batch_size:

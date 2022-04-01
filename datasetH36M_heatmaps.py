@@ -34,11 +34,14 @@ import models
 import random
 import h36mIterator
 import normalization
+import time
+
 
 class JsonDataset(torch.utils.data.IterableDataset):
-    def __init__(self, inputpath_cropped, inputpath_original):
+    def __init__(self, inputpath_cropped, inputpath_original, HEATMAP_SIZE):
         self.inputpath_cropped = inputpath_cropped
         self.inputpath_original = inputpath_original
+        self.HEATMAP_SIZE=HEATMAP_SIZE
         #self.count = countFiles(self.inputpath_cropped, ".json")
         #self.jsonFiles = [f for f in listdir(self.inputpath_cropped) if isfile(join(self.inputpath_cropped, f)) and f.endswith("json") ]
         
@@ -50,6 +53,7 @@ class JsonDataset(torch.utils.data.IterableDataset):
         #Important, the scandir iterator needs to be created each time
         #buffer = []
         #self.scandirIterator = os.scandir(self.inputpath_original)
+        normalizer = normalization.NormalizationHeatmaps(outputRes=self.HEATMAP_SIZE, sigma=2)
         buffer_originals = []
         buffer_variations = []
         self.scandirIterator = h36mIterator.iterator()
@@ -57,16 +61,16 @@ class JsonDataset(torch.utils.data.IterableDataset):
             #We fill first a buffer of originals
             buffer_originals.append(keypoints_original)
             len_buffer_originals = len(buffer_originals)
-            if len_buffer_originals == 65536:
+            if len_buffer_originals == 10:#2048:#2048:#2048:#2048:#65536:
                 #Once the buffer is filled, we shuffle and obtain variations
                 print("shuffle buffer original full: ", len_buffer_originals)
                 print("sorting buffer originals...")
                 random.shuffle(buffer_originals)
                 print("generating variations...")
-
+                start = time.time()
                 for buffered_keypoints_original in buffer_originals:
 
-                    keypoints_original_norm, dummy, dummy, dummy = normalization.normalize(buffered_keypoints_original, keepConfidence=False)
+                    keypoints_original_norm, dummy, dummy, dummy = normalizer.normalize(buffered_keypoints_original, keepConfidence=False)
                     #keypoints_original_norm_noconfidence_flat = [item for sublist in keypoints_original_norm for item in sublist]
                     #keypoints_original_flat = torch.tensor(keypoints_original_norm_noconfidence_flat)
                     keypoints_original_norm = torch.tensor(keypoints_original_norm)
@@ -74,7 +78,7 @@ class JsonDataset(torch.utils.data.IterableDataset):
                     variations = openPoseUtils.crop(buffered_keypoints_original)               
                     for v_idx, keypoints_cropped in enumerate(variations):    
                         #The normalization is performed over the cropped skeleton
-                        keypoints_cropped_norm, scaleFactor, x_displacement, y_displacement = normalization.normalize(keypoints_cropped, keepConfidence=True)              
+                        keypoints_cropped_norm, scaleFactor, x_displacement, y_displacement = normalizer.normalize(keypoints_cropped, keepConfidence=True)              
                         #keypoints_cropped_norm, dummy, dummy, dummy = openPoseUtils.normalize(keypoints_cropped, keepConfidence=True)             
                         #dummy, dummy, dummy = openPoseUtils.normalize(keypoints_cropped, keepConfidence=True)             
                         
@@ -89,6 +93,8 @@ class JsonDataset(torch.utils.data.IterableDataset):
 
                         buffer_variations.append((keypoints_croppedFlatFloatTensor, keypoints_original_norm, confidence_values, scaleFactor, x_displacement, y_displacement, "unknown file"))
                         
+                end = time.time()
+                print(f"Runtime of the batch normalization is {end - start}")
                 len_variations = len(buffer_variations)
                 print("Variations generated: ", len_variations)
                 print("Shuffling variations...")

@@ -92,8 +92,9 @@ beta1 = 0.5
 # Number of GPUs available. Use 0 for CPU mode.
 ngpu = 0
 
+device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
 
-netG = models.Generator(channels=nc)
+netG = models.Generator(ngpu)
 netG.load_state_dict(torch.load(MODELPATH))
 #model.eval()
 
@@ -151,18 +152,21 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
     #fixed_noise_N = torch.randn(n, nz, device=device)
     fixed_noise_N = torch.randn(n, nz)
 
+    fixed_noise = torch.randn(batch_size, nz, 1, 1, device=device)
+
+
 
     #batch_of_one_keypoints_cropped = batch_of_one_keypoints_cropped.to(device)
     #fixed_noise_N = fixed_noise_N.to(device)
     netG.eval()
     #fake = netG(batch_of_one_keypoints_cropped, fixed_noise_N).detach().cpu()
-    fake = netG(batch_of_one_keypoints_cropped).detach().cpu()
+    fake = netG(fixed_noise).detach().cpu()
     #fake = batch_of_one_keypoints_cropped # DEBUG DOING NOTHING
 
     #print("cropped before restoring:", batch_of_one_keypoints_cropped[0])
     #print("fake before restoring:", fake[0])
     #print("batch_of_one_confidence_values:", batch_of_one_confidence_values[0])
-    fake = models.restoreOriginalKeypoints(fake, batch_of_one_keypoints_cropped, batch_of_one_confidence_values)
+    #fake = models.restoreOriginalKeypoints(fake, batch_of_one_keypoints_cropped, batch_of_one_confidence_values)
     #print("after restoring:", fake[0])
     netG.train()
     #fakeReshapedAsKeypoints = np.reshape(fake, (n, 25, 2))
