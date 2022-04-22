@@ -30,24 +30,25 @@ import h36mUtils
 #Before: pip install cdflib
 
 INPUTPATHS = [
-"/Volumes/ElementsDat/pose/H36M/H36M/2D/S1/MyPoseFeatures/D2_Positions/",
-"/Volumes/ElementsDat/pose/H36M/H36M/2D/S5/MyPoseFeatures/D2_Positions/",
-"/Volumes/ElementsDat/pose/H36M/H36M/2D/S6/MyPoseFeatures/D2_Positions/",
-"/Volumes/ElementsDat/pose/H36M/H36M/2D/S7/MyPoseFeatures/D2_Positions/",
-"/Volumes/ElementsDat/pose/H36M/H36M/2D/S8/MyPoseFeatures/D2_Positions/",
-"/Volumes/ElementsDat/pose/H36M/H36M/2D/S9/MyPoseFeatures/D2_Positions/",
-"/Volumes/ElementsDat/pose/H36M/H36M/2D/S11/MyPoseFeatures/D2_Positions/"
+"/2D/S1/MyPoseFeatures/D2_Positions/",
+"/2D/S5/MyPoseFeatures/D2_Positions/",
+"/2D/S6/MyPoseFeatures/D2_Positions/",
+"/2D/S7/MyPoseFeatures/D2_Positions/",
+"/2D/S8/MyPoseFeatures/D2_Positions/",
+"/2D/S9/MyPoseFeatures/D2_Positions/",
+"/2D/S11/MyPoseFeatures/D2_Positions/"
 ]
-OUTPUTPATH = "/Volumes/ElementsDat/pose/H36M/H36M/H36M"
+#OUTPUTPATH = "/Volumes/ElementsDat/pose/H36M/H36M/H36M"
 
-pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
+#pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
 
 
-def iterator():
+def iterator(datasetPath):
 	totalYield = 0
 	for directory in INPUTPATHS:
-		print("Processing "+directory)
-		scandirIterator = os.scandir(directory)
+		absoluteDirectory = datasetPath+directory
+		print("Processing "+absoluteDirectory)
+		scandirIterator = os.scandir(absoluteDirectory)
 		for item in scandirIterator:
 			#if files >= MAX:
 			#    break
@@ -55,7 +56,7 @@ def iterator():
 			#print(filename)
 			extension = os.path.splitext(filename)[1]
 			if extension == ".cdf":
-				path = join(directory, filename)
+				path = join(absoluteDirectory, filename)
 				cdf = cdflib.CDF(path)
 				#print(cdf.cdf_info())
 				pose = cdf.varget("Pose")
