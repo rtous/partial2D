@@ -51,7 +51,8 @@ def draw_pose(img, keypoints, threshold, keypoint_index_pairs, colors, haveThres
 
 def draw_pose_scale(img, keypoints, threshold, keypoint_index_pairs, colors, haveThreshold, thickness=2):        	
 	height, width = img.shape[:2]
-	keypoints_scaled = scale(keypoints, width/4)
+	#print("width=", width)
+	keypoints_scaled = scale(keypoints, width/4) #4 if image 64x64, 23 if 128x128
 	draw_pose(img, keypoints_scaled, threshold, keypoint_index_pairs, colors, haveThreshold, thickness)        
 
 def draw_keypoints(img, keypoints):   

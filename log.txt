@@ -161,5 +161,15 @@ low dimensional data
 - DONE: Tried with only joints that are in H36M and openpose (15). Great
 improvement of FPD!
 - Tried with wasserstein GAN. Unstable training. FPD results seems ok but around 15000
-
+--------------------------------------
+20-04-2022: 
+- Solved the speed problem with heatmaps (incresing the stride in the Discriminator?). But results still not good.
+- Tried to start from a simple autoencoder. Everything seems to work
+- Now try a simple DCGAN (using the decoder part of the autoencoder). 
+- This is not working, trying to solve the problem
+- Use tensorboard to display evolution
+- PROBLEM: Discriminator goes to zero, not learning
+- SOLUTION: cannot use a sigmoid layer and then binary cross entropy (BCE) loss. Remove sigmoid and use BCEWithLogitsLoss
+https://github.com/soumith/ganhacks/issues/36
+- Seems not to work...
 

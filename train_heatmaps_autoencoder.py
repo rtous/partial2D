@@ -31,7 +31,7 @@ import shutil
 import sys
 from torch.utils.tensorboard import SummaryWriter
 
-import models_heatmaps_DCGAN
+import models_heatmaps_autoencoder
 import dataset
 import datasetH36M_heatmaps
 import normalization
@@ -139,8 +139,7 @@ image_size = 30
 nc = 15
 
 # Size of z latent vector (i.e. size of generator input)
-nz = 1000
-noise_dim = 8 #1
+nz = 100
 
 # Size of feature maps in generator
 #ngf = 64
@@ -207,7 +206,7 @@ def weights_init(m):
 
 
 # Create the generator
-netG_ = models_heatmaps_DCGAN.Generator(nc)
+netG_ = models_heatmaps_autoencoder.Generator(channels=nc)
 netG = netG_.to(device)
 
 #Register my debug hook
@@ -224,53 +223,48 @@ netG.apply(weights_init)
 
 # Print the model
 print(netG)
-#pytorchUtils.explainModel(netG, 1, 1, 128, 128)
+#pytorchUtils.explainModel(netG, 1, 1, 28, 28)
 #pytorchUtils.computeModel(netG, 1, [{"layer":0, "output":7},{"layer":6, "output":14},{"layer":9, "output":28}])
 
 # Create the Discriminator
-netD_ = models_heatmaps_DCGAN.Discriminator(ngpu)
-netD = netD_.to(device)
+#netD_ = models_heatmaps.Discriminator(ngpu)
+#netD = netD_.to(device)
 
 #Register my debug hook
-if arguments.debug:
-	pytorchUtils.registerDebugHook(netD_)
+#if arguments.debug:
+#	pytorchUtils.registerDebugHook(netD_)
 
 # Handle multi-gpu if desired
-if (device.type == 'cuda') and (ngpu > 1):
-    netD = nn.DataParallel(netD, list(range(ngpu)))
+#if (device.type == 'cuda') and (ngpu > 1):
+#    netD = nn.DataParallel(netD, list(range(ngpu)))
 
 # Apply the weights_init function to randomly initialize all weights
 #  to mean=0, stdev=0.2.
-netD.apply(weights_init)
+#netD.apply(weights_init)
 
 # Print the model
-print(netD)
-pytorchUtils.explainModel(netD, 128, 128, 1, 1)
-#pytorchUtils.computeModel(netD, 1, [{"layer":0, "output":7},{"layer":6, "output":14},{"layer":9, "output":28}])
-
+#print(netD)
+#pytorchUtils.explainModel(netD, 28, 28, 1, 1)
 
 # Initialize BCELoss function
 #criterion = nn.BCELoss() according to https://github.com/soumith/ganhacks/issues/363
 #criterion = torch.nn.BCEWithLogitsLoss
 #criterion = nn.BCELoss() 
-
+lossFunctionAutoencoder = torch.nn.MSELoss()
 #lossFunctionD = nn.BCELoss() 
-lossFunctionD = nn.BCEWithLogitsLoss() 
-lossFunctionG_adversarial = nn.BCEWithLogitsLoss() 
 #lossFunctionG_adversarial = nn.BCELoss()#nn.MSELoss() 
-lossFunctionG_regression = torch.nn.L1Loss()
+#lossFunctionG_regression = torch.nn.L1Loss()
 
 # Create batch of latent vectors that we will use to visualize
 #  the progression of the generator
-#fixed_noise = torch.randn(batch_size, nz, device=device)
-fixed_noise = torch.randn(batch_size, nz, noise_dim, noise_dim, device=device)
+fixed_noise = torch.randn(batch_size, nz, device=device)
 
 # Establish convention for real and fake labels during training
 real_label = 1.
 fake_label = 0.
 
 # Setup Adam optimizers for both G and D
-optimizerD = optim.Adam(netD.parameters(), lr=lr, betas=(beta1, 0.999))
+#optimizerD = optim.Adam(netD.parameters(), lr=lr, betas=(beta1, 0.999))
 optimizerG = optim.Adam(netG.parameters(), lr=lr, betas=(beta1, 0.999))
 
 
@@ -339,11 +333,11 @@ for epoch in range(num_epochs):
         # (1) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
         ###########################
         ## Train with all-real batch
-        netD.zero_grad()
+        #netD.zero_grad()
      
      	#Batch of real labels
         label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
-        print("b_size=",b_size)
+        
         #print("***********************")
         #print("***********************")
         #print("batch_of_keypoints_cropped.shape=",batch_of_keypoints_cropped.shape)
@@ -358,38 +352,36 @@ for epoch in range(num_epochs):
 
         # Forward pass real batch through D
         # In a conditional GAN the input of the Discriminator not just the ouput, is a valid pair (condition-output)
-        startD = time.time()
-        print("Discriminator input: ", batch_of_keypoints_cropped.shape)
-        output = netD(batch_of_keypoints_original).view(-1)
-        endD = time.time()
-        print(f"Discriminator took {endD - startD}")
+        #startD = time.time()
+        #output = netD(batch_of_keypoints_cropped, batch_of_keypoints_original).view(-1)
+        #endD = time.time()
+        #print(f"Discriminator took {endD - startD}")
         #output = netD(batch_of_keypoints_cropped, batch_of_keypoints_original)
         
-        print("Discriminator output: ", output.shape)
+        #print("Discriminator output: ", output.shape)
         
         # Calculate loss on all-real batch
-        errD_real = lossFunctionD(output, label)
+        #errD_real = lossFunctionD(output, label)
         # Calculate gradients for D in backward pass
-        errD_real.backward()
-        D_x = output.mean().item()
+        #errD_real.backward()
+        #D_x = output.mean().item()
 
         ## Train with all-fake batch
         # Generate batch of latent vectors
-        
-
-        noise = torch.randn(b_size, nz, noise_dim, noise_dim, device=device)
-        
+        noise = torch.randn(b_size, nz, device=device)
         #print("Noise shape: ", noise.shape)
         
         # Generate fake image batch with G
         #batch_of_fake_original = netG(batch_of_keypoints_cropped, noise)
         startG = time.time()
         #batch_of_fake_original = netG(batch_of_keypoints_cropped, noise)
-        #batch_of_fake_original = netG(batch_of_keypoints_cropped)
-        batch_of_fake_original = netG(noise)
+        batch_of_fake_original = netG(batch_of_keypoints_original)
         endG = time.time()
         print(f"Generator took {endG - startG}")
-        print(f"Generator output shape", batch_of_fake_original.shape)
+        
+
+        errG = lossFunctionAutoencoder(batch_of_fake_original, batch_of_keypoints_original)
+
         #print("Generator output shape: ", batch_of_fake_original.shape)
 
         #Restore the original keypoints with confidence > CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS
@@ -401,27 +393,25 @@ for epoch in range(num_epochs):
        
         # Classify all fake batch with D
         # In a conditional GAN the input of the Discriminator not just the ouput, is a valid pair (condition-output)
-        print(f"Discriminator second input", batch_of_fake_original.shape)
-        output = netD(batch_of_fake_original.detach()).view(-1)
-        #output = netD(batch_of_fake_original).view(-1)
+        #output = netD(batch_of_keypoints_cropped, batch_of_fake_original.detach()).view(-1)
         
         # Calculate D's loss on the all-fake batch
-        errD_fake = lossFunctionD(output, label)
+        #errD_fake = lossFunctionD(output, label)
         
         # Calculate the gradients for this batch, accumulated (summed) with previous gradients
-        startDu = time.time()
-        errD_fake.backward()
+        #startDu = time.time()
+        #errD_fake.backward()
         
-        D_G_z1 = output.mean().item()
+        #D_G_z1 = output.mean().item()
         
         # Compute error of D as sum over the fake and the real batches
-        errD = errD_real + errD_fake
+        #errD = errD_real + errD_fake
         
         # Update D
         
-        optimizerD.step()
-        endDu = time.time()
-        print(f"optimizerD.step() took {endDu - startDu}")
+        #optimizerD.step()
+        #endDu = time.time()
+        #print(f"optimizerD.step() took {endDu - startDu}")
 
         ############################
         # (2) Update G network: maximize log(D(G(z)))
@@ -431,19 +421,19 @@ for epoch in range(num_epochs):
         label.fill_(real_label)  # fake labels are real for generator cost
         
         # Since we just updated D, perform another forward pass of all-fake batch through D
-        output = netD(batch_of_fake_original).view(-1)
+        #output = netD(batch_of_keypoints_cropped, batch_of_fake_original).view(-1)
         
         # Calculate G's loss based on this output
         #errG = criterion(output, label)
 
         ##############
 
-        g_adv = lossFunctionG_adversarial(output, label) #adversarial loss
-        g_pixel = lossFunctionG_regression(batch_of_fake_original, batch_of_keypoints_original) #pixel loss
+        #g_adv = lossFunctionG_adversarial(output, label) #adversarial loss
+        #g_pixel = lossFunctionG_regression(batch_of_fake_original, batch_of_keypoints_original) #pixel loss
 
         #errG = 0.25 * g_adv + 0.75 * g_pixel
 
-        errG = 1 * g_adv# + 0.5 * g_pixel
+        #errG = 0.5 * g_adv + 0.5 * g_pixel
 
         #errG = 0.001 * g_adv + 0.999 * g_pixel
         
@@ -452,7 +442,7 @@ for epoch in range(num_epochs):
         # Calculate gradients for G
         errG.backward()
         
-        D_G_z2 = output.mean().item()
+        #D_G_z2 = output.mean().item()
         
         # Update G
         optimizerG.step()
@@ -461,25 +451,19 @@ for epoch in range(num_epochs):
 
 
         tb.add_scalar("LossG", errG.item(), step_absolute)
-        tb.add_scalar("g_adv", g_adv.item(), step_absolute)
-        tb.add_scalar("g_pixel", g_pixel.item(), step_absolute)
-        tb.add_scalar("LossD", errD.item(), step_absolute)
-        tb.add_scalar("errD_real", errD_real.item(), step_absolute)
-        tb.add_scalar("errD_fake", errD_fake.item(), step_absolute)
+        #tb.add_scalar("g_adv", g_adv.item(), step_absolute)
+        #tb.add_scalar("g_pixel", g_pixel.item(), step_absolute)
+        #tb.add_scalar("LossD", errD.item(), step_absolute)
+        #tb.add_scalar("errD_real", errD_real.item(), step_absolute)
+        #tb.add_scalar("errD_fake", errD_fake.item(), step_absolute)
 
         # Output training stats each 50 batches
         if i % 50 == 0:
             print("WARNING: generator noise disabled")
             print("**************************************************************")
-            print('[%d/%d][%d/?]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f'
+            print('[%d/%d][%d/?]\tLoss_D: -\tLoss_G: %.4f\tD(x): -\tD(G(z)): - /-'
                   % (epoch, num_epochs, i, #len(dataloader),
-                     errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
-            print('errD_real: %.4f, errD_fake: %.4f\t'
-                  % (errD_real.item(), errD_fake.item()))
-
-            print('loss g_adv: %.4f, loss g_pixel: %.4f\t'
-                  % (g_adv.item(), g_pixel.item()))
-
+                     errG.item()))
         # Save model and display the first 64 results each 1000 batches
         if i % 100 == 0: 
             torch.save(netG.state_dict(), OUTPUTPATH+"/model/model_epoch"+str(epoch)+"_batch"+str(i)+".pt")
@@ -489,7 +473,7 @@ for epoch in range(num_epochs):
 
             with torch.no_grad():
                 #fake = netG(batch_of_keypoints_cropped, fixed_noise).detach().cpu()
-                fake = netG(fixed_noise).detach().cpu()
+                fake = netG(batch_of_keypoints_original).detach().cpu()
                 #We restore the original keypoints (before denormalizing)
                 
                 #fake = torch.tensor(normalization.nullPoseBatch(len(batch_of_keypoints_cropped), normalization.HEATMAP_WIDTH, batch_size))
@@ -515,8 +499,8 @@ for epoch in range(num_epochs):
 
             NUM_ROWS = 8
             NUM_COLS = 8
-            WIDTH = 64
-            HEIGHT = 64
+            WIDTH = 128
+            HEIGHT = 128
             imagesCropped = np.empty(shape=(NUM_ROWS, NUM_COLS),dtype='object')
             images = np.empty(shape=(NUM_ROWS, NUM_COLS),dtype='object')
             imagesOriginal = np.empty(shape=(NUM_ROWS, NUM_COLS),dtype='object')
@@ -587,7 +571,6 @@ for epoch in range(num_epochs):
                 cv2.imwrite(targetFilePathCropped, total_imageCropped)
                 cv2.imwrite(targetFilePath, total_image)
                 cv2.imwrite(targetFilePathOriginal, total_imageOriginal)
-                print("written images into ", OUTPUTPATH)
             except Exception:
                 print("WARNING: Cannot draw tile ")
                 traceback.print_exc()
@@ -598,14 +581,14 @@ for epoch in range(num_epochs):
             
         # Save Losses for plotting later
         G_losses.append(errG.item())
-        D_losses.append(errD.item())
+        #D_losses.append(errD.item())
 
         iters += 1
         
         i += 1
         step_absolute += 1
         end = time.time()
-        print(f"Training step {i-1} took {end - start}")
+        print(f"Training step took {end - start}")
     print("---- end of epoch "+str(epoch)+"---")
     '''
     if batch_of_keypoints_cropped.size(0) < batch_size:
