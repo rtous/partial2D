@@ -140,7 +140,7 @@ nc = 15
 
 # Size of z latent vector (i.e. size of generator input)
 nz = 1000
-noise_dim = 8 #1
+noise_dim = 1 #8
 
 # Size of feature maps in generator
 #ngf = 64
@@ -154,7 +154,7 @@ ndf = 16
 num_epochs = 100
 
 # Learning rate for optimizers
-lr = 0.0002
+lr = 0.0002#0.0002
 
 # Beta1 hyperparam for Adam optimizers
 beta1 = 0.5
@@ -207,7 +207,7 @@ def weights_init(m):
 
 
 # Create the generator
-netG_ = models_heatmaps_DCGAN.Generator(nc)
+netG_ = models_heatmaps_DCGAN.Generator(nc, nz)
 netG = netG_.to(device)
 
 #Register my debug hook
@@ -254,10 +254,10 @@ pytorchUtils.explainModel(netD, 128, 128, 1, 1)
 #criterion = torch.nn.BCEWithLogitsLoss
 #criterion = nn.BCELoss() 
 
-#lossFunctionD = nn.BCELoss() 
-lossFunctionD = nn.BCEWithLogitsLoss() 
-lossFunctionG_adversarial = nn.BCEWithLogitsLoss() 
-#lossFunctionG_adversarial = nn.BCELoss()#nn.MSELoss() 
+lossFunctionD = nn.BCELoss() 
+#lossFunctionD = nn.BCEWithLogitsLoss() 
+#lossFunctionG_adversarial = nn.BCEWithLogitsLoss() 
+lossFunctionG_adversarial = nn.BCELoss()#nn.MSELoss() 
 lossFunctionG_regression = torch.nn.L1Loss()
 
 # Create batch of latent vectors that we will use to visualize
@@ -379,7 +379,7 @@ for epoch in range(num_epochs):
 
         noise = torch.randn(b_size, nz, noise_dim, noise_dim, device=device)
         
-        #print("Noise shape: ", noise.shape)
+        print("Noise shape: ", noise.shape)
         
         # Generate fake image batch with G
         #batch_of_fake_original = netG(batch_of_keypoints_cropped, noise)
