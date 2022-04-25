@@ -70,7 +70,7 @@ image_size = 50
 nc = 15
 
 # Size of z latent vector (i.e. size of generator input)
-nz = 100
+nz = 1000
 
 # Size of feature maps in generator
 #ngf = 64
@@ -94,7 +94,7 @@ ngpu = 0
 
 device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
 
-netG = models.Generator(ngpu)
+netG = models.Generator(nc, nz)
 netG.load_state_dict(torch.load(MODELPATH))
 #model.eval()
 
@@ -114,7 +114,7 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
     jsonFiles = [f for f in listdir(keypointsPath) if isfile(join(keypointsPath, f))]
     n = 0
     for filename in jsonFiles:
-        #print('Testing '+filename)
+        print('Testing '+filename)
         try:
             #keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(keypointsPath, filename))
             
