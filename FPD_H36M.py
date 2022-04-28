@@ -34,6 +34,8 @@ DATASET3="data/H36Mtest"
 #DATASET3="dynamicData/ECCV18OP_test"
 DATASET4="data/H36Mtest_original_noreps"
 
+DATASET_H36M="/Volumes/ElementsDat/pose/H36M/H36M"
+
 #DATASET2="/Volumes/ElementsDat/pose/COCO/ruben_structure/keypoints_openpose_format"
 #DATASET2="data/output/COCOlite"
 #DATASET2="dynamicData/H36M_ECCV18_HOLLYWOOD_test"
@@ -89,7 +91,7 @@ def calculate_fid(act1, act2):
 
 def readDatasetH36M(size, dims):
 	vectors = numpy.zeros(shape=(size, dims))
-	scandirIterator = h36mIterator.iterator()
+	scandirIterator = h36mIterator.iterator(DATASET_H36M)
 	i = 0
 	for keypoints in scandirIterator:
 		if i == 0:

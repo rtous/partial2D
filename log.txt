@@ -173,4 +173,22 @@ improvement of FPD!
 https://github.com/soumith/ganhacks/issues/36
 - Seems not to work...
 - SOLVED! La DCGAN funciona si replico lo del faces. el noise són 100 heatmaps de 1x1. He copiat el seu Generator i voilà...
+---------------------------------------------
+27-04-2022
+- Trying now with the conditional GAN
+- It does not work. One problem I see is that regression loss is almost zero.
+- Found this: 
+https://discuss.pytorch.org/t/mse-l2-loss-on-two-masked-images/28417/3
+- pixel wise Euclidean loss
+https://www.reddit.com/r/deeplearning/comments/ia8fec/survey_on_loss_for_heatmap_regression/
+---------------------------------------------
+28-04-2022
+
+- I disabled the GAN and using just regression. Initially it didn't work
+- Getting inspiration from my autoencoder I set normalize=True in the last downsample layer and it works! but it replicates the same output...
+- I see that the autoencoder has normalize=True also in the last upsample layer... I tried it but does not make any difference
+- I tried with more data buffer and... seems to work :-)
+
+data/output/H36M/TEST/keypoints size=1000
+FID: 11497.921
 

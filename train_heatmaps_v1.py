@@ -396,7 +396,7 @@ for epoch in range(num_epochs):
         print(CRED + "WARNING: keypoints restauration disabled (DEBUGGING)" + CEND)
         print(CRED + "(when testing too)" + CEND)
         
-        batch_of_fake_original = models_heatmaps.restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, confidence_values)
+        #batch_of_fake_original = models_heatmaps.restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, confidence_values)
 
         #As they are fake images let's prepare a batch of labels FAKE
         label.fill_(fake_label)
@@ -504,8 +504,8 @@ for epoch in range(num_epochs):
                 #fake = torch.tensor(normalization.nullPoseBatch(len(batch_of_keypoints_cropped), normalization.HEATMAP_WIDTH, batch_size))
                 #onesConfidentValuesBatch = normalization.onesConfidentValuesBatch(len(batch_of_keypoints_cropped[0]), batch_size)
                 
-           
-                fake = models_heatmaps.restoreOriginalKeypoints(fake, batch_of_keypoints_cropped, confidence_values)
+                #DEBUG
+                #fake = models_heatmaps.restoreOriginalKeypoints(fake, batch_of_keypoints_cropped, confidence_values)
                 
                 #print(fake[0][0])
                 #print(batch_of_keypoints_cropped[0][0])

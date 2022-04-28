@@ -243,7 +243,7 @@ def json2KeypointsFlat(path):
 
     return keypointsFlat
 
-def json2Keypoints(path):
+def json2Keypoints(path, only15joints=False):
      
     keypointsFlat = json2KeypointsFlat(path)
 
@@ -255,15 +255,16 @@ def json2Keypoints(path):
         list(map(float, keypointsFlat[2::3]))  
     ))
 
+    if only15joints:
+        keypoints = poseUtilsBaseline.first15Keypoints(keypoints)
+
     return keypoints
 
 def json2normalizedKeypoints(path, only15joints=False):
 
-    keypoints = json2Keypoints(path)
+    keypoints = json2Keypoints(path, only15joints)
 
-    if only15joints:
-        keypoints = poseUtilsBaseline.first15Keypoints(keypoints)
-
+    
 
     #boneSpineIndex = REFERENCE_JOINT_PAIR_INDEX
 

@@ -36,160 +36,16 @@ ngf = 16
 ndf = 4#16
 
 NEURONS_PER_LAYER_GENERATOR = 32
-'''
-class Generator(nn.Module):
-    #Receives a noise vector (nz dims) + keypoints cropped (50 dims)
-    def __init__(self, ngpu):
-        super(Generator, self).__init__()
-        self.ngpu = ngpu
-        self.main = nn.Sequential(
-            nn.ConvTranspose2d( in_channels=nz, out_channels=ngf * 4, kernel_size=(4,4), stride=(1,1), padding=(0,0), bias=False),
-            nn.BatchNorm2d(num_features=ngf * 4),
-            nn.ReLU(True),
-            # state size. (ngf*8) x 4 x 4   
-
-            nn.ConvTranspose2d( in_channels=ngf * 4, out_channels=ngf * 2, kernel_size=(3,3), stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(ngf * 2),
-            nn.ReLU(True),
-            # state size. (ngf) x 32 x 32         
-
-            nn.ConvTranspose2d( in_channels=ngf * 2, out_channels=ngf, kernel_size=(4,4), stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(ngf),
-            nn.ReLU(True),
-            # state size. (ngf) x 32 x 32
-
-            nn.ConvTranspose2d( in_channels=ngf, out_channels=nc, kernel_size=(4,4), stride=2, padding=1, bias=False),
-            nn.Tanh()
-        )
-
-    def forward(self, batch_of_keypoints_cropped, noise):
-        #input = torch.cat((batch_of_keypoints_cropped, noise), -1)
-        input = batch_of_keypoints_cropped
-        return self.main(input)
-'''
 
 def noiseSquareBatch(outputRes, batchsize):
     #noiseSquareBatch = np.zeros((batchsize, 1, outputRes, outputRes), dtype="float32")
     noiseSquareBatch = np.random.random_sample((batchsize, 1, outputRes, outputRes)).astype('float32')
     return noiseSquareBatch
-'''
-#FOR 128 pixels
-class Generator(nn.Module):
-    def __init__(self, ngpu):
-        super(Generator, self).__init__()
-        self.ngpu = ngpu
-        self.main = nn.Sequential(
-            # input is Z, going into a convolution
-            #nn.ConvTranspose2d( in_channels=nz, out_channels=ngf * 8, kernel_size=(4,4), stride=(1,1), padding=(0,0), bias=False),
-            nn.ConvTranspose2d( in_channels=nz, out_channels=ngf * 4, kernel_size=(8,8), stride=(1,1), padding=(0,0), bias=False),
-            #nn.BatchNorm2d(num_features=ngf * 8),
-            nn.BatchNorm2d(num_features=ngf * 4),
-            nn.ReLU(True),
-            # state size. (ngf*8) x 4 x 4
-            
-            #nn.ConvTranspose2d(in_channels=ngf * 8, out_channels=ngf * 4, kernel_size=4, stride=2, padding=1, bias=False),
-            #nn.BatchNorm2d(ngf * 4),
-            #nn.ReLU(True),
-            # state size. (ngf*4) x 8 x 8
-            
-            #nn.ConvTranspose2d( in_channels=ngf * 4, out_channels=ngf, kernel_size=34, stride=2, padding=1, bias=False),
-            #nn.BatchNorm2d(ngf),
-            nn.ConvTranspose2d( in_channels=ngf * 4, out_channels=ngf * 2, kernel_size=4, stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(ngf * 2),
-            nn.ReLU(True),
-            # state size. (ngf*2) x 16 x 16
-            
-            nn.ConvTranspose2d( in_channels=ngf * 2, out_channels=ngf, kernel_size=4, stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(ngf),
-            nn.ReLU(True),
-            # state size. (ngf) x 32 x 32
-            
-            nn.ConvTranspose2d( in_channels=ngf, out_channels=nc, kernel_size=4, stride=2, padding=1, bias=False),
-            nn.Tanh()
-            # state size. (nc) x 64 x 64
-        )
 
-    def forward(self, input):
-        return self.main(input)
-'''
-'''
-#For 64 pixels
-class Generator(nn.Module):
-    def __init__(self, ngpu):
-        super(Generator, self).__init__()
-        self.ngpu = ngpu
-        self.main = nn.Sequential(
-            # input is Z, going into a convolution
-            #nn.ConvTranspose2d( in_channels=nz, out_channels=ngf * 8, kernel_size=(4,4), stride=(1,1), padding=(0,0), bias=False),
-            nn.ConvTranspose2d( in_channels=nz, out_channels=ngf * 4, kernel_size=(8,8), stride=(1,1), padding=(0,0), bias=False),
-            #nn.BatchNorm2d(num_features=ngf * 8),
-            nn.BatchNorm2d(num_features=ngf * 4),
-            nn.ReLU(True),
-            # state size. (ngf*8) x 4 x 4
-            
-            #nn.ConvTranspose2d(in_channels=ngf * 8, out_channels=ngf * 4, kernel_size=4, stride=2, padding=1, bias=False),
-            #nn.BatchNorm2d(ngf * 4),
-            #nn.ReLU(True),
-            # state size. (ngf*4) x 8 x 8
-            
-            #nn.ConvTranspose2d( in_channels=ngf * 4, out_channels=ngf, kernel_size=34, stride=2, padding=1, bias=False),
-            #nn.BatchNorm2d(ngf),
-            nn.ConvTranspose2d( in_channels=ngf * 4, out_channels=ngf * 2, kernel_size=4, stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(ngf * 2),
-            nn.ReLU(True),
-            # state size. (ngf*2) x 16 x 16
-            
-            nn.ConvTranspose2d( in_channels=ngf * 2, out_channels=ngf, kernel_size=4, stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(ngf),
-            nn.ReLU(True),
-            # state size. (ngf) x 32 x 32
-            
-            nn.ConvTranspose2d( in_channels=ngf, out_channels=nc, kernel_size=4, stride=2, padding=1, bias=False),
-            nn.Tanh()
-            # state size. (nc) x 64 x 64
-        )
-
-    def forward(self, input):
-        return self.main(input)
-'''
-#For 64 pixels
-class Discriminator(nn.Module):
-    def __init__(self, ngpu):
-        super(Discriminator, self).__init__()
-        self.ngpu = ngpu
-        self.main = nn.Sequential(
-            # input is (nc) x 64 x 64
-            nn.Conv2d(nc, ndf, 4, 2, 1, bias=False),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf) x 32 x 32
-            nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ndf * 2),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*2) x 16 x 16
-            nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ndf * 4),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*4) x 8 x 8
-            nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ndf * 8),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*8) x 4 x 4
-            nn.Conv2d(ndf * 8, 1, 4, 1, 0, bias=False),
-            nn.Sigmoid()
-        )
-
-    def forward(self, batch_of_keypoints_original):
-        #print("Discriminator input shape befor concat: batch_of_keypoints_cropped.shape=",batch_of_keypoints_cropped.shape)
-        #print("Discriminator input shape befor concat: batch_of_keypoints_original.shape=",batch_of_keypoints_original.shape)
-        
-        #Mirar això: https://www.tensorflow.org/tutorials/generative/pix2pix
-        #input = torch.cat((batch_of_keypoints_cropped, batch_of_keypoints_original), -3)  
-        
-        input = batch_of_keypoints_original
-        return self.main(input)
-class Generator(nn.Module):
+class Generator64(nn.Module):
+#v1 (64 pixels)
     def __init__(self, channels, nz, addNoise=False):
-        super(Generator, self).__init__()
+        super(Generator64, self).__init__()
         self.nc = channels
         self.addNoise = addNoise
         self.nz = nz
@@ -225,60 +81,90 @@ class Generator(nn.Module):
         )
     def forward(self, input):
         return self.main(input)
-'''
-class Generator(nn.Module):
-    #Channels = nc + 1 (1 for the noise)
-    def __init__(self, channels, addNoise=False):
-        super(Generator, self).__init__()
-        self.channels = channels
+
+
+#FOR 128 pixels
+class Generator128(nn.Module):
+    def __init__(self, channels, nz, addNoise=False):
+        super(Generator128, self).__init__()
+        self.nc = channels
         self.addNoise = addNoise
-        if self.addNoise:
-            self.input_channels = self.channels+1
-        else:
-            self.input_channels = self.channels  
-
-        def downsample(in_feat, out_feat, normalize=True, relu=True):
-            layers = [nn.Conv2d(in_channels=in_feat, out_channels=out_feat, kernel_size=4, stride=2, padding=1)]
-            if normalize:
-                layers.append(nn.BatchNorm2d(out_feat, 0.8))
-            if relu:
-                layers.append(nn.LeakyReLU(0.2))
-            return layers
-
-        def upsample(in_feat, out_feat, normalize=True, relu=True):
-            layers = [nn.ConvTranspose2d(in_channels=in_feat, out_channels=out_feat, kernel_size=4, stride=2, padding=1)]
-            if normalize:
-                layers.append(nn.BatchNorm2d(out_feat, 0.8))
-            if relu:
-                layers.append(nn.ReLU())
-            return layers
-
-        self.model = nn.Sequential(
-            #With more layers it works worst
-            *upsample(1000, 64),
-            *upsample(64, 32),
-            *upsample(32, self.channels, normalize=False, relu=False),
-            #nn.Conv2d(in_channels=64, out_channels=channels, kernel_size=4, stride=2, padding=1),
-            nn.Tanh() 
+        self.nz = nz
+        self.main = nn.Sequential(
+            # input is Z, going into a convolution
+            #nn.ConvTranspose2d( in_channels=nz, out_channels=ngf * 8, kernel_size=(4,4), stride=(1,1), padding=(0,0), bias=False),
+            nn.ConvTranspose2d( in_channels=nz, out_channels=ngf * 8, kernel_size=8, stride=2, padding=0, bias=False),
+            #nn.BatchNorm2d(num_features=ngf * 8),
+            nn.BatchNorm2d(num_features=ngf * 8),
+            nn.ReLU(True),
+            # state size. (ngf*8) x 4 x 4
+            
+            nn.ConvTranspose2d(in_channels=ngf * 8, out_channels=ngf * 4, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(ngf * 4),
+            nn.ReLU(True),
+            # state size. (ngf*4) x 8 x 8
+            
+            #nn.ConvTranspose2d( in_channels=ngf * 4, out_channels=ngf, kernel_size=34, stride=2, padding=1, bias=False),
+            #nn.BatchNorm2d(ngf),
+            nn.ConvTranspose2d( in_channels=ngf * 4, out_channels=ngf * 2, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(ngf * 2),
+            nn.ReLU(True),
+            # state size. (ngf*2) x 16 x 16
+            
+            nn.ConvTranspose2d( in_channels=ngf * 2, out_channels=ngf, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(ngf),
+            nn.ReLU(True),
+            # state size. (ngf) x 32 x 32
+            
+            nn.ConvTranspose2d( in_channels=ngf, out_channels=nc, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.Tanh()
+            # state size. (nc) x 64 x 64
         )
-        
-    #About noise in cGAN: https://arxiv.org/pdf/1905.02135.pdf
+
     def forward(self, input):
-        #print("Generator received: ", x.shape)
-        #print("Generator...")
-        batchsize = input.shape[0]
-        #channels = x.shape[1]
-        outputRes = input.shape[2]
-        print("batchsize=", batchsize)
-        print("outputRes=", outputRes)
-        print("Generator input shape", input.shape)
-        return self.model(input)
-'''
-'''
-#128 pixels?
-class Discriminator(nn.Module):
+        return self.main(input)
+
+
+#For 64 pixels
+class Discriminator64(nn.Module):
     def __init__(self, ngpu):
-        super(Discriminator, self).__init__()
+        super(Discriminator64, self).__init__()
+        self.ngpu = ngpu
+        self.main = nn.Sequential(
+            # input is (nc) x 64 x 64
+            nn.Conv2d(nc, ndf, 4, 2, 1, bias=False),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf) x 32 x 32
+            nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 2),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*2) x 16 x 16
+            nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 4),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*4) x 8 x 8
+            nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 8),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*8) x 4 x 4
+            nn.Conv2d(ndf * 8, 1, 4, 1, 0, bias=False),
+            nn.Sigmoid()
+        )
+
+    def forward(self, batch_of_keypoints_original):
+        #print("Discriminator input shape befor concat: batch_of_keypoints_cropped.shape=",batch_of_keypoints_cropped.shape)
+        #print("Discriminator input shape befor concat: batch_of_keypoints_original.shape=",batch_of_keypoints_original.shape)
+        
+        #Mirar això: https://www.tensorflow.org/tutorials/generative/pix2pix
+        #input = torch.cat((batch_of_keypoints_cropped, batch_of_keypoints_original), -3)  
+        
+        input = batch_of_keypoints_original
+        return self.main(input)
+
+#128 pixels?
+class Discriminator128(nn.Module):
+    def __init__(self, ngpu):
+        super(Discriminator128, self).__init__()
         self.ngpu = ngpu
         self.main = nn.Sequential(
             # input is (nc) x 64 x 64
@@ -302,7 +188,7 @@ class Discriminator(nn.Module):
             nn.Sigmoid()
         )
 
-    def forward(self, batch_of_keypoints_cropped, batch_of_keypoints_original):
+    def forward(self, batch_of_keypoints_original):
         #print("Discriminator input shape befor concat: batch_of_keypoints_cropped.shape=",batch_of_keypoints_cropped.shape)
         #print("Discriminator input shape befor concat: batch_of_keypoints_original.shape=",batch_of_keypoints_original.shape)
         
@@ -315,7 +201,7 @@ class Discriminator(nn.Module):
         #print("Discriminator input[0] after concat:",input[0][0])
         #print("Discriminator...")
         return self.main(input)
-'''
+
 def restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, batch_of_confidence_values):
     '''
     print("DEBUGGING restoreOriginalKeypoints...")

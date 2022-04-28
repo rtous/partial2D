@@ -207,7 +207,7 @@ def weights_init(m):
 
 
 # Create the generator
-netG_ = models_heatmaps_DCGAN.Generator(nc, nz)
+netG_ = models_heatmaps_DCGAN.Generator64(nc, nz)
 netG = netG_.to(device)
 
 #Register my debug hook
@@ -228,7 +228,7 @@ print(netG)
 #pytorchUtils.computeModel(netG, 1, [{"layer":0, "output":7},{"layer":6, "output":14},{"layer":9, "output":28}])
 
 # Create the Discriminator
-netD_ = models_heatmaps_DCGAN.Discriminator(ngpu)
+netD_ = models_heatmaps_DCGAN.Discriminator64(ngpu)
 netD = netD_.to(device)
 
 #Register my debug hook

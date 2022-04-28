@@ -117,7 +117,7 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
         try:
             #keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(keypointsPath, filename))
             
-            keypoints_cropped = openPoseUtils.json2Keypoints(join(keypointsPath, filename))
+            keypoints_cropped = openPoseUtils.json2Keypoints(join(keypointsPath, filename), only15joints=True)
 
             keypoints_cropped_norm, scaleFactor, x_displacement, y_displacement = normalizer.normalize(keypoints_cropped, keepConfidence=True)              
 
@@ -257,7 +257,7 @@ def testImage(netG, outputPath, imagePath, keypointsPath):
 
 	
 #CHARADE DATASET
-#testMany(netG, DATASET_CHARADE, DATASET_CHARADE_IMAGES, OUTPUTPATH, "/CHARADE", ".png")
+testMany(netG, DATASET_CHARADE, DATASET_CHARADE_IMAGES, OUTPUTPATH, "/CHARADE", ".png")
 
 testMany(netG, DATASET_TEST, DATASET_TEST_IMAGES, OUTPUTPATH, "/TEST", ".jpg", False)
 

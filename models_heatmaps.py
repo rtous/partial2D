@@ -110,6 +110,7 @@ class Generator(nn.Module):
             *upsample(32, self.channels, normalize=False, relu=False),
             #nn.Conv2d(in_channels=64, out_channels=channels, kernel_size=4, stride=2, padding=1),
             nn.Tanh() 
+            #nn.Sigmoid()
         )
         '''
         self.model = nn.Sequential(
@@ -125,26 +126,32 @@ class Generator(nn.Module):
         )
         '''
     #About noise in cGAN: https://arxiv.org/pdf/1905.02135.pdf
+    #For instance, assume the shape of current layer is C × H × W
+    #the Gaussian noise nz × 1 × 1 is spatially replicated to nz × H × W along H and W dimension. 
+    #After concatenation along channel dimension, the shape of resulting concatenated layer will be (C + nz) × H × W.
     def forward(self, input):
         #print("Generator received: ", x.shape)
         #print("Generator...")
         batchsize = input.shape[0]
-        #channels = x.shape[1]
+        channels = input.shape[1]
         outputRes = input.shape[2]
         print("batchsize=", batchsize)
         print("outputRes=", outputRes)
         if self.addNoise:
-            noise = torch.tensor(noiseSquareBatch(outputRes, batchsize))
-            input = torch.cat((input, noise), -3) 
+            #noise = torch.randn(batchsize, channels, 1, 1)
+            noise = torch.FloatTensor(batchsize, 1, outputRes, outputRes).normal_(0, 1)
+            #noise = torch.Variable(noise)
+            #noise = torch.tensor(noiseSquareBatch(outputRes, batchsize))
+            input = torch.cat((input, noise), 1) 
         else:
             print("WARING: Not adding noise to the input.") 
         return self.model(input)
 
-'''
+
 NEURONS_PER_LAYER_DISCRIMINATOR = 16
-class Discriminator(nn.Module):
+class Discriminator64(nn.Module):
     def __init__(self, ngpu):
-        super(Discriminator, self).__init__()
+        super(Discriminator64, self).__init__()
         self.ngpu = ngpu
         self.main = nn.Sequential(
             # input is (nc) x 64 x 64
@@ -163,9 +170,20 @@ class Discriminator(nn.Module):
             nn.Conv2d(in_channels=ndf * 4, out_channels=1, kernel_size=(2,2), stride=2, padding=0, bias=False),
             nn.Sigmoid()
         )
-'''
+    def forward(self, batch_of_keypoints_cropped, batch_of_keypoints_original):
+        #print("Discriminator input shape befor concat: batch_of_keypoints_cropped.shape=",batch_of_keypoints_cropped.shape)
+        #print("Discriminator input shape befor concat: batch_of_keypoints_original.shape=",batch_of_keypoints_original.shape)
+        
+        #Mirar això: https://www.tensorflow.org/tutorials/generative/pix2pix
+        input = torch.cat((batch_of_keypoints_cropped, batch_of_keypoints_original), -3)  
+        #print("Discriminator input shape:",input.shape)
+        # Hauria de ser (batch_size, 128, 128, channels*2)
+        #print("Discriminator input[0] after concat:",input[0][0])
+        #print("Discriminator...")
+        return self.main(input)
+
 #NEURONS_PER_LAYER_DISCRIMINATOR = 4
-class Discriminator(nn.Module):
+class Discriminator128(nn.Module):
     def __init__(self, ngpu):
         super(Discriminator, self).__init__()
         self.ngpu = ngpu
@@ -211,7 +229,7 @@ def restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped,
     '''
     
     #batch_of_fake_original_ = batch_of_fake_original.copy()
-    batch_of_fake_original_ = batch_of_fake_original.detach()
+    batch_of_fake_original_ = batch_of_fake_original.clone()
 
     for i, keypoints in enumerate(batch_of_fake_original):
         #if i == 0:
