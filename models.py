@@ -30,6 +30,7 @@ ngf = 16
 ndf = 16
 
 NEURONS_PER_LAYER_GENERATOR = 256
+NEURONS_PER_LAYER_GENERATOR_EMBEDDING = 128
 class Generator(nn.Module):
     #Receives a noise vector (nz dims) + keypoints cropped (50 dims)
     def __init__(self, ngpu):
@@ -41,11 +42,11 @@ class Generator(nn.Module):
           nn.BatchNorm1d(NEURONS_PER_LAYER_GENERATOR, 0.8),
           nn.LeakyReLU(0.25),
           # Second upsampling
-          nn.Linear(NEURONS_PER_LAYER_GENERATOR, NEURONS_PER_LAYER_GENERATOR, bias=False),
-          nn.BatchNorm1d(NEURONS_PER_LAYER_GENERATOR, 0.8),
+          nn.Linear(NEURONS_PER_LAYER_GENERATOR, NEURONS_PER_LAYER_GENERATOR_EMBEDDING, bias=False),
+          nn.BatchNorm1d(NEURONS_PER_LAYER_GENERATOR_EMBEDDING, 0.8),
           nn.LeakyReLU(0.25),
           # Third upsampling
-          nn.Linear(NEURONS_PER_LAYER_GENERATOR, NEURONS_PER_LAYER_GENERATOR, bias=False),
+          nn.Linear(NEURONS_PER_LAYER_GENERATOR_EMBEDDING, NEURONS_PER_LAYER_GENERATOR, bias=False),
           nn.BatchNorm1d(NEURONS_PER_LAYER_GENERATOR, 0.8),
           nn.LeakyReLU(0.25),
           # Final upsampling
