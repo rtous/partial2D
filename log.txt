@@ -191,4 +191,8 @@ https://www.reddit.com/r/deeplearning/comments/ia8fec/survey_on_loss_for_heatmap
 
 data/output/H36M/TEST/keypoints size=1000
 FID: 11497.921
+---------------------------------------------
+29-04-2022
+- Recapitulem. Sense heatmaps (epoch 4, step 12000) obtinc 5063.359. Amb heatmaps uns 8000 aprox. 
+
 

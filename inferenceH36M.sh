@@ -7,7 +7,7 @@ DATASET_TEST="data/H36Mtest"
 DATASET_TEST_IMAGES="UNKNOWN"
 #DATASET_TEST="dynamicData/ECCV18OP_test_crop"
 #DATASET_TEST_IMAGES="/Volumes/ElementsDat/pose/H36M/ECCV2018/ECCV18_Challenge/Train/IMG/"
-MODELPATH="data/output/H36M/model/model_epoch0_batch10000.pt"
+MODELPATH="data/output/H36M/model/model_epoch4_batch12000.pt"
 MODEL="models"
 ONLY15=1
 

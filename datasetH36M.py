@@ -51,7 +51,7 @@ class JsonDataset(torch.utils.data.IterableDataset):
         #self.scandirIterator = os.scandir(self.inputpath_original)
         buffer_originals = []
         buffer_variations = []
-        self.scandirIterator = h36mIterator.iterator()
+        self.scandirIterator = h36mIterator.iterator(self.inputpath_original)
         for keypoints_original in self.scandirIterator:
             #We fill first a buffer of originals
             buffer_originals.append(keypoints_original)

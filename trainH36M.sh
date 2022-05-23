@@ -1,5 +1,5 @@
 DATASET_CROPPED="NOTSPECIFIED"
-DATASET_ORIGINAL="/Volumes/ElementsDat/pose/H36M/H36M/H36M/"
+DATASET_ORIGINAL="/Volumes/ElementsDat/pose/H36M/H36M"
 #DATASET_ORIGINAL="/Volumes/ElementsDat/pose/H36M/ECCV2018/ECCV18OD_no_sufix"
 OUTPUTPATH="data/output/H36M"
 DATASET_CHARADE="/Users/rtous/DockerVolume/charade/input/keypoints"
