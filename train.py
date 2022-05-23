@@ -252,7 +252,7 @@ pytorchUtils.explainModel(netD, 28, 28, 1, 1)
 #criterion = nn.BCELoss() 
 lossFunctionD = nn.BCELoss() 
 lossFunctionG_adversarial = nn.BCELoss() 
-lossFunctionG_regression = torch.nn.L1Loss()
+lossFunctionG_regression = torch.nn.MSELoss() #torch.nn.L1Loss()
 
 # Create batch of latent vectors that we will use to visualize
 #  the progression of the generator
