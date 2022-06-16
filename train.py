@@ -413,7 +413,7 @@ for epoch in range(num_epochs):
 
         #errG = 0 * g_adv + 1 * g_pixel
 
-        errG = 0 * g_adv + 1 * g_pixel
+        errG = 1 * g_adv + 0 * g_pixel
 
         #errG = 0.001 * g_adv + 0.999 * g_pixel
         

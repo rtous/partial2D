@@ -1,0 +1,12 @@
+
+1) ECCV2018 images (original and truncated ) -> OpenPose
+
+2) Imatges COCO
+
+3) HOLLYWOOD DATASET = ECCV2018 images truncated
+
+------------- switch to using annotated poses
+
+4) 
+
+------------- try heatmaps
