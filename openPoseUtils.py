@@ -155,7 +155,7 @@ POSE_BODY_25_BODY_PARTS_DICT = {
     #25:"Background"
 }
 '''
-
+'''
 POSE_BODY_25_COLORS_RENDER_GPU =[
         [255,     0,    85],
         [255,     0,     0], 
@@ -183,9 +183,39 @@ POSE_BODY_25_COLORS_RENDER_GPU =[
           [0,   255,   255],
           [0,   255,   255]
 ]
+'''
+
+POSE_BODY_25_COLORS_RENDER_GPU =[
+        [231,   76,     60], #0:"Nose", (vermell)
+        [231,   76,     60], #1:"Neck",
+        [0,     152,    219], #2:"RShoulder", (LShoulder)
+        [231,   76,     60], #3:"RElbow",
+        [231,   76,     60], #4:"RWrist",
+        [0,     152,    219], #5:"LShoulder",
+        [0,     152,    219], #6:"LElbow",
+        [231,   76,     60], #7:"LWrist", (cadera esquerra) 
+        [231,   76,     60], #8:"MidHip", (RHip)
+        [231,   76,     60], #9:"RHip", (RKnee)
+        [0,     152,    219], #10:"RKnee", (LHip)
+        [0,     152,    219], #11:"RAnkle", (?)
+        [0,     152,    219], #12:"LHip",
+        [231,   76,     60], #13:"LKnee", (neck!!)
+        [231,   76,     60], #14:"LAnkle", )Reye
+
+        [231,   76,     60], #15:"REye", (Rear)
+        [50,     152,    219], #16:"LEye", (L)
+        [50,     152,    219], #17:"REar",
+        [50,     152,    219], #18:"LEar", (L peu)
+        [50,     152,    219], #19:"LBigToe",
+        [50,     152,    219], #20:"LSmallToe",
+        [231,   76,     60], #21:"LHeel",
+        [231,   76,     60], #22:"RBigToe",
+        [231,   76,     60], #23:"RSmallToe",
+        [0,   0,     60] #24:"RHeel",
+]
 
 
-#POSE_BODY_25_PAIRS_RENDER_GP = [[1,8],   [1,2],   [1,5],   [2,3],   [3,4],   [5,6],   [6,7],   [8,9],   [9,10],  [10,11], [8,12],  [12,13], [13,14],  [1,0],   [0,15], [15,17],  [0,16], [16,18],   [14,19],[19,20],[14,21], [11,22],[22,23],[11,24]]
+POSE_BODY_25_PAIRS_RENDER_GP_25 = [[1,8],   [1,2],   [1,5],   [2,3],   [3,4],   [5,6],   [6,7],   [8,9],   [9,10],  [10,11], [8,12],  [12,13], [13,14],  [1,0],   [0,15], [15,17],  [0,16], [16,18],   [14,19],[19,20],[14,21], [11,22],[22,23],[11,24]]
 POSE_BODY_25_PAIRS_RENDER_GP = [[1,8],   [1,2],   [1,5],   [2,3],   [3,4],   [5,6],   [6,7],   [8,9],   [9,10],  [10,11], [8,12],  [12,13], [13,14],  [1,0]]
 
 
@@ -263,8 +293,6 @@ def json2Keypoints(path, only15joints=False):
 def json2normalizedKeypoints(path, only15joints=False):
 
     keypoints = json2Keypoints(path, only15joints)
-
-    
 
     #boneSpineIndex = REFERENCE_JOINT_PAIR_INDEX
 

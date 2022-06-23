@@ -43,6 +43,7 @@ for item in scandirIterator:
 		print(cdf.cdf_info())
 		pose = cdf.varget("Pose")
 		print(pose[0][0])
-		util_viz.visualizeOne(pose[0][0], "H36M")
+		util_viz.visualizeOne(pose[0][0], "H36M", "borrar.png")
+		sys.exit()
 		i += 1
 	    

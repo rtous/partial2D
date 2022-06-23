@@ -32,7 +32,7 @@ def computeMiddleJoint(keypoints, joint1name, joint2name, DICT):
 
 def draw_part(img, keypoint1, keypoint2, color, keypoint_index_pairs, thickness):
 	#img = cv2.line(img, (keypoint1[0], keypoint1[1]), (keypoint2[0], keypoint2[1]), (color[0], color[1], color[2]), 2)
-    img = cv2.line(img, (int(keypoint1[0]), int(keypoint1[1])), (int(keypoint2[0]), int(keypoint2[1])), (color[0], color[1], color[2]), thickness)
+    img = cv2.line(img, (int(keypoint1[0]), int(keypoint1[1])), (int(keypoint2[0]), int(keypoint2[1])), (color[2], color[1], color[0]), thickness, lineType=cv2.LINE_AA)
     
 def draw_pose(img, keypoints, threshold, keypoint_index_pairs, colors, haveThreshold, thickness=2):        
 	for boneNumer, bone in enumerate(keypoint_index_pairs):

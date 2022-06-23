@@ -27,6 +27,35 @@ H36M_NAMES[25] = 'RShoulder'
 H36M_NAMES[26] = 'RElbow'
 H36M_NAMES[27] = 'RWrist'
 
+POSE_BODY_25_BODY_PARTS_DICT = {
+    0:"Nose",
+    1:"Neck",
+    2:"RShoulder",
+    3:"RElbow",
+    4:"RWrist",
+    5:"LShoulder",
+    6:"LElbow",
+    7:"LWrist",
+    8:"MidHip",
+    9:"RHip",
+    10:"RKnee",
+    11:"RAnkle",
+    12:"LHip",
+    13:"LKnee",
+    14:"LAnkle",
+    15:"REye",
+    16:"LEye",
+    17:"REar",
+    18:"LEar",
+    19:"LBigToe",
+    20:"LSmallToe",
+    21:"LHeel",
+    22:"RBigToe",
+    23:"RSmallToe",
+    24:"RHeel",
+    #25:"Background"
+}
+
 def show3Dpose(channels, ax, lcolor="#3498db", rcolor="#e74c3c", add_labels=False): # blue, orange
   """
   Visualize a 3d skeleton
@@ -90,7 +119,7 @@ def show2DposeOPENPOSE(channels, ax):
   #0 = red (real right) 1 = blue (left)
   LR = np.array([0,0,1,0,0,1,1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0], dtype=bool)
 
-  show2Dpose(I, J, LR, openPoseUtils.POSE_BODY_25_BODY_PARTS_DICT, channels, ax)
+  show2Dpose(I, J, LR, POSE_BODY_25_BODY_PARTS_DICT, channels, ax)
 
 def show2DposeH36M(channels, ax):
   I  = np.array([1,2,3,1,7,8,1, 13,14,14,18,19,14,26,27])-1 # start points
@@ -132,7 +161,9 @@ def show2Dpose(I, J, LR, DICT, channels, ax, lcolor="#3498db", rcolor="#e74c3c",
   ax.get_xaxis().set_ticklabels([])
   ax.get_yaxis().set_ticklabels([])
 
-  RADIUS = 350 # space around the subject
+  #RADIUS = 350 # space around the subject
+  RADIUS = 150 # space around the subject
+ 
   xroot, yroot = vals[0,0], vals[0,1]
   ax.set_xlim([-RADIUS+xroot, RADIUS+xroot])
   ax.set_ylim([-RADIUS+yroot, RADIUS+yroot])
@@ -142,25 +173,40 @@ def show2Dpose(I, J, LR, DICT, channels, ax, lcolor="#3498db", rcolor="#e74c3c",
 
   ax.set_aspect('equal')
 
-def visualizeOne(keypoints, format):
+def visualizeOne(keypoints, format, savePath):
   # Visualize random samples
   import matplotlib.gridspec as gridspec
 
   # 1080p = 1,920 x 1,080
-  fig = plt.figure( figsize=(19.2, 10.8) )
+  #fig = plt.figure( figsize=(19.2, 10.8) )
+  fig = plt.figure( figsize=(5, 5) )
 
-  gs1 = gridspec.GridSpec(5, 9) # 5 rows, 9 columns
+  #gs1 = gridspec.GridSpec(5, 9) # 5 rows, 9 columns
+  gs1 = gridspec.GridSpec(1, 1) # 5 rows, 9 columns
   gs1.update(wspace=-0.00, hspace=0.05) # set the spacing between axes.
   plt.axis('off')
   subplot_idx, exidx = 1, 1
   ax1 = plt.subplot(gs1[subplot_idx-1])
+  ax1.axis('off')
   #keypointsNumpy = np.array(keypoints)
   if format == "OPENPOSE":
     show2DposeOPENPOSE(keypoints, ax1 )
+  elif format == "OPENPOSE15":
+    show2DposeOPENPOSE15(keypoints, ax1 )
   elif format == "H36M":
     show2DposeH36M(keypoints, ax1 )
+  else:
+    print("ERROR: Unknown format ", format)
+    sys.exit()
   ax1.invert_yaxis()
-  plt.show()
+  if savePath is not None:
+    plt.savefig(savePath)
+  else:
+    plt.show()
+  
+
+
+
 
 
 def visualizeMany(keypointsList, format):

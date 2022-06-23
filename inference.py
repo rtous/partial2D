@@ -109,6 +109,7 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
     batch_x_displacement = []
     batch_y_displacement = []
     batch_filenames = []
+    batch_of_one_keypoints_cropped25 = []
     jsonFiles = [f for f in listdir(keypointsPath) if isfile(join(keypointsPath, f))]
     n = 0
     for filename in jsonFiles:
@@ -119,6 +120,12 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
             else:
                 only15joints=False
             keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(keypointsPath, filename), only15joints)
+            
+            #We have worked with jut 15 keypoints, need to restore the other 10
+            keypoints_cropped25 = openPoseUtils.json2Keypoints(join(keypointsPath, filename), False)
+            batch_of_one_keypoints_cropped25.append(keypoints_cropped25)
+
+
             #print("normalized keypoints_cropped=", keypoints_cropped)
             #print("obtained scaleFactor=",scaleFactor)
             keypoints_cropped, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
@@ -148,6 +155,10 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
 
     #batch_of_one_keypoints_cropped = batch_of_one_keypoints_cropped.to(device)
     #fixed_noise_N = fixed_noise_N.to(device)
+
+    print("batch_of_one_keypoints_cropped.shape:")
+    print(batch_of_one_keypoints_cropped.shape)
+
     netG.eval()
     fake = netG(batch_of_one_keypoints_cropped, fixed_noise_N).detach().cpu()
     #fake = batch_of_one_keypoints_cropped # DEBUG DOING NOTHING
@@ -173,8 +184,19 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
         #if idx == 0:
         #    print("writing: ", batch_filenames[idx])
         #    print("written: ", fakeKeypointsCroppedOneImageIntRescaled)
-        openPoseUtils.keypoints2json(fakeKeypointsCroppedOneImageIntRescaled, outputPath+outputSubpath+"/keypoints/"+batch_filenames[idx])
+        
+        #FIX
+		#We have worked with jut 15 keypoints, need to restore the other 10
+        #print("fakeKeypointsCroppedOneImageIntRescaled PRE", fakeKeypointsCroppedOneImageIntRescaled)
+        keypoints_cropped25 = batch_of_one_keypoints_cropped25[idx]
+        for i in range(len(fakeKeypointsCroppedOneImageIntRescaled), len(batch_of_one_keypoints_cropped25[idx])):
+        	fakeKeypointsCroppedOneImageIntRescaled.append(keypoints_cropped25[i])
+        #print("fakeKeypointsCroppedOneImageIntRescaled POST", fakeKeypointsCroppedOneImageIntRescaled)
+        #till here
 
+        openPoseUtils.keypoints2json(fakeKeypointsCroppedOneImageIntRescaled, outputPath+outputSubpath+"/keypoints/"+batch_filenames[idx])
+        print("Wrote pose in %s in with %d keypoints" % (batch_filenames[idx], len(fakeKeypointsCroppedOneImageIntRescaled)))
+    
         #Draw over image file
         #fileName = batch_filenames[idx]
         #indexUnderscore = fileName.find('_')
@@ -184,8 +206,7 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
         #Remove "_keypoints" and anyghing else till the .
         #WANRING: CHARADE and TEST keypoints have slightly different names
         #CHARADE has other "_" that have to be preserved
-        
-        
+             
         json_file_without_extension = os.path.splitext(batch_filenames[idx])[0]
 
         indexFromRemove = json_file_without_extension.find('_keypoints')
