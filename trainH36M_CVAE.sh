@@ -1,5 +1,15 @@
+SETUP=1 #0=laptop, 1=office
+
+if [ $SETUP -eq 0 ]
+then   
+    DATASET_ORIGINAL="/Volumes/ElementsDat/pose/H36M/H36M"
+    #DATASET_ORIGINAL="/Volumes/ElementsDat/pose/H36M/ECCV2018/ECCV18OD_no_sufix"
+else
+    DATASET_ORIGINAL="/mnt/f/datasets/pose/H36M/H36M"
+    #DATASET_ORIGINAL="/Volumes/ElementsDat/pose/H36M/ECCV2018/ECCV18OD_no_sufix"
+fi
+
 DATASET_CROPPED="NOTSPECIFIED"
-DATASET_ORIGINAL="/Volumes/ElementsDat/pose/H36M/H36M"
 #DATASET_ORIGINAL="/Volumes/ElementsDat/pose/H36M/ECCV2018/ECCV18OD_no_sufix"
 OUTPUTPATH="data/output/H36M_CVAE"
 DATASET_CHARADE="/Users/rtous/DockerVolume/charade_full/input/keypoints"

@@ -32,7 +32,8 @@ import sys
 from torch.utils.tensorboard import SummaryWriter
 import models
 import random
-import h36mIterator_tiny as h36mIterator #DEBUG import h36mIterator
+#import h36mIterator_tiny as h36mIterator #DEBUG import h36mIterator
+import h36mIterator
 import BodyModelOPENPOSE15
 
 class JsonDataset(torch.utils.data.IterableDataset):
@@ -58,7 +59,7 @@ class JsonDataset(torch.utils.data.IterableDataset):
             #We fill first a buffer of originals
             buffer_originals.append(keypoints_original)
             len_buffer_originals = len(buffer_originals)
-            if len_buffer_originals == 65536:#65536
+            if len_buffer_originals == 200000:#65536
                 break
                 
         #Once the iterator finishes or the buffer is filled, we shuffle and obtain variations

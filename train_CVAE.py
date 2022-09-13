@@ -176,6 +176,98 @@ beta1 = 0.5
 # Number of GPUs available. Use 0 for CPU mode.
 ngpu = 1
 
+def drawBatch(fakeReshapedAsKeypoints, originalReshapedAsKeypoints):
+    NUM_ROWS = 8
+    NUM_COLS = 8
+    WIDTH = 64
+    HEIGHT = 64
+    imagesCropped = np.empty(shape=(NUM_ROWS, NUM_COLS),dtype='object')
+    images = np.empty(shape=(NUM_ROWS, NUM_COLS),dtype='object')
+    imagesOriginal = np.empty(shape=(NUM_ROWS, NUM_COLS),dtype='object')
+    
+    ####### DRAW DEBUG POSES FOR THE FIRST 64 IMAGES
+    print("Draw debug poses for the batch")
+    for idx in range(NUM_ROWS*NUM_COLS):
+        blank_imageOriginal = np.zeros((WIDTH,HEIGHT,3), np.uint8)
+        blank_imageCropped = np.zeros((WIDTH,HEIGHT,3), np.uint8)
+        blank_image = np.zeros((WIDTH,HEIGHT,3), np.uint8)
+        originalReshapedAsKeypointsOneImage = originalReshapedAsKeypoints[idx]
+        fakeKeypointsCroppedOneImage = croppedReshapedAsKeypoints[idx]
+        fakeKeypointsOneImage = fakeReshapedAsKeypoints[idx]
+
+        scaleFactorOneImage = scaleFactor[idx]
+        x_displacementOneImage = x_displacement[idx]
+        y_displacementOneImage = y_displacement[idx]
+
+        json_file = batch_of_json_file[idx]
+        
+
+        #??????????????????????
+        '''
+        fakeKeypointsOneImage, dummy, dummy, dummy = openPoseUtils.normalize(fakeKeypointsOneImage)
+        if (idx == 0):
+            print("normalizedFakeKeypointsOneImage (output normalized):", fakeKeypointsOneImage)
+        '''
+        
+        #fakeKeypointsCroppedOneImageInt = poseUtils.keypointsToInteger(fakeKeypointsCroppedOneImage)
+        #fakeKeypointsOneImageInt = poseUtils.keypointsToInteger(fakeKeypointsOneImage)
+        originalReshapedAsKeypointsOneImageInt = originalReshapedAsKeypointsOneImage
+        fakeKeypointsCroppedOneImageInt = fakeKeypointsCroppedOneImage
+        fakeKeypointsOneImageInt = fakeKeypointsOneImage
+        
+        
+        #Draw result over the original image
+        fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalize(fakeKeypointsOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage)
+        
+        #fakeKeypointsCroppedOneImageIntRescaledNP = poseUtils.keypoints2Numpy(fakeKeypointsCroppedOneImageIntRescaled)
+        #fakeKeypointsCroppedOneImageIntRescaledNP = poseUtils.scale(fakeKeypointsCroppedOneImageIntRescaledNP, 0.01)
+
+
+        #If we want to save the .json files of the batch
+        #openPoseUtils.keypoints2json(fakeKeypointsOneImageInt, OUTPUTPATH+"/"+f"{idx:02d}"+"_img_keypoints.json")
+        
+        json_file_without_extension = os.path.splitext(json_file)[0]
+        json_file_without_extension = json_file_without_extension.replace('_keypoints', '')
+        
+        #Draw the (still normalized) results for DEBUG  
+        #NOTE: the original poses are centered at (0.5, 0.5)
+        #They are re-escaled and centered at the mid hip for drawing
+        #originalReshapedAsKeypointsOneImageInt
+        #fakeKeypointsCroppedOneImageInt
+        #fakeKeypointsOneImageInt (with restoreOriginalKeypoints)
+        try:
+            #poseUtils.draw_pose(blank_imageOriginal, originalReshapedAsKeypointsOneImageInt, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+            #poseUtils.draw_pose(blank_imageCropped, fakeKeypointsCroppedOneImageInt, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+            #poseUtils.draw_pose(blank_image, fakeKeypointsOneImageInt, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+            poseUtils.draw_pose_scaled_centered(blank_imageOriginal, originalReshapedAsKeypointsOneImageInt.numpy(), -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 1/(WIDTH/4), WIDTH/2, HEIGHT/2, 8)
+            poseUtils.draw_pose_scaled_centered(blank_imageCropped, fakeKeypointsCroppedOneImageInt, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 1/(WIDTH/4), WIDTH/2, HEIGHT/2, 8)
+            poseUtils.draw_pose_scaled_centered(blank_image, fakeKeypointsOneImageInt, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 1/(WIDTH/4), WIDTH/2, HEIGHT/2, 8)
+            targetFilePathCropped = OUTPUTPATH+"/debug_input"+str(idx)+".jpg"
+            targetFilePath = OUTPUTPATH+"/debug"+str(idx)+".jpg"
+            #cv2.imwrite(targetFilePath, blank_image)
+            imagesOriginal[int(idx/NUM_COLS)][int(idx%NUM_COLS)] = blank_imageOriginal
+            imagesCropped[int(idx/NUM_COLS)][int(idx%NUM_COLS)] = blank_imageCropped
+            images[int(idx/NUM_COLS)][int(idx%NUM_COLS)] = blank_image
+        except Exception:
+            print("WARNING: Cannot draw keypoints ", fakeKeypointsOneImageInt)
+            traceback.print_exc()
+    try:
+        #print("Assigning: images[int("+str(idx)+"/NUM_COLS)][int("+str(idx)+"%NUM_COLS)]")
+        total_imageOriginal = poseUtils.concat_tile(imagesOriginal)
+        total_imageCropped = poseUtils.concat_tile(imagesCropped)
+        total_image = poseUtils.concat_tile(images)  
+        targetFilePathOriginal = OUTPUTPATH+"/debug_input_original.jpg"
+        targetFilePathCropped = OUTPUTPATH+"/debug_input_cropped.jpg"
+        targetFilePath = OUTPUTPATH+"/debug_output.jpg"
+        print("Writting into ", targetFilePathOriginal)
+        cv2.imwrite(targetFilePathCropped, total_imageCropped)
+        cv2.imwrite(targetFilePath, total_image)
+        cv2.imwrite(targetFilePathOriginal, total_imageOriginal)
+    except Exception:
+        print("WARNING: Cannot draw tile ")
+        traceback.print_exc()
+
+
 def prepare_dataset():
   
     #jsonDataset = dataset.JsonDataset(inputpath_cropped=DATASET_CROPPED, inputpath_original=DATASET_ORIGINAL)
@@ -222,7 +314,10 @@ def weights_init(m):
 # Reconstruction + KL divergence losses summed over all elements and batch
 def loss_function(recon_x, x, mu, logvar):
     #BCE = F.binary_cross_entropy(recon_x, x.view(-1, numJoints*2), reduction='sum')
-    BCE = F.binary_cross_entropy(recon_x, x, reduction='sum')
+    #BCE = F.binary_cross_entropy(recon_x, x, reduction='sum')
+    BCE = F.mse_loss(recon_x, x, size_average=None, reduce=None, reduction='sum')#mean
+
+
     # see Appendix B from VAE paper:
     # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
     # https://arxiv.org/abs/1312.6114
@@ -309,6 +404,11 @@ for epoch in range(num_epochs):
 	
         #CVAE code
         recon_batch, mu, logvar = model(batch_of_keypoints_original, batch_of_keypoints_cropped)
+        #Restore the original keypoints with confidence > CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS
+        recon_batch = models.restoreOriginalKeypoints(recon_batch, batch_of_keypoints_cropped, confidence_values)
+
+
+
         optimizer.zero_grad()
         loss = loss_function(recon_batch, batch_of_keypoints_original, mu, logvar)
         loss.backward()
@@ -321,7 +421,24 @@ for epoch in range(num_epochs):
         if i % 50 == 0:
             print("**************************************************************")
             print('[%d/%d][%d/?]\tLoss: %.4f' % (epoch, num_epochs, i, loss.item()))
+        if i % 1000 == 0: 
+            torch.save(model.state_dict(), OUTPUTPATH+"/model/model_epoch"+str(epoch)+"_batch"+str(i)+".pt")
+            with torch.no_grad():
+                #c = torch.eye(10, 10)
+                #sample = torch.randn(10, 20).to(device)
+                fake = model.decode(fixed_noise, batch_of_keypoints_cropped).cpu()
+                fake = models.restoreOriginalKeypoints(fake, batch_of_keypoints_cropped, confidence_values)
 
+                #save_image(sample.view(10, 1, 28, 28),
+                #           'data/output/VAE/sample_' + str(epoch) + '.png')
+                
+                fakeReshapedAsKeypoints = np.reshape(fake, (batch_size, numJoints, 2))
+                fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
+                originalReshapedAsKeypoints = np.reshape(batch_of_keypoints_original.cpu(), (batch_size, numJoints, 2))
+                croppedReshapedAsKeypoints = np.reshape(batch_of_keypoints_cropped.cpu(), (batch_size, numJoints, 2))
+                croppedReshapedAsKeypoints = croppedReshapedAsKeypoints.numpy()
+
+                drawBatch(fakeReshapedAsKeypoints, originalReshapedAsKeypoints)
 
         iters += 1
         

@@ -137,7 +137,7 @@ class CVAE(nn.Module):
         c: (bs, class_size)
         '''
         inputs = torch.cat([x, c], 1) # (bs, feature_size+class_size)
-        print("inputs.shape: ", inputs.shape)
+        #print("inputs.shape: ", inputs.shape)
         h1 = self.elu(self.fc1(inputs))
         #h1 = self.elu(self.bn1(self.fc1(inputs)))
         #h2 = self.elu(self.bn2(self.fc2(h1)))
@@ -157,7 +157,8 @@ class CVAE(nn.Module):
         '''
         inputs = torch.cat([z, c], 1) # (bs, latent_size+class_size)
         h3 = self.elu(self.fc3(inputs))
-        return self.sigmoid(self.fc4(h3))
+        #return self.sigmoid(self.fc4(h3))
+        return self.fc4(h3) #our (normalized) data is not in the range 0,1
 
     def forward(self, x, c):
         '''

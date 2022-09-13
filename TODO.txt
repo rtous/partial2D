@@ -1,3 +1,9 @@
+Things to consider:
+	- only taking 65536 poses from H36M
+	- normalization not in 0-1
+	- not training with openpose outputs
+
+
 
 - More data? COCO, PANOPTIC? Projections from 3D datasets?
 - Check ablation

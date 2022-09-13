@@ -17,7 +17,8 @@ from numpy import iscomplexobj
 from scipy.linalg import sqrtm
 import random
 import scipy.stats as stats
-import h36mIterator_tiny as h36mIterator #DEBUG import h36mIterator
+#import h36mIterator_tiny as h36mIterator #DEBUG import h36mIterator
+import h36mIterator
 import random
 import BodyModelOPENPOSE15 #borrar
 

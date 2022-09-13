@@ -1,9 +1,18 @@
+SETUP=1 #0=laptop, 1=office
+
+if [ $SETUP -eq 0 ]
+then
+    DATASET_REFERENCE="/Volumes/ElementsDat/pose/H36M/H36M"
+
+else
+    DATASET_REFERENCE="/mnt/f/datasets/pose/H36M/H36M"
+fi
+
 DATASET_CANDIDATE="data/output/H36M_VAE/TEST/keypoints"
-DATASET_CROPPED="data/H36Mtest"
-DATASET_ORIGNAL="data/H36Mtest_original_noreps"
+DATASET_CROPPED="dynamicData/H36Mtest"
+DATASET_ORIGNAL="dynamicData/H36Mtest_original_noreps"
 DATASET_CANDIDATE_MAX=35000
 
-DATASET_REFERENCE="/Volumes/ElementsDat/pose/H36M/H36M"
 DATASET_REFERENCE_MAX=200000
 
 NUMJOINTS=15
