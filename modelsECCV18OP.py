@@ -28,7 +28,7 @@ ngf = 16
 # Size of feature maps in discriminator
 #ndf = 64
 ndf = 16
-
+'''
 NEURONS_PER_LAYER_GENERATOR = 256
 NEURONS_PER_LAYER_GENERATOR_EMBEDDING = 128
 class Generator(nn.Module):
@@ -59,7 +59,38 @@ class Generator(nn.Module):
     def forward(self, batch_of_keypoints_cropped, noise):
         input = torch.cat((batch_of_keypoints_cropped, noise), -1)
         return self.main(input)
+'''
+NEURONS_PER_LAYER_GENERATOR = 512
+class Generator(nn.Module):
+    #Receives a noise vector (nz dims) + keypoints cropped (50 dims)
+    def __init__(self, ngpu, numJoints):
+        super(Generator, self).__init__()
+        self.ngpu = ngpu
+        self.numJoints = numJoints
+        self.image_size = self.numJoints*2
+        self.main = nn.Sequential(
+          # First upsampling
+          nn.Linear(self.image_size+nz, NEURONS_PER_LAYER_GENERATOR, bias=False),
+          nn.BatchNorm1d(NEURONS_PER_LAYER_GENERATOR, 0.8),
+          nn.LeakyReLU(0.25),
+          # Second upsampling
+          nn.Linear(NEURONS_PER_LAYER_GENERATOR, NEURONS_PER_LAYER_GENERATOR, bias=False),
+          nn.BatchNorm1d(NEURONS_PER_LAYER_GENERATOR, 0.8),
+          nn.LeakyReLU(0.25),
+          # Third upsampling
+          nn.Linear(NEURONS_PER_LAYER_GENERATOR, NEURONS_PER_LAYER_GENERATOR, bias=False),
+          nn.BatchNorm1d(NEURONS_PER_LAYER_GENERATOR, 0.8),
+          nn.LeakyReLU(0.25),
+          # Final upsampling
+          nn.Linear(NEURONS_PER_LAYER_GENERATOR, self.image_size, bias=False),
+          #nn.Tanh()
+        )
 
+    def forward(self, batch_of_keypoints_cropped, noise):
+        input = torch.cat((batch_of_keypoints_cropped, noise), -1)
+        return self.main(input)
+
+'''
 NEURONS_PER_LAYER_DISCRIMINATOR = 256
 class Discriminator(nn.Module):
     def __init__(self, ngpu, numJoints):
@@ -71,20 +102,20 @@ class Discriminator(nn.Module):
             # input is (nc) x 64 x 64
             #nn.Conv2d(in_channels=nc, out_channels=ndf, kernel_size=(16,16), stride=2, padding=1, bias=False),
             nn.Linear(self.image_size*2, NEURONS_PER_LAYER_DISCRIMINATOR, bias=False),
-            nn.BatchNorm1d(NEURONS_PER_LAYER_DISCRIMINATOR, 0.8),
+            #nn.BatchNorm1d(NEURONS_PER_LAYER_DISCRIMINATOR, 0.8),
             nn.LeakyReLU(0.2, inplace=True),
             #nn.LeakyReLU(0.2),
             # state size. (ndf) x 32 x 32
             #nn.Conv2d(in_channels=ndf, out_channels=ndf * 2, kernel_size=4, stride=2, padding=1, bias=False),
             nn.Linear(NEURONS_PER_LAYER_DISCRIMINATOR, NEURONS_PER_LAYER_DISCRIMINATOR, bias=False),
-            nn.BatchNorm1d(NEURONS_PER_LAYER_DISCRIMINATOR, 0.8),
+            #nn.BatchNorm1d(NEURONS_PER_LAYER_DISCRIMINATOR, 0.8),
             #nn.BatchNorm2d(ndf * 2),
             nn.LeakyReLU(0.2, inplace=True),
             #nn.LeakyReLU(0.2),
             # state size. (ndf*2) x 16 x 16
             #nn.Conv2d(in_channels=ndf * 2, out_channels=ndf * 8, kernel_size=4, stride=2, padding=1, bias=False),
             nn.Linear(NEURONS_PER_LAYER_DISCRIMINATOR, NEURONS_PER_LAYER_DISCRIMINATOR, bias=False),
-            nn.BatchNorm1d(NEURONS_PER_LAYER_DISCRIMINATOR, 0.8),
+            #nn.BatchNorm1d(NEURONS_PER_LAYER_DISCRIMINATOR, 0.8),
             #nn.BatchNorm2d(ndf * 8),
             nn.LeakyReLU(0.2, inplace=True),
             #nn.LeakyReLU(0.2),
@@ -105,6 +136,45 @@ class Discriminator(nn.Module):
         input = torch.cat((batch_of_keypoints_cropped, batch_of_keypoints_original), -1)  
         #print("Discriminator input:",input.shape)
         return self.main(input)
+'''
+NEURONS_PER_LAYER_DISCRIMINATOR = 512
+class Discriminator(nn.Module):
+    def __init__(self, ngpu, numJoints):
+        super(Discriminator, self).__init__()
+        self.ngpu = ngpu
+        self.numJoints = numJoints
+        self.image_size = self.numJoints*2
+        self.main = nn.Sequential(
+            # input is (nc) x 64 x 64
+            #nn.Conv2d(in_channels=nc, out_channels=ndf, kernel_size=(16,16), stride=2, padding=1, bias=False),
+            nn.Linear(self.image_size*2, NEURONS_PER_LAYER_DISCRIMINATOR, bias=False),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf) x 32 x 32
+            #nn.Conv2d(in_channels=ndf, out_channels=ndf * 2, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.Linear(NEURONS_PER_LAYER_DISCRIMINATOR, NEURONS_PER_LAYER_DISCRIMINATOR, bias=False),
+            #nn.BatchNorm2d(ndf * 2),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*2) x 16 x 16
+            #nn.Conv2d(in_channels=ndf * 2, out_channels=ndf * 8, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.Linear(NEURONS_PER_LAYER_DISCRIMINATOR, NEURONS_PER_LAYER_DISCRIMINATOR, bias=False),
+            #nn.BatchNorm2d(ndf * 8),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*4) x 8 x 8
+            #nn.Conv2d(in_channels=ndf * 4, out_channels=ndf * 8, kernel_size=4, stride=2, padding=1, bias=False),
+            #nn.BatchNorm2d(ndf * 8),
+            #nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*8) x 4 x 4
+            #nn.Conv2d(in_channels=ndf * 8, out_channels=1, kernel_size=2, stride=1, padding=0, bias=False),
+            nn.Linear(NEURONS_PER_LAYER_DISCRIMINATOR, 1, bias=False),
+            nn.Sigmoid()
+        )
+
+    def forward(self, batch_of_keypoints_cropped, batch_of_keypoints_original):
+        #print("Discriminator input:",input)
+        #print("Discriminator input shape:",input.shape)
+        input = torch.cat((batch_of_keypoints_cropped, batch_of_keypoints_original), -1)  
+        return self.main(input)
+
 
 def restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, batch_of_confidence_values):
     '''

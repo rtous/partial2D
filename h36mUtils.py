@@ -3,6 +3,7 @@ import openPoseUtils
 import numpy as np
 import sys
 import os
+import BodyModelOPENPOSE15
 
 # info here: https://github.com/qxcv/pose-prediction/blob/master/H36M-NOTES.md
 
@@ -50,7 +51,7 @@ def openpose2H36M(openpose_keypoints):
     for key in H36M_JOINTS:
         try:
             h36mKeypointName= H36M_JOINTS[key]
-            openposeIndex = poseUtils.geJointIndexFromName(h36mKeypointName, openPoseUtils.POSE_BODY_25_BODY_PARTS_DICT)
+            openposeIndex = poseUtils.geJointIndexFromName(h36mKeypointName, BodyModelOPENPOSE15.POSE_BODY_25_BODY_PARTS_DICT)
             openposeKeypoint = openpose_keypoints[openposeIndex]
             new_keypoint = (openposeKeypoint[0], openposeKeypoint[1])
         except ValueError:
@@ -80,9 +81,9 @@ def h36m2openpose(h36m_keypoints_flat):
         list(map(int, h36m_keypoints_flat[1::2]))
     ))
     resulting_keypoints = []
-    for key in openPoseUtils.POSE_BODY_25_BODY_PARTS_DICT:
+    for key in BodyModelOPENPOSE15.POSE_BODY_25_BODY_PARTS_DICT:
         try:
-            resultingKeypointName= openPoseUtils.POSE_BODY_25_BODY_PARTS_DICT[key]
+            resultingKeypointName= BodyModelOPENPOSE15.POSE_BODY_25_BODY_PARTS_DICT[key]
             h36mIndex = poseUtils.geJointIndexFromName(resultingKeypointName, H36M_JOINTS)
             h36mKeypoint = h36m_keypoints[h36mIndex]
             new_keypoint = (h36mKeypoint[0], h36mKeypoint[1], 1.0)

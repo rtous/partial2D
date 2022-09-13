@@ -1,0 +1,32 @@
+5/09/2022 -------
+- EasyMocap (https://github.com/zju3dv/EasyMocap) which is used in CEB EasyMocap Monocular uses HRNET and OpenPose for internet videos -> Keep working!
+
+- IDEA: First improve the model, match the FID! Try a VAE
+- Seen this about VAEs and low dimensional data: https://openreview.net/forum?id=y_op4lLLaWL
+- ELBO = evidence lower bound = negative variational free energy
+- "evidence" = likelihood function evaluated at a fixed θ: logp(x;θ)
+- READ THIS: https://mbernste.github.io/posts/elbo/
+
+6/09/2022 -------
+- VAE seems the way, but need a condition
+- Try CVAE!! (also can try VAE-Info-CGAN and variations)
+- https://github.com/unnir/cVAE/blob/master/cvae.py
+
+7/09/2022 
+- The CVAE gives negative values
+- Tried a lower nz = 10, no improvement
+- Let's try first a normal VAE: https://debuggercafe.com/getting-started-with-variational-autoencoder-using-pytorch/
+
+NO, let's try the VAE without the classes. It works for MNIST
+
+- Same problem...
+- IDEA: Be able to obtain a low FID with just an autoencoder, without truncations
+
+HINT: Negative losses because using BCE instead of MSE (MNIST is binary!!)
+
+
+8/09/2022 ------
+
+- SOLVED!!! The sigmoid in the output of the decoder forced data in the range [0, 1] and my data is not there!!!! now it works!!! maybe I should change the data??
+
+https://stackoverflow.com/questions/65307833/why-is-the-decoder-in-an-autoencoder-uses-a-sigmoid-on-the-last-layer

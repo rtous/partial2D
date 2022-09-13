@@ -5,6 +5,13 @@ import numpy as np
 import math
 import sys
 
+def debugKeypoints(keypoints):
+	print("----- debug keypoints -----")
+	print("Type: ", type(keypoints))
+	print("Len: ", len(keypoints))
+	print("Sample: ", keypoints[0])
+	print("---------------------------")
+
 def keypoints2Numpy(keypoints):
 	keypointsNP = np.vstack(keypoints)
 	return keypointsNP
@@ -13,6 +20,20 @@ def keypointsListFlatten(keypoints):
 	keypointsNP = np.vstack(keypoints)
 	keypointsNPflat = keypointsNP.flatten()
 	return keypointsNPflat
+
+def deflatten(keypointsFlat, haveConfidence):
+	if haveConfidence: 
+		keypoints = list(zip(
+			list(map(float, keypointsFlat[0::3])), 
+			list(map(float, keypointsFlat[1::3])), 
+			list(map(float, keypointsFlat[2::3]))  
+		))
+	else:
+		keypoints = list(zip(
+			list(map(float, keypointsFlat[0::2])), 
+			list(map(float, keypointsFlat[1::2]))	        
+		))
+	return keypoints
 
 def geJointIndexFromName(jointName, jointNamesDict):
     idx = list(jointNamesDict.keys())[list(jointNamesDict.values()).index(jointName)]
@@ -35,9 +56,12 @@ def draw_part(img, keypoint1, keypoint2, color, keypoint_index_pairs, thickness)
     img = cv2.line(img, (int(keypoint1[0]), int(keypoint1[1])), (int(keypoint2[0]), int(keypoint2[1])), (color[2], color[1], color[0]), thickness, lineType=cv2.LINE_AA)
     
 def draw_pose(img, keypoints, threshold, keypoint_index_pairs, colors, haveThreshold, thickness=2):        
+	""" 
+	Draws keypoints (if haveThreshold with a confidence > threshold) over img
+	"""
 	for boneNumer, bone in enumerate(keypoint_index_pairs):
 		#print("Part: "+str(bone[0])+","+str(bone[1]))
-		#print(bone)
+		#print("bone: ", bone)
 		keypoint1 = keypoints[bone[0]]
 		keypoint2 = keypoints[bone[1]]
 		color = colors[boneNumer]
@@ -49,11 +73,13 @@ def draw_pose(img, keypoints, threshold, keypoint_index_pairs, colors, haveThres
 			if keypoint1[0] > 0 and keypoint1[1] > 0 and keypoint2[0] > 0 and keypoint2[1] > 0:
 				draw_part(img, keypoint1, keypoint2, color, keypoint_index_pairs, thickness)
 
-def draw_pose_scale(img, keypoints, threshold, keypoint_index_pairs, colors, haveThreshold, thickness=1):        	
+def draw_pose_scaled_centered(img, keypoints, threshold, keypoint_index_pairs, colors, haveThreshold, scaleFactor, centerX, centerY, centerKeypointIndex, thickness=1):        	
 	height, width = img.shape[:2]
 	#print("width=", width)
-	keypoints_scaled = scale(keypoints, width/23) #4 if image 64x64, 23 if 128x128
-	draw_pose(img, keypoints_scaled, threshold, keypoint_index_pairs, colors, haveThreshold, thickness)        
+	#scaleFactor = 23
+	keypoints_scaled = scale(keypoints, scaleFactor) #4 if image 64x64, 23 if 128x128
+	keypoints_scaled_centered, dummy, dummy = center_pose(keypoints_scaled, centerX, centerY, centerKeypointIndex)
+	draw_pose(img, keypoints_scaled_centered, threshold, keypoint_index_pairs, colors, haveThreshold, thickness)        
 
 def draw_keypoints(img, keypoints):   
 	for i, k in enumerate(keypoints):
@@ -94,6 +120,7 @@ def magnitude(keypoints, idx1, idx2)
 
 def center_pose(keypoints, centerX, centerY, centerKeypointIndex):
 	#Center the reference keypoint at centerX and centerY 
+
 	keypoint1 = keypoints[centerKeypointIndex]
 	centered_keypoints = keypoints.copy()
 	x_displacement = keypoint1[0] - centerX
@@ -181,6 +208,7 @@ def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, bo
 
 		#Compute scale factor to obtain the desired spine size
 		scaleFactor = magnitudeSpine/spinesize
+		#scaleFactor = magnitudeSpine/1
 
 		#Scale: dividing any keypoint by the scale factor
 		for i, k in enumerate(normalized_keypoints):
@@ -214,6 +242,49 @@ def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, bo
 
 
 	return normalized_keypoints, scaleFactor, x_displacement, y_displacement
+
+'''
+def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, boneSpineIndex, keepThreshold):
+	
+	normalized_keypoints = keypoints.copy()
+
+	keypoint1 = normalized_keypoints[keypoint_index_pairs[boneSpineIndex][0]]
+	keypoint2 = normalized_keypoints[keypoint_index_pairs[boneSpineIndex][1]]
+
+	scaleFactor = -1
+	x_displacement = -1
+	y_displacement = -1
+
+	if keypoint1[0]!=0 and keypoint1[1]!=0 and keypoint2[0]!=0 and keypoint2[1]!=0:
+
+		x_distance = keypoint1[0]-keypoint2[0]
+		y_distance = keypoint1[1]-keypoint2[1]
+
+		#Compute the length of the spine
+		magnitudeSpine = math.sqrt(pow(x_distance, 2)+pow(y_distance, 2))
+
+		#Compute scale factor to obtain the desired spine size
+		scaleFactor = magnitudeSpine/spinesize
+		centerX = 0.5
+		centerY = 0.5
+		x_displacement = keypoint1[0] - centerX
+		y_displacement = keypoint1[1] - centerY
+		#Scale: dividing any keypoint by the scale factor
+		for i, k in enumerate(normalized_keypoints):
+			if keepThreshold:
+				#new_keypoint = (int(k[0]/scaleFactor), int(k[1]/scaleFactor), k[2]) 
+				new_keypoint = ((k[0]-keypoint1[0])/scaleFactor + centerX, (k[1]-keypoint1[1])/scaleFactor + centerY, k[2]) 
+			else: 
+				#new_keypoint = (int(k[0]/scaleFactor), int(k[1]/scaleFactor)) 
+				new_keypoint = ((k[0]-keypoint1[0])/scaleFactor + centerX, (k[1]-keypoint1[1])/scaleFactor + centerY) 
+			normalized_keypoints[i] = new_keypoint
+	else:
+		raise Exception('Reference bone keypoints are zero :-(')
+
+
+	return normalized_keypoints, scaleFactor, x_displacement, y_displacement
+'''
+
 
 def denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, keepThreshold):
 	#WARNING: It skips 0 values in the normalized pose

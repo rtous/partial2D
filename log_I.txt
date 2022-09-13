@@ -194,5 +194,14 @@ FID: 11497.921
 ---------------------------------------------
 29-04-2022
 - Recapitulem. Sense heatmaps (epoch 4, step 12000) obtinc 5063.359. Amb heatmaps uns 8000 aprox. 
+---------------------------------------------
+25-07-2022
+- Ja tinc el paper gairebé llest. 
+- He tornat a fer proves amb ECCV18OP (resultat a ECCV18OP_FINAL)
+- He hagut de crear un datasetBasic que agafés els keypoints tallats i guardats en comptes de tallar-los on-the-fly (com faig a H36M). Encara no sé per què no funciona.
+
+WARNING: Veig que la normalització no la faig amb neck grandària 1??
+WARNinG: Testing center at 0,0 i scaling a 1 
+Sembla funcionar però dona un FD molt alt...
 
 

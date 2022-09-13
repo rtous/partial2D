@@ -23,7 +23,7 @@ import pathlib
 import json
 from os import listdir
 from os.path import isfile, join, splitext
-import openPoseUtils
+
 import poseUtils
 import cv2
 import traceback
@@ -31,10 +31,16 @@ import shutil
 import sys
 from torch.utils.tensorboard import SummaryWriter
 
-import models
+#import models
 import dataset
+import datasetBasic
+#import datasetBACKUP
 import datasetH36M
 import time
+import Configuration
+import openPoseUtils
+import importlib
+
 
 VERSION="13"
 NORMALIZATION="SCALE"
@@ -48,9 +54,16 @@ try:
     DATASET_CHARADE_IMAGES=argv[5]
     DATASET_TEST=argv[6]
     DATASET_TEST_IMAGES=argv[7]
-
+    conf = Configuration.Configuration()
+    conf.set_BODY_MODEL(argv[8])
+    datasetModule = eval(argv[9])
+    MODEL=argv[10]
+    #datasetModule = eval("datasetH36M")
+    #print(conf.bodyModel.POSE_BODY_25_BODY_PARTS_DICT[20])
 except ValueError:
     print("Wrong arguments. Expecting two paths.")
+
+models = importlib.import_module(MODEL)
 
 # Root directory for dataset
 #dataroot_cropped = "/Volumes/ElementsDat/pose/COCO/ruben_structure/keypoints_openpose_format_cropped"
@@ -127,12 +140,12 @@ torch.manual_seed(manualSeed)
 # Batch size during training
 #batch_size = 128
 #batch_size = 64
-batch_size = 128#128#64
+batch_size = 128#128#128#64
 
 # Spatial size of training images. All images will be resized to this
 #   size using a transformer.
 
-numJoints = 15#25
+numJoints = len(conf.bodyModel.POSE_BODY_25_BODY_PARTS)  #15
 image_size = numJoints*2
 
 # Number of channels in the training images. For color images this is 3
@@ -165,7 +178,7 @@ def prepare_dataset():
   
     #jsonDataset = dataset.JsonDataset(inputpath_cropped=DATASET_CROPPED, inputpath_original=DATASET_ORIGINAL)
 
-    jsonDataset = datasetH36M.JsonDataset(inputpath_cropped=DATASET_CROPPED, inputpath_original=DATASET_ORIGINAL)
+    jsonDataset = datasetModule.JsonDataset(inputpath_cropped=DATASET_CROPPED, inputpath_original=DATASET_ORIGINAL, bodyModel=conf.bodyModel)
 
     dataloader = torch.utils.data.DataLoader(jsonDataset, batch_size=batch_size, 
                                              num_workers=workers)
@@ -206,7 +219,7 @@ def weights_init(m):
 
 
 # Create the generator
-netG_ = models.Generator(ngpu)
+netG_ = models.Generator(ngpu, numJoints)
 netG = netG_.to(device)
 
 #Register my debug hook
@@ -227,7 +240,7 @@ pytorchUtils.explainModel(netG, 1, 1, 28, 28)
 #pytorchUtils.computeModel(netG, 1, [{"layer":0, "output":7},{"layer":6, "output":14},{"layer":9, "output":28}])
 
 # Create the Discriminator
-netD_ = models.Discriminator(ngpu)
+netD_ = models.Discriminator(ngpu, numJoints)
 netD = netD_.to(device)
 
 #Register my debug hook
@@ -413,7 +426,7 @@ for epoch in range(num_epochs):
 
         #errG = 0 * g_adv + 1 * g_pixel
 
-        errG = 1 * g_adv + 0 * g_pixel
+        errG = 0 * g_adv + 1 * g_pixel
 
         #errG = 0.001 * g_adv + 0.999 * g_pixel
         
@@ -507,20 +520,29 @@ for epoch in range(num_epochs):
                	#Draw result over the original image
                 fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalize(fakeKeypointsOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage)
                	
-               	#If we want to save the .json files of the batch
+               	#fakeKeypointsCroppedOneImageIntRescaledNP = poseUtils.keypoints2Numpy(fakeKeypointsCroppedOneImageIntRescaled)
+                #fakeKeypointsCroppedOneImageIntRescaledNP = poseUtils.scale(fakeKeypointsCroppedOneImageIntRescaledNP, 0.01)
+
+
+                #If we want to save the .json files of the batch
                 #openPoseUtils.keypoints2json(fakeKeypointsOneImageInt, OUTPUTPATH+"/"+f"{idx:02d}"+"_img_keypoints.json")
                 
                 json_file_without_extension = os.path.splitext(json_file)[0]
                	json_file_without_extension = json_file_without_extension.replace('_keypoints', '')
                	
-               	#Draw the pairs  
+               	#Draw the (still normalized) results for DEBUG  
+                #NOTE: the original poses are centered at (0.5, 0.5)
+                #They are re-escaled and centered at the mid hip for drawing
+                #originalReshapedAsKeypointsOneImageInt
+                #fakeKeypointsCroppedOneImageInt
+                #fakeKeypointsOneImageInt (with restoreOriginalKeypoints)
                 try:
-                    poseUtils.draw_pose(blank_imageOriginal, originalReshapedAsKeypointsOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
-                    poseUtils.draw_pose(blank_imageCropped, fakeKeypointsCroppedOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
-                    poseUtils.draw_pose(blank_image, fakeKeypointsOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
-                    #poseUtils.draw_pose_scale(blank_imageOriginal, originalReshapedAsKeypointsOneImageInt.numpy(), -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
-                    #poseUtils.draw_pose_scale(blank_imageCropped, fakeKeypointsCroppedOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
-                    #poseUtils.draw_pose_scale(blank_image, fakeKeypointsOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+                    #poseUtils.draw_pose(blank_imageOriginal, originalReshapedAsKeypointsOneImageInt, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+                    #poseUtils.draw_pose(blank_imageCropped, fakeKeypointsCroppedOneImageInt, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+                    #poseUtils.draw_pose(blank_image, fakeKeypointsOneImageInt, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+                    poseUtils.draw_pose_scaled_centered(blank_imageOriginal, originalReshapedAsKeypointsOneImageInt.numpy(), -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 1/(WIDTH/4), WIDTH/2, HEIGHT/2, 8)
+                    poseUtils.draw_pose_scaled_centered(blank_imageCropped, fakeKeypointsCroppedOneImageInt, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 1/(WIDTH/4), WIDTH/2, HEIGHT/2, 8)
+                    poseUtils.draw_pose_scaled_centered(blank_image, fakeKeypointsOneImageInt, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 1/(WIDTH/4), WIDTH/2, HEIGHT/2, 8)
                     targetFilePathCropped = OUTPUTPATH+"/debug_input"+str(idx)+".jpg"
                     targetFilePath = OUTPUTPATH+"/debug"+str(idx)+".jpg"
                     #cv2.imwrite(targetFilePath, blank_image)

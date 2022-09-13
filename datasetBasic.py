@@ -47,44 +47,47 @@ class JsonDataset(torch.utils.data.IterableDataset):
     def __iter__(self):
         #jsonFiles = [f for f in listdir(self.inputpath) if isfile(join(self.inputpath, f)) and f.endswith("json") ]
         #Important, the scandir iterator needs to be created each time
-        buffer = []
-        self.scandirIterator = os.scandir(self.inputpath_original)
+        self.scandirIterator = os.scandir(self.inputpath_cropped)
         for item in self.scandirIterator:
             json_file = str(item.name)
             if json_file.endswith(".json"):
                 try:
-                	#Normalize over the original
-                    keypoints_original, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(self.inputpath_original, json_file), self.bodyModel)
-                    keypoints_original_noconfidence, dummy = openPoseUtils.removeConfidence(keypoints_original)
-                    keypoints_original_flat = [item for sublist in keypoints_original_noconfidence for item in sublist]
-                    keypoints_original_flat = torch.tensor(keypoints_original_flat)
-                    #keypoints_original_flat = keypoints_original_flat.flatten()
+                    #print("Processing file: "+json_file)
+                    keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(self.inputpath_cropped, json_file), self.bodyModel)
+                    keypoints_cropped, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
+                    keypoints_cropped = [item for sublist in keypoints_cropped for item in sublist]
+                    keypoints_cropped = [float(k) for k in keypoints_cropped]
+                    keypoints_cropped = torch.tensor(keypoints_cropped)
+                    keypoints_cropped = keypoints_cropped.flatten()
+
+                    #Read the file with the original keypoints
+                    #They are normalized
+                    #They are used to 1)   2) restore good keypoints in the result
+                    indexUnderscore = json_file.find('_')
+                    json_file = json_file[:indexUnderscore]+".json"#+"_keypoints.json"  
+                    original_keypoints_path = join(self.inputpath_original, json_file)
+                    if not os.path.isfile(original_keypoints_path):
+                        print("FATAL ERROR: original keypoints path not found: "+original_keypoints_path)
+                        sys.exit()
+                    keypoints_original, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(original_keypoints_path, self.bodyModel)
+                    keypoints_original, dummy = openPoseUtils.removeConfidence(keypoints_original)
+                    keypoints_original = [item for sublist in keypoints_original for item in sublist]
+                    keypoints_original = [float(k) for k in keypoints_original]
+                    keypoints_original = torch.tensor(keypoints_original)
+                    keypoints_original = keypoints_original.flatten()
                     
-                    variations = openPoseUtils.crop(keypoints_original, self.bodyModel)               
-                    for v_idx, keypoints_cropped in enumerate(variations):                       
-                        keypoints_croppedNoConf, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
-                        keypoints_croppedFlat = [item for sublist in keypoints_croppedNoConf for item in sublist]
-                        keypoints_croppedFlatFloat = [float(k) for k in keypoints_croppedFlat]
-                        keypoints_croppedFlatFloatTensor = torch.tensor(keypoints_croppedFlatFloat)
-                        
-                        #The confidence_values of the cropped skeletons signal which bones to fake and which to keep
-                        confidence_values = torch.tensor(confidence_values)
-                        
-                        #Buffer some to sort them before yielding
-                        buffer.append((keypoints_croppedFlatFloatTensor, keypoints_original_flat, confidence_values, scaleFactor, x_displacement, y_displacement, json_file))
-                        if len(buffer) == 2048:
-                            random.shuffle(buffer)
-                            for tup in buffer:
-                                yield tup[0], tup[1], tup[2], tup[3], tup[4], tup[5], tup[6]
-                            buffer = []
+                    confidence_values = torch.tensor(confidence_values)
+                    #print("confidence_values:")
+                    #print(confidence_values)
+                    yield keypoints_cropped, keypoints_original, confidence_values, scaleFactor, x_displacement, y_displacement, json_file
                 except ValueError as ve:
                     print(ve)
                 #except OSError as oe:
                 #   print(oe)
                 except Exception as e:
                     print("WARNING: Error reading ", json_file)
-                    #print(e)
-                    traceback.print_exc()
+                    print(e)
+                    #traceback.print_exc()
         self.scandirIterator.close()
         print("Closed scandirIterator.")
             

@@ -32,12 +32,12 @@ import BodyModelOPENPOSE15
 
 INPUTPATHS = [
 "/2D/S1/MyPoseFeatures/D2_Positions/",
-"/2D/S5/MyPoseFeatures/D2_Positions/",
-"/2D/S6/MyPoseFeatures/D2_Positions/",
-"/2D/S7/MyPoseFeatures/D2_Positions/",
-"/2D/S8/MyPoseFeatures/D2_Positions/",
-"/2D/S9/MyPoseFeatures/D2_Positions/",
-"/2D/S11/MyPoseFeatures/D2_Positions/"
+#"/2D/S5/MyPoseFeatures/D2_Positions/",
+#"/2D/S6/MyPoseFeatures/D2_Positions/",
+#"/2D/S7/MyPoseFeatures/D2_Positions/",
+#"/2D/S8/MyPoseFeatures/D2_Positions/",
+#"/2D/S9/MyPoseFeatures/D2_Positions/",
+#"/2D/S11/MyPoseFeatures/D2_Positions/"
 ]
 #OUTPUTPATH = "/Volumes/ElementsDat/pose/H36M/H36M/H36M"
 

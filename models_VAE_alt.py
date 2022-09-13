@@ -9,6 +9,9 @@ import torchvision.transforms as transforms
 from torchvision.transforms import ToTensor, Lambda, Compose
 import torchvision.utils as vutils
 
+from torch.nn import functional as F
+
+
 CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS = 0.1 
 
 #   size using a transformer.
@@ -19,7 +22,7 @@ CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS = 0.1
 nc = 1
 
 # Size of z latent vector (i.e. size of generator input)
-nz = 100
+#nz = 100
 
 # Size of feature maps in generator
 #ngf = 64
@@ -105,6 +108,47 @@ class Discriminator(nn.Module):
         input = torch.cat((batch_of_keypoints_cropped, batch_of_keypoints_original), -1)  
         #print("Discriminator input:",input.shape)
         return self.main(input)
+
+NEURONS_PER_LAYER_CVAE = 128
+class VAE(nn.Module):
+    def __init__(self, feature_size, latent_size):
+        super(VAE, self).__init__()
+        self.feature_size = feature_size
+        self.latent_size = latent_size
+    
+        # encoder
+        self.enc1 = nn.Linear(in_features=feature_size, out_features=512)
+        self.enc2 = nn.Linear(in_features=512, out_features=latent_size*2)
+ 
+        # decoder 
+        self.dec1 = nn.Linear(in_features=latent_size, out_features=512)
+        self.dec2 = nn.Linear(in_features=512, out_features=feature_size)
+
+    def reparameterize(self, mu, log_var):
+        """
+        :param mu: mean from the encoder's latent space
+        :param log_var: log variance from the encoder's latent space
+        """
+        std = torch.exp(0.5*log_var) # standard deviation
+        eps = torch.randn_like(std) # `randn_like` as we need the same size
+        sample = mu + (eps * std) # sampling as if coming from the input space
+        return sample
+
+    def forward(self, x):
+        x = F.relu(self.enc1(x))
+        x = self.enc2(x).view(-1, 2, self.latent_size)
+        # get `mu` and `log_var`
+        mu = x[:, 0, :] # the first feature values as mean
+        log_var = x[:, 1, :] # the other feature values as variance
+        # get the latent vector through reparameterization
+        z = self.reparameterize(mu, log_var)
+ 
+        # decoding
+        x = F.relu(self.dec1(z))
+        reconstruction = torch.sigmoid(self.dec2(x))
+        return reconstruction, mu, log_var
+
+
 
 def restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, batch_of_confidence_values):
     '''

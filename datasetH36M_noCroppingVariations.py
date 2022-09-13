@@ -51,9 +51,8 @@ class JsonDataset(torch.utils.data.IterableDataset):
         #Important, the scandir iterator needs to be created each time
         #buffer = []
         #self.scandirIterator = os.scandir(self.inputpath_original)
-        buffer_originals = []
-        buffer_variations = []
         self.scandirIterator = h36mIterator.iterator(self.inputpath_original)
+        buffer_originals = []
         for keypoints_original in self.scandirIterator:
             #We fill first a buffer of originals
             buffer_originals.append(keypoints_original)
@@ -65,42 +64,28 @@ class JsonDataset(torch.utils.data.IterableDataset):
         print("shuffle buffer original full: ", len_buffer_originals)
         print("sorting buffer originals...")
         random.shuffle(buffer_originals)
-        print("generating variations...")
+        print("yielding originals...")
 
         for buffered_keypoints_original in buffer_originals:
-
             keypoints_original_norm, dummy, dummy, dummy = openPoseUtils.normalize(buffered_keypoints_original, BodyModelOPENPOSE15, keepConfidence=False)
             keypoints_original_norm_noconfidence_flat = [item for sublist in keypoints_original_norm for item in sublist]
             keypoints_original_flat = torch.tensor(keypoints_original_norm_noconfidence_flat)
             
-            variations = openPoseUtils.crop(buffered_keypoints_original, BodyModelOPENPOSE15)               
-            for v_idx, keypoints_cropped in enumerate(variations):    
-                #The normalization is performed over the cropped skeleton
-                keypoints_cropped_norm, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalize(keypoints_cropped, BodyModelOPENPOSE15, keepConfidence=True)              
-                #keypoints_cropped_norm, dummy, dummy, dummy = openPoseUtils.normalize(keypoints_cropped, keepConfidence=True)             
-                #dummy, dummy, dummy = openPoseUtils.normalize(keypoints_cropped, keepConfidence=True)             
-                
-                keypoints_croppedNoConf, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped_norm)
-                keypoints_croppedFlat = [item for sublist in keypoints_croppedNoConf for item in sublist]
-                keypoints_croppedFlatFloat = [float(k) for k in keypoints_croppedFlat]
-                keypoints_croppedFlatFloatTensor = torch.tensor(keypoints_croppedFlatFloat)
-                
-                #The confidence_values of the cropped skeletons signal which bones to fake and which to keep
-                confidence_values = torch.tensor(confidence_values)
-
-                buffer_variations.append((keypoints_croppedFlatFloatTensor, keypoints_original_flat, confidence_values, scaleFactor, x_displacement, y_displacement, "unknown file"))
-                
-        len_variations = len(buffer_variations)
-        print("Variations generated: ", len_variations)
-        print("Shuffling variations...")
-        random.shuffle(buffer_variations)
-        print("Yielding variations...")
-        for tup in buffer_variations:
-            yield tup[0], tup[1], tup[2], tup[3], tup[4], tup[5], tup[6]
-        print(str(len_variations)+" variations yield.")
-        buffer_variations = []
-        buffer_originals = []
             
+            keypoints_cropped_norm, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalize(buffered_keypoints_original, BodyModelOPENPOSE15, keepConfidence=True)              
+            #keypoints_cropped_norm, dummy, dummy, dummy = openPoseUtils.normalize(keypoints_cropped, keepConfidence=True)             
+            #dummy, dummy, dummy = openPoseUtils.normalize(keypoints_cropped, keepConfidence=True)             
+            
+            keypoints_croppedNoConf, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped_norm)
+            keypoints_croppedFlat = [item for sublist in keypoints_croppedNoConf for item in sublist]
+            keypoints_croppedFlatFloat = [float(k) for k in keypoints_croppedFlat]
+            keypoints_croppedFlatFloatTensor = torch.tensor(keypoints_croppedFlatFloat)
+            
+            #The confidence_values of the cropped skeletons signal which bones to fake and which to keep
+            confidence_values = torch.tensor(confidence_values)#Here I repeat the originals twice because
+            #some training expect the variation to come first
+            yield keypoints_croppedFlatFloatTensor, keypoints_original_flat, confidence_values, scaleFactor, x_displacement, y_displacement, "unknown file"
+    
         self.scandirIterator.close()
         print("Closed h36mIterator.")
             

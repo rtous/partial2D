@@ -34,9 +34,10 @@ import models
 import random
 
 class JsonDataset(torch.utils.data.IterableDataset):
-    def __init__(self, inputpath_cropped, inputpath_original):
+    def __init__(self, inputpath_cropped, inputpath_original, bodyModel):
         self.inputpath_cropped = inputpath_cropped
         self.inputpath_original = inputpath_original
+        self.bodyModel = bodyModel
         #self.count = countFiles(self.inputpath_cropped, ".json")
         #self.jsonFiles = [f for f in listdir(self.inputpath_cropped) if isfile(join(self.inputpath_cropped, f)) and f.endswith("json") ]
         
@@ -55,7 +56,7 @@ class JsonDataset(torch.utils.data.IterableDataset):
                 try:
                     keypoints_original = openPoseUtils.json2Keypoints(join(self.inputpath_original, json_file))
                     
-                    keypoints_original_norm, dummy, dummy, dummy = openPoseUtils.normalize(keypoints_original, keepConfidence=False)
+                    keypoints_original_norm, dummy, dummy, dummy = openPoseUtils.normalize(keypoints_original, self.bodyModel, keepConfidence=False)
                     #keypoints_original_norm_noconfidence, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalize(keypoints_original, keepConfidence=False)                    
                     #keypoints_original_ = keypoints_original.copy()
                     #keypoints_original_norm, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalize(keypoints_original, keepConfidence=False)                    
@@ -65,10 +66,10 @@ class JsonDataset(torch.utils.data.IterableDataset):
                     keypoints_original_flat = torch.tensor(keypoints_original_norm_noconfidence_flat)
                     #keypoints_original_flat = keypoints_original_flat.flatten()
                     
-                    variations = openPoseUtils.crop(keypoints_original)               
+                    variations = openPoseUtils.crop(keypoints_original,self.bodyModel)               
                     for v_idx, keypoints_cropped in enumerate(variations):    
                         #The normalization is performed over the cropped skeleton
-                        keypoints_cropped_norm, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalize(keypoints_cropped, keepConfidence=True)              
+                        keypoints_cropped_norm, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalize(keypoints_cropped, self.bodyModel, keepConfidence=True)              
                         #keypoints_cropped_norm, dummy, dummy, dummy = openPoseUtils.normalize(keypoints_cropped, keepConfidence=True)             
                         #dummy, dummy, dummy = openPoseUtils.normalize(keypoints_cropped, keepConfidence=True)             
                         
@@ -92,7 +93,7 @@ class JsonDataset(torch.utils.data.IterableDataset):
                 #except OSError as oe:
                 #   print(oe)
                 except Exception as e:
-                    print("WARNING: Error reading ", json_file)
+                    print("WARNING: Error reading ", join(self.inputpath_original, json_file))
                     #print(e)
                     traceback.print_exc()
         self.scandirIterator.close()

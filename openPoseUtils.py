@@ -9,6 +9,7 @@ from os.path import isfile, join, splitext
 import pathlib
 import traceback
 import poseUtilsBaseline
+import Configuration
 
 '''
 OPENPOSE INFO
@@ -49,112 +50,119 @@ pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True)
 #25 May 2019
 #https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/include/openpose/pose/poseParametersRender.hpp
 
-POSE_BODY_25_BODY_PARTS = [
-    "Nose",
-    "Neck",
-    "RShoulder",
-    "RElbow",
-    "RWrist",
-    "LShoulder",
-    "LElbow",
-    "LWrist",
-    "MidHip",
-    "RHip",
-    "RKnee",
-    "RAnkle",
-    "LHip",
-    "LKnee",
-    "LAnkle",
-    #"REye",
-    #"LEye",
-    #"REar",
-    #"LEar",
-    #"LBigToe",
-    #"LSmallToe",
-    #"LHeel",
-    #"RBigToe",
-    #"RSmallToe",
-    #"RHeel",
-    #"Background"
-]
-''' 
-POSE_BODY_25_BODY_PARTS = [
-    "Nose",
-    "Neck",
-    "RShoulder",
-    "RElbow",
-    "RWrist",
-    "LShoulder",
-    "LElbow",
-    "LWrist",
-    "MidHip",
-    "RHip",
-    "RKnee",
-    "RAnkle",
-    "LHip",
-    "LKnee",
-    "LAnkle",
-    "REye",
-    "LEye",
-    "REar",
-    "LEar",
-    "LBigToe",
-    "LSmallToe",
-    "LHeel",
-    "RBigToe",
-    "RSmallToe",
-    "RHeel",
-    #"Background"
-]
+#POSE_BODY_25_BODY_PARTS = Configuration.bodyModel.POSE_BODY_25_BODY_PARTS
+'''
+if Configuration.BODY_MODEL=="OPENPOSE_15":
+	POSE_BODY_25_BODY_PARTS = [
+	    "Nose",
+	    "Neck",
+	    "RShoulder",
+	    "RElbow",
+	    "RWrist",
+	    "LShoulder",
+	    "LElbow",
+	    "LWrist",
+	    "MidHip",
+	    "RHip",
+	    "RKnee",
+	    "RAnkle",
+	    "LHip",
+	    "LKnee",
+	    "LAnkle",
+	    #"REye",
+	    #"LEye",
+	    #"REar",
+	    #"LEar",
+	    #"LBigToe",
+	    #"LSmallToe",
+	    #"LHeel",
+	    #"RBigToe",
+	    #"RSmallToe",
+	    #"RHeel",
+	    #"Background"
+	]
+	POSE_BODY_25_BODY_PARTS_DICT = {
+	    0:"Nose",
+	    1:"Neck",
+	    2:"RShoulder",
+	    3:"RElbow",
+	    4:"RWrist",
+	    5:"LShoulder",
+	    6:"LElbow",
+	    7:"LWrist",
+	    8:"MidHip",
+	    9:"RHip",
+	    10:"RKnee",
+	    11:"RAnkle",
+	    12:"LHip",
+	    13:"LKnee",
+	    14:"LAnkle",
+	}
+	POSE_BODY_25_PAIRS_RENDER_GP = [[1,8],   [1,2],   [1,5],   [2,3],   [3,4],   [5,6],   [6,7],   [8,9],   [9,10],  [10,11], [8,12],  [12,13], [13,14],  [1,0]]
+
+elif Configuration.BODY_MODEL=="OPENPOSE_25": 
+	POSE_BODY_25_BODY_PARTS = [
+	    "Nose",
+	    "Neck",
+	    "RShoulder",
+	    "RElbow",
+	    "RWrist",
+	    "LShoulder",
+	    "LElbow",
+	    "LWrist",
+	    "MidHip",
+	    "RHip",
+	    "RKnee",
+	    "RAnkle",
+	    "LHip",
+	    "LKnee",
+	    "LAnkle",
+	    "REye",
+	    "LEye",
+	    "REar",
+	    "LEar",
+	    "LBigToe",
+	    "LSmallToe",
+	    "LHeel",
+	    "RBigToe",
+	    "RSmallToe",
+	    "RHeel",
+	    #"Background"
+	]
+	POSE_BODY_25_BODY_PARTS_DICT = {
+	    0:"Nose",
+	    1:"Neck",
+	    2:"RShoulder",
+	    3:"RElbow",
+	    4:"RWrist",
+	    5:"LShoulder",
+	    6:"LElbow",
+	    7:"LWrist",
+	    8:"MidHip",
+	    9:"RHip",
+	    10:"RKnee",
+	    11:"RAnkle",
+	    12:"LHip",
+	    13:"LKnee",
+	    14:"LAnkle",
+	    15:"REye",
+	    16:"LEye",
+	    17:"REar",
+	    18:"LEar",
+	    19:"LBigToe",
+	    20:"LSmallToe",
+	    21:"LHeel",
+	    22:"RBigToe",
+	    23:"RSmallToe",
+	    24:"RHeel",
+	    #25:"Background"
+	}
+	POSE_BODY_25_PAIRS_RENDER_GP_25 = [[1,8],   [1,2],   [1,5],   [2,3],   [3,4],   [5,6],   [6,7],   [8,9],   [9,10],  [10,11], [8,12],  [12,13], [13,14],  [1,0],   [0,15], [15,17],  [0,16], [16,18],   [14,19],[19,20],[14,21], [11,22],[22,23],[11,24]]
+else:
+	print("Unknown Configuration.BODY_MODEL:", Configuration.BODY_MODEL)
+	sys.exit(0)
 '''
 
-POSE_BODY_25_BODY_PARTS_DICT = {
-    0:"Nose",
-    1:"Neck",
-    2:"RShoulder",
-    3:"RElbow",
-    4:"RWrist",
-    5:"LShoulder",
-    6:"LElbow",
-    7:"LWrist",
-    8:"MidHip",
-    9:"RHip",
-    10:"RKnee",
-    11:"RAnkle",
-    12:"LHip",
-    13:"LKnee",
-    14:"LAnkle",
-}
-'''
-POSE_BODY_25_BODY_PARTS_DICT = {
-    0:"Nose",
-    1:"Neck",
-    2:"RShoulder",
-    3:"RElbow",
-    4:"RWrist",
-    5:"LShoulder",
-    6:"LElbow",
-    7:"LWrist",
-    8:"MidHip",
-    9:"RHip",
-    10:"RKnee",
-    11:"RAnkle",
-    12:"LHip",
-    13:"LKnee",
-    14:"LAnkle",
-    15:"REye",
-    16:"LEye",
-    17:"REar",
-    18:"LEar",
-    19:"LBigToe",
-    20:"LSmallToe",
-    21:"LHeel",
-    22:"RBigToe",
-    23:"RSmallToe",
-    24:"RHeel",
-    #25:"Background"
-}
-'''
 '''
 POSE_BODY_25_COLORS_RENDER_GPU =[
         [255,     0,    85],
@@ -214,37 +222,32 @@ POSE_BODY_25_COLORS_RENDER_GPU =[
         [0,   0,     60] #24:"RHeel",
 ]
 
-
-POSE_BODY_25_PAIRS_RENDER_GP_25 = [[1,8],   [1,2],   [1,5],   [2,3],   [3,4],   [5,6],   [6,7],   [8,9],   [9,10],  [10,11], [8,12],  [12,13], [13,14],  [1,0],   [0,15], [15,17],  [0,16], [16,18],   [14,19],[19,20],[14,21], [11,22],[22,23],[11,24]]
-POSE_BODY_25_PAIRS_RENDER_GP = [[1,8],   [1,2],   [1,5],   [2,3],   [3,4],   [5,6],   [6,7],   [8,9],   [9,10],  [10,11], [8,12],  [12,13], [13,14],  [1,0]]
-
-
 POSE_BODY_25_PAIRS_RENDER_GP_NAMES = ["Neck-MidHip", "Neck-RShoulder", "Neck-LShoulder", "RShoulder-RElbow", "RElbow-RWrist", "LShoulder-LElbow", "LElbow-LWrist", "MidHip-RHip", "RHip-RKnee", "RKnee-RAnkle", "MidHip-LHip", "LHip-LKnee", "LKnee-LAnkle", "Neck-Nose", "Nose-REye", "REye-REar", "Nose-LEye", "LEye-LEar", "LAnkle-LBigToe", "LBigToe-LSmallToe", "LAnkle-LHeel", "RAnkle-RBigToe", "RBigToe-RSmallToe", "RAnkle-RHeel"]
 
-def findPart(partName):
-    for i, part in enumerate(POSE_BODY_25_BODY_PARTS):
+def findPart(partName, bodyModel):
+    for i, part in enumerate(bodyModel.POSE_BODY_25_BODY_PARTS):
         if part == partName:
             return i
     raise RuntimeError("part name not found:"+partName)
 
-def findBone(boneName):
+def findBone(boneName, bodyModel):
     for i, bone in enumerate(POSE_BODY_25_PAIRS_RENDER_GP_NAMES):
         if bone == boneName:
             return i
     raise RuntimeError("bone name not found:"+boneName)
 
-def hasPart(keypoints, partName):
-    index = findPart(partName)
+def hasPart(keypoints, partName, bodyModel):
+    index = findPart(partName, bodyModel)
     if keypoints[index][2] > 0:
         return True
     else:
         return False
 
-def hasBone(keypoints, boneName):
-    boneIndex = findBone(boneName)
+def hasBone(keypoints, boneName, bodyModel):
+    boneIndex = findBone(boneName, bodyModel)
 
-    keypoint1 = keypoints[POSE_BODY_25_PAIRS_RENDER_GP[boneIndex][0]]
-    keypoint2 = keypoints[POSE_BODY_25_PAIRS_RENDER_GP[boneIndex][1]]
+    keypoint1 = keypoints[bodyModel.POSE_BODY_25_PAIRS_RENDER_GP[boneIndex][0]]
+    keypoint2 = keypoints[bodyModel.POSE_BODY_25_PAIRS_RENDER_GP[boneIndex][1]]
 
     if keypoint1[0]!=0 and keypoint1[1]!=0 and keypoint2[0]!=0 and keypoint2[1]!=0:
         return True
@@ -274,7 +277,8 @@ def json2KeypointsFlat(path):
     return keypointsFlat
 
 def json2Keypoints(path, only15joints=False):
-     
+    #returns a list of lists (x, y, c)
+    
     keypointsFlat = json2KeypointsFlat(path)
 
     #keypointsFlat = list(map(int, keypointsFlat))
@@ -290,15 +294,15 @@ def json2Keypoints(path, only15joints=False):
 
     return keypoints
 
-def json2normalizedKeypoints(path, only15joints=False):
+def json2normalizedKeypoints(path, bodyModel, only15joints=False):
 
     keypoints = json2Keypoints(path, only15joints)
 
     #boneSpineIndex = REFERENCE_JOINT_PAIR_INDEX
 
-    referenceBoneIndex, referenceBoneSize = reference_bone(keypoints)
+    referenceBoneIndex, referenceBoneSize = reference_bone(keypoints, bodyModel)
 
-    normalized_keypoints, scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, POSE_BODY_25_PAIRS_RENDER_GP, referenceBoneSize, WIDTH, HEIGHT, referenceBoneIndex, HAVETHRESHOLD)
+    normalized_keypoints, scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, referenceBoneSize, WIDTH, HEIGHT, referenceBoneIndex, HAVETHRESHOLD)
 
     return normalized_keypoints, scaleFactor, x_displacement, y_displacement
 
@@ -400,23 +404,23 @@ def addConfidenceValue(keypoints):
     return intKeypoints
 
 
-def magnitude_bone_from_index(keypoints, boneIndex):
-    keypoint1 = keypoints[POSE_BODY_25_PAIRS_RENDER_GP[boneIndex][0]]
-    keypoint2 = keypoints[POSE_BODY_25_PAIRS_RENDER_GP[boneIndex][1]]
+def magnitude_bone_from_index(keypoints, boneIndex, bodyModel):
+    keypoint1 = keypoints[bodyModel.POSE_BODY_25_PAIRS_RENDER_GP[boneIndex][0]]
+    keypoint2 = keypoints[bodyModel.POSE_BODY_25_PAIRS_RENDER_GP[boneIndex][1]]
     x_distance = keypoint1[0]-keypoint2[0]
     y_distance = keypoint1[1]-keypoint2[1]
     magnitudeSpine = math.sqrt(pow(x_distance, 2)+pow(y_distance, 2))
     return magnitudeSpine
 
 def magnitude_bone(keypoints, boneName):
-    if hasBone(keypoints, boneName):
+    if hasBone(keypoints, boneName, bodyModel):
         boneIndex = findBone(boneName)
         magnitudeSpine = magnitude_bone_from_index(keypoints, boneIndex)
         return magnitudeSpine
     else:
         raise Exception('magnitude_bone: bone not found: ', boneName)
 
-def reference_bone(keypoints):
+def reference_bone(keypoints, bodyModel):
     #PROBLEM: If you choose different reference bones for cropped and original...
  
     
@@ -433,8 +437,8 @@ def reference_bone(keypoints):
 
     
     #Allways same bones (big ones ones)
-    if hasBone(keypoints, "Neck-Nose"):
-        return findBone("Neck-Nose"), NECKSIZE
+    if hasBone(keypoints, "Neck-Nose", bodyModel):
+        return findBone("Neck-Nose", bodyModel), NECKSIZE
     else:
         raise Exception('No reference bone has been found :-(')
     
@@ -480,20 +484,21 @@ def normalize(keypoints, keepConfidence=False):
 
     return normalized_keypoints, scaleFactor, x_displacement, y_displacement
 '''
-def normalize(keypoints, keepConfidence=False):
+def normalize(keypoints, bodyModel, keepConfidence=False):
 
     #boneSpineIndex = REFERENCE_JOINT_PAIR_INDEX
 
-    referenceBoneIndex, referenceBoneSize = reference_bone(keypoints)
+    referenceBoneIndex, referenceBoneSize = reference_bone(keypoints, bodyModel)
 
-    keypoints_normalized, scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, POSE_BODY_25_PAIRS_RENDER_GP, referenceBoneSize, WIDTH, HEIGHT, referenceBoneIndex, keepConfidence)
+    keypoints_normalized, scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, referenceBoneSize, WIDTH, HEIGHT, referenceBoneIndex, keepConfidence)
 
     return keypoints_normalized, scaleFactor, x_displacement, y_displacement
 
 
-def denormalize(keypoints, scaleFactor, x_displacement, y_displacement):
+def denormalize(keypoints, scaleFactor, x_displacement, y_displacement, keepConfidence=False):
+    #discards confidence
 
-    newKeypoints = poseUtils.denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, False)
+    newKeypoints = poseUtils.denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, keepConfidence)
 
     return newKeypoints
 '''
@@ -540,18 +545,20 @@ def removeConfidence(keypoints):
         #keypoints[i] = new_keypoint
     return newKeypoints, confidence_values
 
-def removeBones(keypoints, boneNames):
+def removeBones(keypoints, boneNames, bodyModel):
     #newKeypoints = poseUtils.copyKeypoints(keypoints)
     newKeypoints = [] 
     for i, k in enumerate(keypoints):
-        if not POSE_BODY_25_BODY_PARTS[i] in boneNames:
+        if not bodyModel.POSE_BODY_25_BODY_PARTS[i] in boneNames:
+            #print("i=", i)
+            #print("len(POSE_BODY_25_BODY_PARTS)", len(bodyModel.POSE_BODY_25_BODY_PARTS))
             new_keypoint = (k[0], k[1], k[2])   
         else:
             new_keypoint = (0.0, 0.0, 0.0)  
         newKeypoints.append(new_keypoint)
 
     #check if keeps minimum bones:
-    if (hasPart(newKeypoints, "MidHip") and hasPart(newKeypoints, "Neck")) or (hasPart(newKeypoints, "Neck") and hasPart(newKeypoints, "Nose")) or (hasPart(newKeypoints, "Nose") and hasPart(newKeypoints, "REye")):
+    if (hasPart(newKeypoints, "MidHip", bodyModel) and hasPart(newKeypoints, "Neck", bodyModel)) or (hasPart(newKeypoints, "Neck", bodyModel) and hasPart(newKeypoints, "Nose", bodyModel)) or (hasPart(newKeypoints, "Nose", bodyModel) and hasPart(newKeypoints, "REye", bodyModel)):
         return newKeypoints
     else:
         return None
@@ -563,21 +570,23 @@ def removeBones(keypoints, boneNames):
         newKeypoints[boneIndex][2]=0
     return newKeypoints'''
 
-def tryAddingNewCroppedVariation(keypoints, boneNames, variations):
+def tryAddingNewCroppedVariation(keypoints, boneNames, variations, bodyModel):
     #if fails raises exception and continues
-    variation = removeBones(keypoints, boneNames)
+    variation = removeBones(keypoints, boneNames, bodyModel)
     if variation is not None:
         try:
-            referenceBoneIndex, referenceBoneSize = reference_bone(variation)
-            magnitude_bone = magnitude_bone_from_index(variation, referenceBoneIndex)
+            referenceBoneIndex, referenceBoneSize = reference_bone(variation, bodyModel)
+            magnitude_bone = magnitude_bone_from_index(variation, referenceBoneIndex, bodyModel)
             if magnitude_bone == 0:
+                print("WARNING: Variation not added because the magnitude of reference bone is 0.")
                 raise Exception('magnitude_bone == 0')
             variations.append(variation)
         except Exception as e:
-            print("WARNING: Variation not added because the magnitude of reference bone is 0.")
-            traceback.print_stack()
+            print("ERROR adding variation:", e)
+            #traceback.print_stack()
+            #print(e)
 
-def crop(keypoints):
+def crop(keypoints, bodyModel):
 
     variations = [] 
 
@@ -585,51 +594,51 @@ def crop(keypoints):
     #tryAddingNewCroppedVariation(keypoints, [], variations)
     
     #remove below knee
-    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle"], variations)   
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle"], variations, bodyModel)   
     #just right
-    tryAddingNewCroppedVariation(keypoints, ["RAnkle"], variations)
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle"], variations, bodyModel)
     #just left
-    tryAddingNewCroppedVariation(keypoints, ["LAnkle"], variations)
+    tryAddingNewCroppedVariation(keypoints, ["LAnkle"], variations, bodyModel)
     
     #remove legs
-    tryAddingNewCroppedVariation(keypoints, [ "RAnkle","LAnkle", "LKnee", "RKnee"], variations)
+    tryAddingNewCroppedVariation(keypoints, [ "RAnkle","LAnkle", "LKnee", "RKnee"], variations, bodyModel)
     #just right
-    tryAddingNewCroppedVariation(keypoints, ["RAnkle", "RKnee"], variations)
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle", "RKnee"], variations, bodyModel)
     #just left
-    tryAddingNewCroppedVariation(keypoints, ["LAnkle", "LKnee"], variations)
+    tryAddingNewCroppedVariation(keypoints, ["LAnkle", "LKnee"], variations, bodyModel)
     
     #remove below neck but no arms
-    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip"], variations)
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip"], variations, bodyModel)
 
     #remove below neck and wrists
-    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist"], variations)
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist"], variations, bodyModel)
     #just below neck and right wrists
-    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "RWrist"], variations)
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "RWrist"], variations, bodyModel)
     #just below neck and left wrists
-    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist"], variations)
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist"], variations, bodyModel)
     
     #remove below neck and elbows
-    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist", "LElbow", "RElbow"], variations)
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist", "LElbow", "RElbow"], variations, bodyModel)
     #just below neck and right elbow
-    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "RWrist", "RElbow"], variations)
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "RWrist", "RElbow"], variations, bodyModel)
     #just below neck and left elbow
-    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "LElbow"], variations)
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "LElbow"], variations, bodyModel)
      
     #remove shoulders
-    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist", "LElbow", "RElbow", "LShoulder", "RShoulder"], variations)
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist", "LElbow", "RElbow", "LShoulder", "RShoulder"], variations, bodyModel)
     #just right shoulder and left wrist
-    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "RWrist", "RElbow", "RShoulder", "LWrist"], variations)
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "RWrist", "RElbow", "RShoulder", "LWrist"], variations, bodyModel)
     #just right shoulder and left elbow
-    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "RWrist", "RElbow", "RShoulder", "LWrist", "LElbow"], variations)
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "RWrist", "RElbow", "RShoulder", "LWrist", "LElbow"], variations, bodyModel)
     #just right shoulder
-    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "RWrist", "RElbow", "RShoulder"], variations)
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "RWrist", "RElbow", "RShoulder"], variations, bodyModel)
     
     #just left shoulder
-    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "LElbow", "LShoulder"], variations)
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "LElbow", "LShoulder"], variations, bodyModel)
     #just left shoulder and right wrist
-    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "LElbow", "LShoulder", "RWrist"], variations)
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "LElbow", "LShoulder", "RWrist"], variations, bodyModel)
     #just left shoulder and right elbow
-    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "LElbow", "LShoulder", "RWrist", "RElbow"], variations)
+    tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "LElbow", "LShoulder", "RWrist", "RElbow"], variations, bodyModel)
     
     #remove below nose
     #tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist", "LElbow", "RElbow", "LShoulder", "RShoulder", "Neck"], variations)

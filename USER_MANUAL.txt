@@ -1,0 +1,5 @@
+
+
+
+#Generate test dataset for H36M
+./datasetH36M_makelite.sh

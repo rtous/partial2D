@@ -30,6 +30,9 @@ import traceback
 import shutil
 import sys
 from torch.utils.tensorboard import SummaryWriter
+import BodyModelOPENPOSE25
+import modelsECCV18OP
+import datasetBasic
 
 CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS = 0.1
 
@@ -109,7 +112,7 @@ class JsonDataset(torch.utils.data.IterableDataset):
             if json_file.endswith(".json"):
                 try:
                     #print("Processing file: "+json_file)
-                    keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(self.inputpath_cropped, json_file))
+                    keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(self.inputpath_cropped, json_file), BodyModelOPENPOSE25)
                     keypoints_cropped, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
                     keypoints_cropped = [item for sublist in keypoints_cropped for item in sublist]
                     keypoints_cropped = [float(k) for k in keypoints_cropped]
@@ -125,7 +128,7 @@ class JsonDataset(torch.utils.data.IterableDataset):
                     if not os.path.isfile(original_keypoints_path):
                     	print("FATAL ERROR: original keypoints path not found: "+original_keypoints_path)
                     	sys.exit()
-                    keypoints_original, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(original_keypoints_path)
+                    keypoints_original, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(original_keypoints_path, BodyModelOPENPOSE25)
                     keypoints_original, dummy = openPoseUtils.removeConfidence(keypoints_original)
                     keypoints_original = [item for sublist in keypoints_original for item in sublist]
                     keypoints_original = [float(k) for k in keypoints_original]
@@ -142,8 +145,8 @@ class JsonDataset(torch.utils.data.IterableDataset):
                 #	print(oe)
                 except Exception as e:
                     print("WARNING: Error reading ", json_file)
-                    #print(e)
-                    traceback.print_exc()
+                    print(e)
+                    #traceback.print_exc()
         self.scandirIterator.close()
         print("Closed scandirIterator.")
             
@@ -208,7 +211,10 @@ ngpu = 1
 
 def prepare_dataset():
   
-    dataset = JsonDataset(inputpath_cropped=dataroot_cropped, inputpath_original=dataroot_original)
+    datasetModule = eval("datasetBasic")
+    dataset = datasetModule.JsonDataset(inputpath_cropped=dataroot_cropped, inputpath_original=dataroot_original, bodyModel=BodyModelOPENPOSE25)
+
+    #dataset = JsonDataset(inputpath_cropped=dataroot_cropped, inputpath_original=dataroot_original)
 
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
                                              num_workers=workers)
@@ -276,7 +282,7 @@ class Generator(nn.Module):
         return self.main(input)
 
 # Create the generator
-netG_ = Generator(ngpu)
+netG_ = modelsECCV18OP.Generator(ngpu, 25)
 netG = netG_.to(device)
 
 #Register my debug hook
@@ -333,7 +339,7 @@ class Discriminator(nn.Module):
         return self.main(input)
 
 # Create the Discriminator
-netD_ = Discriminator(ngpu)
+netD_ = modelsECCV18OP.Discriminator(ngpu, 25)
 netD = netD_.to(device)
 
 #Register my debug hook
@@ -391,7 +397,7 @@ start = time.time()
 
 def testImage(imagePath, keypointsPath):
 	#Test over the test image
-    keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(keypointsPath)
+    keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(keypointsPath, BodyModelOPENPOSE25)
     print("scaleFactor=",scaleFactor)
     keypoints_cropped, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
     keypoints_cropped = [item for sublist in keypoints_cropped for item in sublist]
@@ -416,13 +422,13 @@ def testImage(imagePath, keypointsPath):
     fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
 
     fakeKeypointsOneImage = fakeReshapedAsKeypoints[0]
-    fakeKeypointsOneImage, dummy, dummy, dummy = openPoseUtils.normalize(fakeKeypointsOneImage)
+    fakeKeypointsOneImage, dummy, dummy, dummy = openPoseUtils.normalize(fakeKeypointsOneImage, BodyModelOPENPOSE25)
     #fakeKeypointsOneImageInt = poseUtils.keypointsToInteger(fakeKeypointsOneImage)
 
     fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalize(fakeKeypointsOneImage, scaleFactor, x_displacement, y_displacement)
    	#imgWithKyepoints = np.zeros((500, 500, 3), np.uint8)
     imgWithKyepoints = cv2.imread(imagePath)
-    poseUtils.draw_pose(imgWithKyepoints, fakeKeypointsCroppedOneImageIntRescaled, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+    poseUtils.draw_pose(imgWithKyepoints, fakeKeypointsCroppedOneImageIntRescaled, -1, BodyModelOPENPOSE25.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
     cv2.imwrite(OUTPUTPATH+"/test_keypoints.jpg", imgWithKyepoints)
 
 def testMany():
@@ -439,7 +445,7 @@ def testMany():
     for filename in jsonFiles:
         #print('Testing '+filename)
         try:
-            keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(keypointsPath, filename))
+            keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(keypointsPath, filename), BodyModelOPENPOSE25)
             #print("obtained scaleFactor=",scaleFactor)
             keypoints_cropped, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
             keypoints_cropped = [item for sublist in keypoints_cropped for item in sublist]
@@ -454,9 +460,13 @@ def testMany():
             batch_y_displacement.append(y_displacement)
             batch_filenames.append(filename)
             n += 1
-        except:
-            pass
+        except Exception as e:
             #print('Skipping '+filename)
+            print("WARNING: Cannot draw keypoints ", filename)
+            print(e)
+            #traceback.print_exc()
+            
+            
 
 	#batch_of_one_keypoints_cropped = torch.tensor(batch_of_one_keypoints_cropped)
 	#batch_of_one_confidence_values = torch.tensor(batch_of_one_confidence_values)
@@ -477,10 +487,10 @@ def testMany():
     print("**********************************************")
     for idx in range(len(fakeReshapedAsKeypoints)):
         fakeKeypointsOneImage = fakeReshapedAsKeypoints[idx]
-        fakeKeypointsOneImage, dummy, dummy, dummy = openPoseUtils.normalize(fakeKeypointsOneImage)
+        fakeKeypointsOneImage, dummy, dummy, dummy = openPoseUtils.normalize(fakeKeypointsOneImage, BodyModelOPENPOSE25)
 	   
         fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalize(fakeKeypointsOneImage, batch_scaleFactor[idx], batch_x_displacement[idx], batch_y_displacement[idx])
-        openPoseUtils.normalizedKeypoints2json(fakeKeypointsCroppedOneImageIntRescaled, OUTPUTPATH+"/Test/keypoints/"+batch_filenames[idx])
+        openPoseUtils.keypoints2json(fakeKeypointsCroppedOneImageIntRescaled, OUTPUTPATH+"/Test/keypoints/"+batch_filenames[idx])
 
 
         #imgWithKyepoints = np.zeros((500, 500, 3), np.uint8)
@@ -491,7 +501,7 @@ def testMany():
         #imgWithKyepoints = cv2.imread(originalImagePath)
         imgWithKyepoints = pytorchUtils.cv2ReadFile(originalImagePath)
         
-        poseUtils.draw_pose(imgWithKyepoints, fakeKeypointsCroppedOneImageIntRescaled, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+        poseUtils.draw_pose(imgWithKyepoints, fakeKeypointsCroppedOneImageIntRescaled, -1, BodyModelOPENPOSE25.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
         try:
             cv2.imwrite(OUTPUTPATH+"/Test/images/"+json_file_without_extension+".jpg", imgWithKyepoints)
             #print("written data/output/Test/"+json_file_without_extension+".jpg")
@@ -710,15 +720,15 @@ for epoch in range(num_epochs):
                	
                	#FIX: bad name, they are not normalized!
                	##########
-                openPoseUtils.normalizedKeypoints2json(fakeKeypointsOneImageInt, OUTPUTPATH+"/"+f"{idx:02d}"+"_img_keypoints.json")
+                openPoseUtils.keypoints2json(fakeKeypointsOneImageInt, OUTPUTPATH+"/"+f"{idx:02d}"+"_img_keypoints.json")
                 
                 json_file_without_extension = os.path.splitext(json_file)[0]
                	json_file_without_extension = json_file_without_extension.replace('_keypoints', '')
                	
                	#Draw the pairs  
                 try:
-                    poseUtils.draw_pose(blank_imageCropped, fakeKeypointsCroppedOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
-                    poseUtils.draw_pose(blank_image, fakeKeypointsOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+                    poseUtils.draw_pose(blank_imageCropped, fakeKeypointsCroppedOneImageInt, -1, BodyModelOPENPOSE25.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+                    poseUtils.draw_pose(blank_image, fakeKeypointsOneImageInt, -1, BodyModelOPENPOSE25.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
                     targetFilePathCropped = OUTPUTPATH+"/debug_input"+str(idx)+".jpg"
                     targetFilePath = OUTPUTPATH+"/debug"+str(idx)+".jpg"
                     #cv2.imwrite(targetFilePath, blank_image)

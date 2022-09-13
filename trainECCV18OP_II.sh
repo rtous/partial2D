@@ -1,7 +1,7 @@
 DATASET_CROPPED="data/ECCV18OP_crop"
 DATASET_ORIGINAL="data/ECCV18OP_onlyused"
 #DATASET_ORIGINAL="/Volumes/ElementsDat/pose/H36M/ECCV2018/ECCV18OD_no_sufix"
-OUTPUTPATH="data/output/ECCV18OP_FINAL"
+OUTPUTPATH="data/output/ECCV18OP_II"
 DATASET_CHARADE="/Users/rtous/DockerVolume/charade_full/input/keypoints"
 DATASET_CHARADE_IMAGES="/Users/rtous/DockerVolume/charade_full/input/images"
 DATASET_TEST="dynamicData/ECCV18OD_test_crop"

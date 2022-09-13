@@ -14,26 +14,55 @@ import numpy
 from numpy import cov
 from numpy import trace
 from numpy import iscomplexobj
+#from numpy.random import random
 from scipy.linalg import sqrtm
 import random
 import scipy.stats as stats
-import h36mIterator_tiny as h36mIterator #DEBUG import h36mIterator
+import h36mIterator
 import random
-import BodyModelOPENPOSE15 #borrar
+#import statistics
+
+#DATASET1="dynamicData/H36M_ECCV18"
+#DATASET1="/Volumes/ElementsDat/pose/H36M/ECCV2018/keyponts_generated_by_openpose_for_train_images_no_sufix"
+#DATASET1="data/H36M_ECCV18_HOLLYWOOD_ORIGINAL_ONLY_THE_CROPPED"
+DATASET1="/Volumes/ElementsDat/pose/H36M/H36M/H36M/"
+
+#DATASET2="/Volumes/ElementsDat/pose/H36M/ECCV2018/keyponts_generated_by_openpose_for_train_images_no_sufix"
+DATASET2="data/output/H36M/TEST/keypoints"
+#DATASET2="dynamicData/ECCV18OP_onlyused"
+DATASET3="data/H36Mtest"
+#DATASET3="dynamicData/ECCV18OP_test"
+DATASET4="data/H36Mtest_original_noreps"
+
+DATASET_H36M="/Volumes/ElementsDat/pose/H36M/H36M"
+
+
+SIZE1 = 200000
+SIZE2 = 35000
+#DIMENSIONS = 50
+numJoints = 15 #25
+DIMENSIONS = numJoints*2
+
+'''
+argv = sys.argv
+try:
+    DATASET1=argv[1]
+    DATASET2=argv[2]
+
+except ValueError:
+    print("Wrong arguments. Expecting two paths.")
+'''
 
 argv = sys.argv
 try:
     DATASET_CANDIDATE=argv[1]
     DATASET_CROPPED=argv[2]
     DATASET_ORIIGNAL=argv[3]
-    DATASET_CANDIDATE_MAX=int(argv[4])
+    DATASET_CANDIDATE_MAX=argv[4]
     DATASET_REFERENCE=argv[5]
-    DATASET_REFERENCE_MAX=int(argv[6])
-    numJoints=int(argv[7])
+    DATASET_REFERENCE_MAX=argv[6]
 except ValueError:
     print("Wrong arguments. Expecting 6 arguments, see the code.")
-
-DIMENSIONS = numJoints*2
 
 def removeConfidence(flatKeypoints):
 	#return flatKeypoints[::3]
@@ -102,26 +131,10 @@ def readDataset(path, size, dims):
 		if extension == ".json":
 			try:
 				keypoints = openPoseUtils.json2KeypointsFlat(join(path, filename))
+				#print("dimensions = ", len(keypoints))
+				#if i == 0:
+				#	print("First item from the iterator ("+path+"/"+filename+":", keypoints)
 				keypointsFlat = removeConfidence(keypoints)
-				
-				#DEBUGGIN###
-				'''
-				keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(path, filename), BodyModelOPENPOSE15, True)
-				keypoints_cropped, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
-            	
-            	#flatten
-				#keypoints_cropped = [item for sublist in keypoints_cropped for item in sublist]
-				#keypoints_cropped = [float(k) for k in keypoints_cropped]
-				#keypoints_cropped = keypoints_cropped.flatten()
-				#fakeReshapedAsKeypoints = np.reshape(keypoints_cropped, (15, 2))
-				#fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
-				
-				denormalizedKeypoints = openPoseUtils.denormalize(fakeReshapedAsKeypoints, scaleFactor, x_displacement, y_displacement)
-				#confidence lost
-				keypointsFlat = poseUtils.keypointsListFlatten(denormalizedKeypoints)
-				'''
-				###########
-
 				vectors[i] = keypointsFlat
 				i += 1
 			except Exception as e:
@@ -130,9 +143,39 @@ def readDataset(path, size, dims):
 				traceback.print_exc()
 	print("Succesfully read "+str(i)+" files from "+path)		
 	print("Variance: ", numpy.var(vectors))	
-	#normality_test_jarque_bera = stats.jarque_bera(vectors)
-	#print("probability normal Jarque-Bera: ", normality_test_jarque_bera[1])
+	normality_test_jarque_bera = stats.jarque_bera(vectors)
+	print("probability normal Jarque-Bera: ", normality_test_jarque_bera[1])
+	#normality_test_kstest = stats.kstest(vectors)
+	#print("probability normal Kolmogorov-Smirnov: ", normality_test_kstest[1])
+
 	return vectors[:i], i
+'''
+def readDatasetBORRAR(path, pickFileFromThisPath, size, dims):
+	vectors = numpy.zeros(shape=(size, dims))
+	scandirIterator = os.scandir(path)
+	i = 0
+	for item in scandirIterator:
+		
+		if i >= size:
+			break
+
+		filename = str(item.name)
+		filename_without_extension = os.path.splitext(filename)[0]
+		extension = os.path.splitext(filename)[1]
+		if extension == ".json":
+			try:
+				keypoints = openPoseUtils.json2KeypointsFlat(join(pickFileFromThisPath, filename))
+				#print("dimensions = ", len(keypoints))
+				vectors[i] = keypoints
+				i += 1
+			except Exception as e:
+				print("WARNING: Error reading ", filename)
+		     
+				traceback.print_exc()
+	print("Succesfully read "+str(i)+" files from "+path)
+	print("Variance: ", statistics.variance(vectors))		
+	return vectors, i
+'''
 
 def testWithSlices(vectors, size, sliceSize):
 	random.shuffle(vectors)
@@ -147,37 +190,47 @@ def testWithSlices(vectors, size, sliceSize):
 		fid = calculate_fid(act1, act2)
 		print('FID: %.3f' % fid)
 
-d_ref, d_ref_num = readDatasetH36M(DATASET_REFERENCE_MAX, DIMENSIONS)
+#d1, d1_num = readDataset(DATASET1, SIZE1, DIMENSIONS)
 
-d_can, d_can_num = readDataset(DATASET_CANDIDATE, DATASET_CANDIDATE_MAX, DIMENSIONS)
 
-d_crop, d_crop_num = readDataset(DATASET_CROPPED, DATASET_CANDIDATE_MAX, DIMENSIONS)
+#arr = numpy.array([11,12,1,21,22,1,31,32,1])
+#print(removeConfidence(arr))
 
-d_orig, d_orig_num = readDataset(DATASET_ORIIGNAL, DATASET_CANDIDATE_MAX, DIMENSIONS)
+d1, d1_num = readDatasetH36M(SIZE1, DIMENSIONS)
 
-print("sample of "+DATASET_REFERENCE+":")
-print(d_ref[0])
-fid = calculate_fid(d_ref, d_ref)
+#d2, d2_num = readDatasetBORRAR(DATASET2, DATASET1, SIZE2, DIMENSIONS)
+d2, d2_num = readDataset(DATASET2, SIZE2, DIMENSIONS)
+
+d3, d3_num = readDataset(DATASET3, SIZE2, DIMENSIONS)
+
+d4, d4_num = readDataset(DATASET4, SIZE2, DIMENSIONS)
+
+#total = readDataset(DATASET1, SIZE1, DIMENSIONS)
+#act1 = total[:int(SIZE1/8)]
+#act2 = total[int(SIZE1/8):]
+print("sample of "+DATASET1+":")
+print(d1[0])
+fid = calculate_fid(d1, d1)
 print("SELF")
 print('FID: %.3f' % fid)
 
-testWithSlices(d_ref, d_ref_num, 1000)
+testWithSlices(d1, d1_num, 1000)
 
-fid = calculate_fid(d_ref[:int(d_ref_num/2)], d_ref[int(d_ref_num/2):])
+fid = calculate_fid(d1[:int(d1_num/2)], d1[int(d1_num/2):])
 print("HALF vs HALF")
 print('FID: %.3f' % fid)
 
 # fid between act1 and act2
-fid = calculate_fid(d_ref, d_can)
-print(DATASET_CANDIDATE+" size="+str(d_can_num))
+fid = calculate_fid(d1, d2)
+print(DATASET2+" size="+str(d2_num))
 print('FID: %.3f' % fid)
 
-fid = calculate_fid(d_ref, d_crop)
-print(DATASET_CROPPED+" size="+str(d_crop_num))
+fid = calculate_fid(d1, d3)
+print(DATASET3+" size="+str(d3_num))
 print('FID: %.3f' % fid)
 
-fid = calculate_fid(d_ref, d_orig)
-print(DATASET_ORIIGNAL+" size="+str(d_orig_num))
+fid = calculate_fid(d1, d4)
+print(DATASET4+" size="+str(d4_num))
 print('FID: %.3f' % fid)
 
 

@@ -16,10 +16,12 @@ INPUTPATHIMAGES = "/Users/rtous/DockerVolume/charade/input/images"
 INPUTPATHKEYPOINTS = "/Users/rtous/DockerVolume/charade/results/openpose/2D_keypoints"
 INPUTPATHKEYPOINTSIMAGES = "/Users/rtous/DockerVolume/charade/result/2D/blank_imagesOPENPOSE"
 INPUTPATHKEYPOINTSIMAGESOVER = "/Users/rtous/DockerVolume/charade/result/2D/imagesOPENPOSE"
+INPUTPATH3D = "/Users/rtous/DockerVolume/charade/results/openpose/3D/images"
 
 INPUTPATHKEYPOINTSFIXED = "/Users/rtous/DockerVolume/partial2D/data/output/H36M/CHARADE/keypoints"
 INPUTPATHKEYPOINTSFIXEDIMAGES = "/Users/rtous/DockerVolume/partial2D/data/output/H36M/CHARADE/imagesBlank"
 INPUTPATHKEYPOINTSFIXEDIMAGESOVER = "/Users/rtous/DockerVolume/partial2D/data/output/H36M/CHARADE/images"
+INPUTPATH3FIXED = "/Users/rtous/DockerVolume/charade/results/ECCV2018_asterix/3D/images"
 
 OUTPUTPATH = "/Users/rtous/DockerVolume/charade/all/"
 
@@ -34,13 +36,18 @@ for filename in jsonFiles:
 	copyfile(join(INPUTPATHKEYPOINTS, filename), join(subdir, filename))
 	copyfile(join(INPUTPATHKEYPOINTSIMAGES, filename_withoutsufix+"_pose.jpg"), join(subdir, filename_withoutsufix+"_pose.jpg"))
 	copyfile(join(INPUTPATHKEYPOINTSIMAGESOVER, filename_withoutsufix+"_pose.jpg"), join(subdir, filename_withoutsufix+"_pose_over.jpg"))
+	
+	try:
+		copyfile(join(INPUTPATH3D, filename_withoutsufix+"/000/output.png"), join(subdir, filename_withoutsufix+"_3D.png"))
+	except:
+		print("WARNING: DISCARDED: "+join(INPUTPATH3D, filename_withoutsufix+"/000/output.png"))
+
 	try:
 		copyfile(join(INPUTPATHKEYPOINTSFIXED, filename), join(subdir, filename_withoutsufix+"_keypoints_fixed.json"))
 		copyfile(join(INPUTPATHKEYPOINTSFIXEDIMAGES, filename_withoutsufix+"_pose.jpg"), join(subdir, filename_withoutsufix+"_pose_fixed.jpg"))
 		copyfile(join(INPUTPATHKEYPOINTSFIXEDIMAGESOVER, filename_withoutsufix+"_pose.jpg"), join(subdir, filename_withoutsufix+"_pose_fixed_over.jpg"))
-	
+		copyfile(join(INPUTPATH3FIXED, filename_withoutsufix+"/000/output.png"), join(subdir, filename_withoutsufix+"_3D_fixed.png"))
 	except:
-
 		print("WARNING: DISCARDED: "+join(INPUTPATHKEYPOINTSFIXED, filename))
 
 
