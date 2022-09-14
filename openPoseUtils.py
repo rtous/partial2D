@@ -712,6 +712,69 @@ def crop(keypoints):
     return variations
 '''
 
+def normalizeV2(keypoints, bodyModel, normalizationMethod, keepConfidence=False, norm=None):
+    #norm = np.linalg.norm(matrix)
+    #matrix = matrix/norm  # normalized matrix
+    
+    #normalizationMethod = "basic", "certer_scale"
+
+    if (normalizationMethod == "certer_scale"):
+
+        referenceBoneIndex, referenceBoneSize = reference_bone(keypoints, bodyModel)
+
+        keypoints_normalized, scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, referenceBoneSize, WIDTH, HEIGHT, referenceBoneIndex, keepConfidence)
+
+        return keypoints_normalized, scaleFactor, x_displacement, y_displacement
+    
+    elif (normalizationMethod == "basic"):
+
+        # norm obtained with np.linalg.norm(keypoints)
+        if len(keypoints[0])>2:
+            keypointsNoConf, dummy = removeConfidence(keypoints)
+        else:
+            keypointsNoConf = keypoints
+
+        keypointsNP = poseUtils.keypoints2Numpy(keypointsNoConf)
+        keypoints_normalized = keypointsNP/norm
+
+        return keypoints_normalized.tolist(), 0, 0, 0
+
+
+def denormalizeV2(keypoints, scaleFactor, x_displacement, y_displacement, normalizationMethod, keepConfidence=False, norm=None):
+    #discards confidence
+    
+    if (normalizationMethod == "certer_scale"):
+        
+        newKeypoints = poseUtils.denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, keepConfidence)
+        
+        return newKeypoints;
+    
+    elif (normalizationMethod == "basic"):
+        
+        keypointsNP = poseUtils.keypoints2Numpy(keypoints)
+        
+        keypoints_denormalized = norm*keypointsNP
+
+        return keypoints_denormalized.tolist()
+'''
+def removeConfidence(keypoints):
+    #If confidence below theshold (0.1) the keypoint will be 0,0
+    print("DEBUG: removeConfidence...")
+    print("keypoints:")
+    print(keypoints)
+    newKeypoints = []  
+    confidence_values = []
+    for i, k in enumerate(keypoints):
+        if k[2] > THRESHOLD: 
+            new_keypoint = (k[0], k[1])
+        else:
+            new_keypoint = (0.0, 0.0)
+        newKeypoints.append(new_keypoint)
+        confidence_values.append(k[2])
+        #new_keypoint = (k[0], k[1])
+        #keypoints[i] = new_keypoint
+    return newKeypoints, confidence_values
+'''
 
 
 

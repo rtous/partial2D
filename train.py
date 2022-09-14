@@ -178,7 +178,7 @@ def prepare_dataset():
   
     #jsonDataset = dataset.JsonDataset(inputpath_cropped=DATASET_CROPPED, inputpath_original=DATASET_ORIGINAL)
 
-    jsonDataset = datasetModule.JsonDataset(inputpath_cropped=DATASET_CROPPED, inputpath_original=DATASET_ORIGINAL, bodyModel=conf.bodyModel)
+    jsonDataset = datasetModule.JsonDataset(inputpath_cropped=DATASET_CROPPED, inputpath_original=DATASET_ORIGINAL, bodyModel=conf.bodyModel, conf=conf)
 
     dataloader = torch.utils.data.DataLoader(jsonDataset, batch_size=batch_size, 
                                              num_workers=workers)
@@ -488,6 +488,7 @@ for epoch in range(num_epochs):
             
             ####### DRAW DEBUG POSES FOR THE FIRST 64 IMAGES
             print("Draw debug poses for the batch")
+            print("denormalizing with conf.norm=", conf.norm)
             for idx in range(NUM_ROWS*NUM_COLS):
                 blank_imageOriginal = np.zeros((WIDTH,HEIGHT,3), np.uint8)
                 blank_imageCropped = np.zeros((WIDTH,HEIGHT,3), np.uint8)
@@ -518,8 +519,10 @@ for epoch in range(num_epochs):
                 
                 
                	#Draw result over the original image
-                fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalize(fakeKeypointsOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage)
+                
+                fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalizeV2(fakeKeypointsOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage, "basic", keepConfidence=False, norm=83156.05487275115)#conf.norm)
                	
+
                	#fakeKeypointsCroppedOneImageIntRescaledNP = poseUtils.keypoints2Numpy(fakeKeypointsCroppedOneImageIntRescaled)
                 #fakeKeypointsCroppedOneImageIntRescaledNP = poseUtils.scale(fakeKeypointsCroppedOneImageIntRescaledNP, 0.01)
 

@@ -35,17 +35,33 @@ import random
 #import h36mIterator_tiny as h36mIterator #DEBUG import h36mIterator
 import h36mIterator
 import BodyModelOPENPOSE15
+import Configuration
 
 class JsonDataset(torch.utils.data.IterableDataset):
-    def __init__(self, inputpath_cropped, inputpath_original, bodyModel):
+    def __init__(self, inputpath_cropped, inputpath_original, bodyModel, conf):
         self.inputpath_cropped = inputpath_cropped
         self.inputpath_original = inputpath_original
         self.bodyModel = bodyModel
+        self.conf = conf
         #self.count = countFiles(self.inputpath_cropped, ".json")
         #self.jsonFiles = [f for f in listdir(self.inputpath_cropped) if isfile(join(self.inputpath_cropped, f)) and f.endswith("json") ]
         
         #scandir does not need to read the entire file list first
         #self.scandirIterator = os.scandir(self.inputpath_cropped)
+
+    def computeNorm(self, buffer_originals):
+        buffer_originals_noconfNPlist = []
+        for buffered_keypoints_original in buffer_originals:
+            buffered_keypoints_original_noconf, dummy = openPoseUtils.removeConfidence(buffered_keypoints_original)
+            #buffered_keypoints_original_noconfNP = np.vstack(buffered_keypoints_original_noconf)
+            buffer_originals_noconfNPlist.append(buffered_keypoints_original_noconf)
+            #print("np.linalg.norm one keypoints=", np.linalg.norm(np.array(buffered_keypoints_original_noconf)))
+        #print("buffer_originals_noconfNPlist=",buffer_originals_noconfNPlist)
+        buffer_originals_noconfNP = np.array(buffer_originals_noconfNPlist)
+        #print("buffer_originals_noconfNP.shape=",buffer_originals_noconfNP.shape)
+        #print("buffer_originals_noconfNP=",buffer_originals_noconfNP)
+        norm = np.linalg.norm(buffer_originals_noconfNP)   
+        return norm
 
     def __iter__(self):
         #jsonFiles = [f for f in listdir(self.inputpath) if isfile(join(self.inputpath, f)) and f.endswith("json") ]
@@ -59,9 +75,14 @@ class JsonDataset(torch.utils.data.IterableDataset):
             #We fill first a buffer of originals
             buffer_originals.append(keypoints_original)
             len_buffer_originals = len(buffer_originals)
-            if len_buffer_originals == 200000:#65536
+            if len_buffer_originals == 1000:#200000:#65536
                 break
-                
+        
+        print("computing norm...")
+        norm = self.computeNorm(buffer_originals)
+        self.conf.norm = norm
+        #norm = 1
+        print("norm=", norm)
         #Once the iterator finishes or the buffer is filled, we shuffle and obtain variations
         print("shuffle buffer original full: ", len_buffer_originals)
         print("sorting buffer originals...")
@@ -70,18 +91,24 @@ class JsonDataset(torch.utils.data.IterableDataset):
 
         for buffered_keypoints_original in buffer_originals:
 
-            keypoints_original_norm, dummy, dummy, dummy = openPoseUtils.normalize(buffered_keypoints_original, BodyModelOPENPOSE15, keepConfidence=False)
+            keypoints_original_norm, dummy, dummy, dummy = openPoseUtils.normalizeV2(buffered_keypoints_original, BodyModelOPENPOSE15, "basic", keepConfidence=False, norm=norm)
+            #print("keypoints_original_norm.shape=",keypoints_original_norm.shape)
+            #print("keypoints_original_norm=",keypoints_original_norm)
+
             keypoints_original_norm_noconfidence_flat = [item for sublist in keypoints_original_norm for item in sublist]
             keypoints_original_flat = torch.tensor(keypoints_original_norm_noconfidence_flat)
             
             variations = openPoseUtils.crop(buffered_keypoints_original, BodyModelOPENPOSE15)               
             for v_idx, keypoints_cropped in enumerate(variations):    
                 #The normalization is performed over the cropped skeleton
-                keypoints_cropped_norm, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalize(keypoints_cropped, BodyModelOPENPOSE15, keepConfidence=True)              
+                keypoints_croppedNoConf, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
+                
+
+                keypoints_cropped_norm, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalizeV2(keypoints_croppedNoConf, BodyModelOPENPOSE15, "basic", keepConfidence=False, norm=norm)              
                 #keypoints_cropped_norm, dummy, dummy, dummy = openPoseUtils.normalize(keypoints_cropped, keepConfidence=True)             
                 #dummy, dummy, dummy = openPoseUtils.normalize(keypoints_cropped, keepConfidence=True)             
                 
-                keypoints_croppedNoConf, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped_norm)
+                #keypoints_croppedNoConf, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped_norm)
                 keypoints_croppedFlat = [item for sublist in keypoints_croppedNoConf for item in sublist]
                 keypoints_croppedFlatFloat = [float(k) for k in keypoints_croppedFlat]
                 keypoints_croppedFlatFloatTensor = torch.tensor(keypoints_croppedFlatFloat)
@@ -109,6 +136,9 @@ class JsonDataset(torch.utils.data.IterableDataset):
     #def __len__(self):
     #    return self.count
     #    return len(self.jsonFiles)
+
+
+    
 '''
 Here I change the nose to be a simple batchsize x 100 tensor.
 I order to input this into the deconvolution I did within the forward:
