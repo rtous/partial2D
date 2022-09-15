@@ -191,10 +191,13 @@ def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, bo
 	
 	normalized_keypoints = keypoints.copy()
 
+	print("normalizing, normalized_keypoints[10]=", normalized_keypoints[10])
+
+	#computing spine distance
 	keypoint1 = normalized_keypoints[keypoint_index_pairs[boneSpineIndex][0]]
 	keypoint2 = normalized_keypoints[keypoint_index_pairs[boneSpineIndex][1]]
 
-	scaleFactor = -1
+	scaleFactor = -1     
 	x_displacement = -1
 	y_displacement = -1
 

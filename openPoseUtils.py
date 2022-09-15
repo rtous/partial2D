@@ -539,6 +539,8 @@ def removeConfidence(keypoints):
             new_keypoint = (k[0], k[1])
         else:
             new_keypoint = (0.0, 0.0)
+        if i==10:
+            print("append(",new_keypoint)
         newKeypoints.append(new_keypoint)
         confidence_values.append(k[2])
         #new_keypoint = (k[0], k[1])

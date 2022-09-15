@@ -107,17 +107,21 @@ class JsonDataset(torch.utils.data.IterableDataset):
                 #keypoints_croppedNoConf, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
                 #keypoints_cropped_norm, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalizeV2(keypoints_croppedNoConf, BodyModelOPENPOSE15, "center_scale", keepConfidence=False, norm=norm)              
                 
-                print("RBefore: keypoints_cropped[0]", keypoints_cropped[0])
-                Rkeypoints_cropped_norm, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalize(keypoints_cropped, BodyModelOPENPOSE15, keepConfidence=True)   
-                print("RNormalized: keypoints_croppedNoConf[0]", Rkeypoints_cropped_norm[0])
-                Rkeypoints_croppedNoConf, confidence_values = openPoseUtils.removeConfidence(Rkeypoints_cropped_norm)
-                print("RRemoved conf: keypoints_croppedNoConf[0]", Rkeypoints_croppedNoConf[0])
+                k = 10
 
-                print("Before: keypoints_cropped[0]", keypoints_cropped[0])
+                print("---------------------------------")
+                print("RBefore: keypoints_cropped[0]", keypoints_cropped[k])
+                Rkeypoints_cropped_norm, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalize(keypoints_cropped, BodyModelOPENPOSE15, keepConfidence=True)   
+                print("RNormalized: keypoints_croppedNoConf[0]", Rkeypoints_cropped_norm[k])
+                Rkeypoints_croppedNoConf, confidence_values = openPoseUtils.removeConfidence(Rkeypoints_cropped_norm)
+                print("RRemoved conf: keypoints_croppedNoConf[0]", Rkeypoints_croppedNoConf[k])
+
+                print("Before: keypoints_cropped[0]", keypoints_cropped[k])
                 keypoints_croppedNoConf, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
-                print("Removed conf: keypoints_croppedNoConf[0]", keypoints_croppedNoConf[0])
+                print("Removed conf: keypoints_croppedNoConf[0]", keypoints_croppedNoConf[k])
                 keypoints_croppedNoConf, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalize(keypoints_croppedNoConf, BodyModelOPENPOSE15, keepConfidence=False)   
-                print("Normalized: keypoints_croppedNoConf[0]", keypoints_croppedNoConf[0])
+                print("Normalized: keypoints_croppedNoConf[0]", keypoints_croppedNoConf[k])
+                print("---------------------------------")
 
                 keypoints_croppedFlat = [item for sublist in keypoints_croppedNoConf for item in sublist]
                 keypoints_croppedFlatFloat = [float(k) for k in keypoints_croppedFlat]

@@ -21,7 +21,7 @@ DATASET_TEST_IMAGES="UNKNOWN"
 #MODELPATH="data/output/H36M/model/model_epoch4_batch12000.pt"
 #MODELPATH="data/output/H36M/model/model_epoch9_batch5000.pt"
 
-MODELPATH="data/output/H36M/model/model_epoch1_batch2000.pt"
+MODELPATH="data/output/H36M/model/model_epoch2_batch2000.pt"
 #MODELPATH="dynamicData/models/H36M_GAN_epoch7_batch2000/H36M_GAN_epoch7_batch2000.pt"
 
 MODEL="models"

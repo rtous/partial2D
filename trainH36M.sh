@@ -1,6 +1,6 @@
 SETUP=0 #0=laptop, 1=office
 
-if [ $SETUP -eq 0 ]
+if [ $SETUP -eq 1 ]
 then   
     DATASET_ORIGINAL="/Volumes/ElementsDat/pose/H36M/H36M"
     #DATASET_ORIGINAL="/Volumes/ElementsDat/pose/H36M/ECCV2018/ECCV18OD_no_sufix"
