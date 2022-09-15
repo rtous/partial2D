@@ -520,7 +520,7 @@ for epoch in range(num_epochs):
                 
                	#Draw result over the original image
                 
-                fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalizeV2(fakeKeypointsOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage, "basic", keepConfidence=False, norm=83156.05487275115)#conf.norm)
+                fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalizeV2(fakeKeypointsOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage, "center_scale", keepConfidence=False, norm=83156.05487275115)#conf.norm)
                	
 
                	#fakeKeypointsCroppedOneImageIntRescaledNP = poseUtils.keypoints2Numpy(fakeKeypointsCroppedOneImageIntRescaled)

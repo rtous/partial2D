@@ -718,7 +718,7 @@ def normalizeV2(keypoints, bodyModel, normalizationMethod, keepConfidence=False,
     
     #normalizationMethod = "basic", "certer_scale"
 
-    if (normalizationMethod == "certer_scale"):
+    if (normalizationMethod == "center_scale"):
 
         referenceBoneIndex, referenceBoneSize = reference_bone(keypoints, bodyModel)
 
@@ -743,7 +743,7 @@ def normalizeV2(keypoints, bodyModel, normalizationMethod, keepConfidence=False,
 def denormalizeV2(keypoints, scaleFactor, x_displacement, y_displacement, normalizationMethod, keepConfidence=False, norm=None):
     #discards confidence
     
-    if (normalizationMethod == "certer_scale"):
+    if (normalizationMethod == "center_scale"):
         
         newKeypoints = poseUtils.denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, keepConfidence)
         

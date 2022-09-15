@@ -91,24 +91,34 @@ class JsonDataset(torch.utils.data.IterableDataset):
 
         for buffered_keypoints_original in buffer_originals:
 
-            keypoints_original_norm, dummy, dummy, dummy = openPoseUtils.normalizeV2(buffered_keypoints_original, BodyModelOPENPOSE15, "basic", keepConfidence=False, norm=norm)
-            #print("keypoints_original_norm.shape=",keypoints_original_norm.shape)
-            #print("keypoints_original_norm=",keypoints_original_norm)
-
+            keypoints_original_norm, dummy, dummy, dummy = openPoseUtils.normalizeV2(buffered_keypoints_original, BodyModelOPENPOSE15, "center_scale", keepConfidence=False, norm=norm)
             keypoints_original_norm_noconfidence_flat = [item for sublist in keypoints_original_norm for item in sublist]
             keypoints_original_flat = torch.tensor(keypoints_original_norm_noconfidence_flat)
             
+            #keypoints_original_norm, dummy, dummy, dummy = openPoseUtils.normalize(buffered_keypoints_original, BodyModelOPENPOSE15, keepConfidence=False)
+            #keypoints_original_norm_noconfidence_flat = [item for sublist in keypoints_original_norm for item in sublist]
+            #keypoints_original_flat = torch.tensor(keypoints_original_norm_noconfidence_flat)
+           
+
             variations = openPoseUtils.crop(buffered_keypoints_original, BodyModelOPENPOSE15)               
             for v_idx, keypoints_cropped in enumerate(variations):    
                 #The normalization is performed over the cropped skeleton
-                keypoints_croppedNoConf, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
-                
 
-                keypoints_cropped_norm, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalizeV2(keypoints_croppedNoConf, BodyModelOPENPOSE15, "basic", keepConfidence=False, norm=norm)              
-                #keypoints_cropped_norm, dummy, dummy, dummy = openPoseUtils.normalize(keypoints_cropped, keepConfidence=True)             
-                #dummy, dummy, dummy = openPoseUtils.normalize(keypoints_cropped, keepConfidence=True)             
+                #keypoints_croppedNoConf, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
+                #keypoints_cropped_norm, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalizeV2(keypoints_croppedNoConf, BodyModelOPENPOSE15, "center_scale", keepConfidence=False, norm=norm)              
                 
-                #keypoints_croppedNoConf, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped_norm)
+                print("RBefore: keypoints_cropped[0]", keypoints_cropped[0])
+                Rkeypoints_cropped_norm, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalize(keypoints_cropped, BodyModelOPENPOSE15, keepConfidence=True)   
+                print("RNormalized: keypoints_croppedNoConf[0]", Rkeypoints_cropped_norm[0])
+                Rkeypoints_croppedNoConf, confidence_values = openPoseUtils.removeConfidence(Rkeypoints_cropped_norm)
+                print("RRemoved conf: keypoints_croppedNoConf[0]", Rkeypoints_croppedNoConf[0])
+
+                print("Before: keypoints_cropped[0]", keypoints_cropped[0])
+                keypoints_croppedNoConf, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
+                print("Removed conf: keypoints_croppedNoConf[0]", keypoints_croppedNoConf[0])
+                keypoints_croppedNoConf, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalize(keypoints_croppedNoConf, BodyModelOPENPOSE15, keepConfidence=False)   
+                print("Normalized: keypoints_croppedNoConf[0]", keypoints_croppedNoConf[0])
+
                 keypoints_croppedFlat = [item for sublist in keypoints_croppedNoConf for item in sublist]
                 keypoints_croppedFlatFloat = [float(k) for k in keypoints_croppedFlat]
                 keypoints_croppedFlatFloatTensor = torch.tensor(keypoints_croppedFlatFloat)
