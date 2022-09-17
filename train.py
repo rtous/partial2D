@@ -41,6 +41,13 @@ import Configuration
 import openPoseUtils
 import importlib
 
+CRED = '\033[91m'
+CGREEN  = '\33[32m'
+CYELLOW = '\33[33m'
+CBLUE   = '\33[34m'
+CBOLD     = '\33[1m'
+CEND = '\033[0m'
+
 
 VERSION="13"
 NORMALIZATION="SCALE"
@@ -58,12 +65,44 @@ try:
     conf.set_BODY_MODEL(argv[8])
     datasetModule = eval(argv[9])
     MODEL=argv[10]
+    NORMALIZATION=argv[11]
+    if argv[12]=="0":
+        KEYPOINT_RESTORATION=False
+    else:
+        KEYPOINT_RESTORATION=True
+    LEN_BUFFER_ORIGINALS=int(argv[13])
+    if argv[14]=="0":
+        CROPPED_VARIATIONS=False
+    else:
+        CROPPED_VARIATIONS=True
     #datasetModule = eval("datasetH36M")
     #print(conf.bodyModel.POSE_BODY_25_BODY_PARTS_DICT[20])
 except ValueError:
     print("Wrong arguments. Expecting two paths.")
 
 models = importlib.import_module(MODEL)
+
+####### INITIAL WARNINGS ########
+if not CROPPED_VARIATIONS:
+    print(CRED + "CROPPED_VARIATIONS=" + str(CROPPED_VARIATIONS) + CEND)
+else:
+    print(CGREEN + "CROPPED_VARIATIONS=" + str(CROPPED_VARIATIONS) + CEND)
+
+if not NORMALIZATION=="center_scale":
+    print(CRED + "NORMALIZATION=" + str(NORMALIZATION) + CEND)
+else:
+    print(CGREEN + "NORMALIZATION=" + str(NORMALIZATION) + CEND)
+if LEN_BUFFER_ORIGINALS<65536:
+    print(CRED + "LEN_BUFFER_ORIGINALS=" + str(LEN_BUFFER_ORIGINALS) + CEND)
+else:
+    print(CGREEN + "LEN_BUFFER_ORIGINALS=" + str(LEN_BUFFER_ORIGINALS) + CEND)
+if not KEYPOINT_RESTORATION:
+    print(CRED + "KEYPOINT_RESTORATION=" + str(KEYPOINT_RESTORATION) + CEND)
+else:
+    print(CGREEN + "KEYPOINT_RESTORATION=" + str(KEYPOINT_RESTORATION) + CEND)
+
+
+###########
 
 # Root directory for dataset
 #dataroot_cropped = "/Volumes/ElementsDat/pose/COCO/ruben_structure/keypoints_openpose_format_cropped"
@@ -174,11 +213,27 @@ beta1 = 0.5
 # Number of GPUs available. Use 0 for CPU mode.
 ngpu = 1
 
-def prepare_dataset():
+def get_mean_and_std(dataloader):
+    channels_sum, channels_squared_sum, num_batches = 0, 0, 0
+    for batch_of_keypoints_cropped, batch_of_keypoints_original, confidence_values, scaleFactor, x_displacement, y_displacement, batch_of_json_file in dataloader:
+        # Mean over batch, height and width, but not over the channels
+        data = batch_of_keypoints_original
+        channels_sum += torch.mean(data)#,dim=[0,1]
+        channels_squared_sum += torch.mean(data**2)
+        num_batches += 1
+    
+    mean = channels_sum / num_batches
+
+    # std = sqrt(E[X^2] - (E[X])^2)
+    std = (channels_squared_sum / num_batches - mean ** 2) ** 0.5
+
+    return mean, std
+
+def prepare_dataset(croppedVariations = True, normalizationStrategy = "center_scale", mean=None, std=None, max_len_buffer_originals = None):
   
     #jsonDataset = dataset.JsonDataset(inputpath_cropped=DATASET_CROPPED, inputpath_original=DATASET_ORIGINAL)
 
-    jsonDataset = datasetModule.JsonDataset(inputpath_cropped=DATASET_CROPPED, inputpath_original=DATASET_ORIGINAL, bodyModel=conf.bodyModel, conf=conf)
+    jsonDataset = datasetModule.JsonDataset(inputpath_cropped=DATASET_CROPPED, inputpath_original=DATASET_ORIGINAL, bodyModel=conf.bodyModel, croppedVariations=croppedVariations, normalizationStrategy=normalizationStrategy, mean=None, std=None, max_len_buffer_originals = max_len_buffer_originals)
 
     dataloader = torch.utils.data.DataLoader(jsonDataset, batch_size=batch_size, 
                                              num_workers=workers)
@@ -188,7 +243,18 @@ def prepare_dataset():
     
     return dataloader
 
-dataloader = prepare_dataset()
+dataloader = prepare_dataset(croppedVariations = False, normalizationStrategy = "none", mean=None, std=None, max_len_buffer_originals = LEN_BUFFER_ORIGINALS)
+
+print("Computing mean and std...")
+mean, std = get_mean_and_std(dataloader)
+
+print("mean= ", mean)
+print("std= ", std)
+
+
+#dataloader = prepare_dataset(croppedVariations = True, normalizationStrategy = "center_scale")
+dataloader = prepare_dataset(croppedVariations = CROPPED_VARIATIONS, normalizationStrategy = NORMALIZATION, mean=None, std=None, max_len_buffer_originals = LEN_BUFFER_ORIGINALS)
+
 
 #pytorchUtils.explainDataloader(dataloader)
 ##########################
@@ -197,16 +263,7 @@ dataloader = prepare_dataset()
 # Decide which device we want to run on
 device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
 print("Device detected: ", device)
-'''
-# Plot some training images
-print("Plotting some...")
-real_batch = next(iter(dataloader))
-plt.figure(figsize=(8,8))
-plt.axis("off")
-plt.title("Training Images")
-plt.imshow(np.transpose(vutils.make_grid(real_batch[0].to(device)[:64], padding=2, normalize=True).cpu(),(1,2,0)))
-plt.show()
-'''
+
 
 # custom weights initialization called on netG and netD
 def weights_init(m):
@@ -287,19 +344,6 @@ img_list = []
 G_losses = []
 D_losses = []
 iters = 0
-
-#Ruben
-#plt.ion() # turn on interactive mode, non-blocking `show`
-#plt.ion()
-#plt.show()
-
-#Aproach pyformulas
-'''
-fig = plt.figure()
-canvas = np.zeros((480,640))
-screen = pf.screen(canvas, 'Sinusoid')
-start = time.time()
-'''
 
 	
 tb = SummaryWriter()
@@ -382,7 +426,8 @@ for epoch in range(num_epochs):
         batch_of_fake_original = netG(batch_of_keypoints_cropped, noise)
 
         #Restore the original keypoints with confidence > CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS
-        batch_of_fake_original = models.restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, confidence_values)
+        if KEYPOINT_RESTORATION:
+            batch_of_fake_original = models.restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, confidence_values)
 
         #As they are fake images let's prepare a batch of labels FAKE
         label.fill_(fake_label)
@@ -469,7 +514,8 @@ for epoch in range(num_epochs):
             with torch.no_grad():
                 fake = netG(batch_of_keypoints_cropped, fixed_noise).detach().cpu()
                 #We restore the original keypoints (before denormalizing)
-                fake = models.restoreOriginalKeypoints(fake, batch_of_keypoints_cropped, confidence_values)
+                if KEYPOINT_RESTORATION:
+                    fake = models.restoreOriginalKeypoints(fake, batch_of_keypoints_cropped, confidence_values)
                 print("Shape of fake: ", fake.shape)
                 fakeReshapedAsKeypoints = np.reshape(fake, (batch_size, numJoints, 2))
                 fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
@@ -520,7 +566,7 @@ for epoch in range(num_epochs):
                 
                	#Draw result over the original image
                 
-                fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalizeV2(fakeKeypointsOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage, "center_scale", keepConfidence=False, norm=83156.05487275115)#conf.norm)
+                fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalizeV2(fakeKeypointsOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage, NORMALIZATION, keepConfidence=False, mean=mean, std=std, norm=83156.05487275115)#conf.norm)
                	
 
                	#fakeKeypointsCroppedOneImageIntRescaledNP = poseUtils.keypoints2Numpy(fakeKeypointsCroppedOneImageIntRescaled)

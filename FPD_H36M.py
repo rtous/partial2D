@@ -22,6 +22,13 @@ import h36mIterator
 import random
 import BodyModelOPENPOSE15 #borrar
 
+CRED = '\033[91m'
+CGREEN  = '\33[32m'
+CYELLOW = '\33[33m'
+CBLUE   = '\33[34m'
+CBOLD     = '\33[1m'
+CEND = '\033[0m'
+
 argv = sys.argv
 try:
     DATASET_CANDIDATE=argv[1]
@@ -33,6 +40,18 @@ try:
     numJoints=int(argv[7])
 except ValueError:
     print("Wrong arguments. Expecting 6 arguments, see the code.")
+
+####### INITIAL WARNINGS ########
+if not DATASET_CANDIDATE=="data/output/H36M/TEST/keypoints":
+    print(CRED + "DATASET_CANDIDATE=" + str(DATASET_CANDIDATE) + CEND)
+else:
+    print(CGREEN + "DATASET_CANDIDATE=" + str(DATASET_CANDIDATE) + CEND)
+if DATASET_REFERENCE_MAX<65536:
+    print(CRED + "DATASET_REFERENCE_MAX=" + str(DATASET_REFERENCE_MAX) + CEND)
+else:
+    print(CGREEN + "DATASET_REFERENCE_MAX=" + str(DATASET_REFERENCE_MAX) + CEND)
+###########
+
 
 DIMENSIONS = numJoints*2
 

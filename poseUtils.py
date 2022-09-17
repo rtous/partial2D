@@ -189,9 +189,12 @@ def denormalize_poseTODO(keypoints, scaleFactor, x_displacement, y_displacement,
 
 def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, boneSpineIndex, keepThreshold):
 	
+	#WARNING: When zero the values should remain zero, also in denormalize
+	#The values will be replaced later but they may impact the process
+
 	normalized_keypoints = keypoints.copy()
 
-	print("normalizing, normalized_keypoints[10]=", normalized_keypoints[10])
+	#print("normalizing, normalized_keypoints[10]=", normalized_keypoints[10])
 
 	#computing spine distance
 	keypoint1 = normalized_keypoints[keypoint_index_pairs[boneSpineIndex][0]]
@@ -232,12 +235,21 @@ def normalize_pose(keypoints, keypoint_index_pairs, spinesize, width, height, bo
 		x_displacement = keypoint1[0] - centerX
 		y_displacement = keypoint1[1] - centerY
 		for i, k in enumerate(normalized_keypoints):
+
 			if keepThreshold:
-				#if k[0]!=0 or k[1]!=0: #to avoid denormalizing zeros?
-				new_keypoint = (k[0]-x_displacement, k[1]-y_displacement, k[2]) 
+				#WARNING: When both values are zero it means 
+				#that we did a removeConfidence before
+				#DECISSION: Keep zeros instead of center them
+				if (k[0] != 0 and k[0] != 0):
+					new_keypoint = (k[0]-x_displacement, k[1]-y_displacement, k[2]) 
+				else:
+					new_keypoint = (k[0], k[1], k[2]) 
 			else:
 				#if k[0]!=0 or k[1]!=0:
-				new_keypoint = (k[0]-x_displacement, k[1]-y_displacement)
+				if (k[0] != 0 and k[0] != 0):
+					new_keypoint = (k[0]-x_displacement, k[1]-y_displacement)
+				else:
+					new_keypoint = (k[0], k[1])
 			normalized_keypoints[i] = new_keypoint
 
 	else:
@@ -297,12 +309,12 @@ def denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, kee
 		if scaleFactor != -1:
 			if keepThreshold:
 				#new_keypoint = (int((k[0]+x_displacement)*scaleFactor), int((k[1]+y_displacement)*scaleFactor), k[2]) 
-				if k[0]!=0 or k[1]!=0: #to avoid denormalizing zeros?
+				if k[0]!=0 and k[1]!=0: #to avoid denormalizing zeros?
 					new_keypoint = ((k[0]+x_displacement)*scaleFactor, (k[1]+y_displacement)*scaleFactor, k[2]) 
 				else:
 					new_keypoint = (0 ,0, 0.0)
 			else: 
-				if k[0]!=0 or k[1]!=0:
+				if k[0]!=0 and k[1]!=0:
 				#new_keypoint = (int((k[0]+x_displacement)*scaleFactor), int((k[1]+y_displacement)*scaleFactor))	
 					new_keypoint = ((k[0]+x_displacement)*scaleFactor, (k[1]+y_displacement)*scaleFactor)	
 				else:

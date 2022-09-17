@@ -1,4 +1,4 @@
-SETUP=1 #0=laptop, 1=office
+SETUP=0 #0=laptop, 1=office
 
 if [ $SETUP -eq 0 ]
 then

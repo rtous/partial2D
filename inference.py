@@ -34,6 +34,13 @@ import importlib
 import Configuration
 #import models
 
+CRED = '\033[91m'
+CGREEN  = '\33[32m'
+CYELLOW = '\33[33m'
+CBLUE   = '\33[34m'
+CBOLD     = '\33[1m'
+CEND = '\033[0m'
+
 argv = sys.argv
 try:
     DATASET_CROPPED=argv[1]
@@ -51,11 +58,32 @@ try:
     	ONLY15=True
     conf = Configuration.Configuration()
     conf.set_BODY_MODEL(argv[11])
+    NORMALIZATION=argv[12]
+    if argv[13]=="0":
+        KEYPOINT_RESTORATION=False
+    else:
+        KEYPOINT_RESTORATION=True
 
 except ValueError:
     print("Wrong arguments. Expecting two paths.")
 
+####### INITIAL WARNINGS ########
+if not DATASET_TEST=="dynamicData/H36Mtest":
+    print(CRED + "DATASET_TEST=" + str(DATASET_TEST) + CEND)
+else:
+    print(CGREEN + "DATASET_TEST=" + str(DATASET_TEST) + CEND)
 
+if not NORMALIZATION=="center_scale":
+    print(CRED + "NORMALIZATION=" + str(NORMALIZATION) + CEND)
+else:
+    print(CGREEN + "NORMALIZATION=" + str(NORMALIZATION) + CEND)
+if not KEYPOINT_RESTORATION:
+    print(CRED + "KEYPOINT_RESTORATION=" + str(KEYPOINT_RESTORATION) + CEND)
+else:
+    print(CGREEN + "KEYPOINT_RESTORATION=" + str(KEYPOINT_RESTORATION) + CEND)
+
+
+###########
 models = importlib.import_module(MODEL)
 
 pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
@@ -130,7 +158,8 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
             
             #We have worked with jut 15 keypoints, need to restore the other 10
             keypoints_cropped25 = openPoseUtils.json2Keypoints(join(keypointsPath, filename), False)
-            print("Read %d keypoints." % (len(keypoints_cropped25)))
+            #print("Read %d keypoints." % (len(keypoints_cropped25)))
+            sys.stdout.write(".")
             batch_of_one_keypoints_cropped25.append(keypoints_cropped25)
 
 
@@ -156,6 +185,7 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
             #pass
             #print('Skipping '+filename)
 
+    sys.stdout.write("\n")
 	#batch_of_one_keypoints_cropped = torch.tensor(batch_of_one_keypoints_cropped)
 	#batch_of_one_confidence_values = torch.tensor(batch_of_one_confidence_values)
     batch_of_one_keypoints_cropped = torch.stack(batch_of_one_keypoints_cropped)
@@ -180,8 +210,12 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
     fakeDeflatten = poseUtils.deflatten(fake[0], False)
     #print("fake before restoring:", poseUtils.deflatten(fake[0], False))
     #print("batch_of_one_confidence_values:", batch_of_one_confidence_values[0])
-    fakeRestored = models.restoreOriginalKeypoints(fake, batch_of_one_keypoints_cropped, batch_of_one_confidence_values)
-    fakeRestoredDeflatten = poseUtils.deflatten(fakeRestored[0], False)
+    
+    if KEYPOINT_RESTORATION:
+        fake = models.restoreOriginalKeypoints(fake, batch_of_one_keypoints_cropped, batch_of_one_confidence_values)
+    
+    fakeRestoredDeflatten = poseUtils.deflatten(fake[0], False)
+    
     #print("after restoring:", fakeRestoredDeflatten)
     
 
@@ -208,7 +242,7 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
     ########
     
     netG.train()
-    fakeReshapedAsKeypoints = np.reshape(fakeRestored, (n, numJoints, 2))
+    fakeReshapedAsKeypoints = np.reshape(fake, (n, numJoints, 2))
     fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
     
     for idx in range(len(fakeReshapedAsKeypoints)):
@@ -217,9 +251,9 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
         
         #???? this was here before
         #fakeKeypointsOneImage, dummy, dummy, dummy = openPoseUtils.normalize(fakeKeypointsOneImage)
-        #print("before denormalize: ", fakeKeypointsOneImage)
-        fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalize(fakeKeypointsOneImage, batch_scaleFactor[idx], batch_x_displacement[idx], batch_y_displacement[idx])
-        #print("after denormalize: ", fakeKeypointsCroppedOneImageIntRescaled)
+        #print("before denormalize: ", fakeKeypointsOneImage[14])
+        fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalizeV2(fakeKeypointsOneImage, batch_scaleFactor[idx], batch_x_displacement[idx], batch_y_displacement[idx], NORMALIZATION, keepConfidence=False, mean=None, std=None, norm=None)
+        #print("after denormalize: ", fakeKeypointsCroppedOneImageIntRescaled[14])
         #if idx == 0:
         #    print("writing: ", batch_filenames[idx])
         #    print("written: ", fakeKeypointsCroppedOneImageIntRescaled)
@@ -232,9 +266,11 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
         	fakeKeypointsCroppedOneImageIntRescaled.append(keypoints_cropped25[i])
         #print("fakeKeypointsCroppedOneImageIntRescaled POST", fakeKeypointsCroppedOneImageIntRescaled)
         #till here
+        if idx == 0:
+            print("before writting to disk: ", fakeKeypointsCroppedOneImageIntRescaled[14])
 
         openPoseUtils.keypoints2json(fakeKeypointsCroppedOneImageIntRescaled, outputPath+outputSubpath+"/keypoints/"+batch_filenames[idx])
-        print("Wrote pose in %s in with %d keypoints" % (batch_filenames[idx], len(fakeKeypointsCroppedOneImageIntRescaled)))
+        #print("Wrote pose in %s in with %d keypoints" % (batch_filenames[idx], len(fakeKeypointsCroppedOneImageIntRescaled)))
     
         #Draw over image file
         #fileName = batch_filenames[idx]
@@ -290,7 +326,8 @@ def testImage(netG, outputPath, imagePath, keypointsPath):
 
     netG.eval()
     fake = netG(batch_of_one_keypoints_cropped, fixed_noise_one).detach().cpu()
-    fake = restoreOriginalKeypoints(fake, batch_of_one_keypoints_cropped, batch_of_one_confidence_values)
+    if KEYPOINT_RESTORATION:
+        fake = restoreOriginalKeypoints(fake, batch_of_one_keypoints_cropped, batch_of_one_confidence_values)
     netG.train()
     fakeReshapedAsKeypoints = np.reshape(fake, (1, numJoints, 2))
     fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()

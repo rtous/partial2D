@@ -539,12 +539,8 @@ def removeConfidence(keypoints):
             new_keypoint = (k[0], k[1])
         else:
             new_keypoint = (0.0, 0.0)
-        if i==10:
-            print("append(",new_keypoint)
         newKeypoints.append(new_keypoint)
         confidence_values.append(k[2])
-        #new_keypoint = (k[0], k[1])
-        #keypoints[i] = new_keypoint
     return newKeypoints, confidence_values
 
 def removeBones(keypoints, boneNames, bodyModel):
@@ -714,7 +710,7 @@ def crop(keypoints):
     return variations
 '''
 
-def normalizeV2(keypoints, bodyModel, normalizationMethod, keepConfidence=False, norm=None):
+def normalizeV2(keypoints, bodyModel, normalizationMethod, keepConfidence=False, mean=None, std=None, norm=None):
     #norm = np.linalg.norm(matrix)
     #matrix = matrix/norm  # normalized matrix
     
@@ -741,8 +737,23 @@ def normalizeV2(keypoints, bodyModel, normalizationMethod, keepConfidence=False,
 
         return keypoints_normalized.tolist(), 0, 0, 0
 
+    elif normalizationMethod == "none":
 
-def denormalizeV2(keypoints, scaleFactor, x_displacement, y_displacement, normalizationMethod, keepConfidence=False, norm=None):
+        if len(keypoints[0])>2:
+            keypointsNoConf, dummy = removeConfidence(keypoints)
+        else:
+            keypointsNoConf = keypoints
+        keypointsNP = poseUtils.keypoints2Numpy(keypointsNoConf)
+        #keypointsNP = keypointsNP.astype(np.double)
+        
+    
+        return keypointsNP, 0, 0, 0 #TODO supress the 0s
+
+    else:
+        print("ERROR: unknown normalizationMethod:", normalizationMethod)
+        sys.exit()
+
+def denormalizeV2(keypoints, scaleFactor, x_displacement, y_displacement, normalizationMethod, keepConfidence=False, mean=None, std=None, norm=None):
     #discards confidence
     
     if (normalizationMethod == "center_scale"):
@@ -758,6 +769,14 @@ def denormalizeV2(keypoints, scaleFactor, x_displacement, y_displacement, normal
         keypoints_denormalized = norm*keypointsNP
 
         return keypoints_denormalized.tolist()
+
+    elif normalizationMethod == "none":
+
+        keypoints = keypoints.tolist()
+        return keypoints
+    else:
+        print("ERROR: unknown normalizationMethod:", normalizationMethod)
+        sys.exit()
 '''
 def removeConfidence(keypoints):
     #If confidence below theshold (0.1) the keypoint will be 0,0
