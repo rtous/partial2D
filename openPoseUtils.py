@@ -10,6 +10,7 @@ import pathlib
 import traceback
 import poseUtilsBaseline
 import Configuration
+import sys
 
 '''
 OPENPOSE INFO
@@ -294,15 +295,17 @@ def json2Keypoints(path, only15joints=False):
 
     return keypoints
 
-def json2normalizedKeypoints(path, bodyModel, only15joints=False):
+def json2normalizedKeypoints(path, bodyModel, only15joints=False, normalization=None, mean=None, std=None):
 
     keypoints = json2Keypoints(path, only15joints)
 
     #boneSpineIndex = REFERENCE_JOINT_PAIR_INDEX
 
-    referenceBoneIndex, referenceBoneSize = reference_bone(keypoints, bodyModel)
+    #referenceBoneIndex, referenceBoneSize = reference_bone(keypoints, bodyModel)
 
-    normalized_keypoints, scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, referenceBoneSize, WIDTH, HEIGHT, referenceBoneIndex, HAVETHRESHOLD)
+    #normalized_keypoints, scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, referenceBoneSize, WIDTH, HEIGHT, referenceBoneIndex, HAVETHRESHOLD)
+    normalized_keypoints, scaleFactor, x_displacement, y_displacement = normalizeV2(keypoints, bodyModel, normalizationMethod=normalization, keepConfidence=HAVETHRESHOLD, mean=mean, std=std)
+
 
     return normalized_keypoints, scaleFactor, x_displacement, y_displacement
 
@@ -715,8 +718,9 @@ def normalizeV2(keypoints, bodyModel, normalizationMethod, keepConfidence=False,
     #matrix = matrix/norm  # normalized matrix
     
     #normalizationMethod = "basic", "certer_scale"
+    #print("normalizationMethod=", normalizationMethod)
 
-    if (normalizationMethod == "center_scale"):
+    if normalizationMethod == "center_scale":
 
         referenceBoneIndex, referenceBoneSize = reference_bone(keypoints, bodyModel)
 
@@ -724,30 +728,31 @@ def normalizeV2(keypoints, bodyModel, normalizationMethod, keepConfidence=False,
 
         return keypoints_normalized, scaleFactor, x_displacement, y_displacement
     
-    elif (normalizationMethod == "basic"):
-
-        # norm obtained with np.linalg.norm(keypoints)
-        if len(keypoints[0])>2:
-            keypointsNoConf, dummy = removeConfidence(keypoints)
-        else:
-            keypointsNoConf = keypoints
-
-        keypointsNP = poseUtils.keypoints2Numpy(keypointsNoConf)
-        keypoints_normalized = keypointsNP/norm
-
-        return keypoints_normalized.tolist(), 0, 0, 0
+    elif normalizationMethod == "basic":
+        
+        normalized_keypoints = keypoints.copy()
+        for i, k in enumerate(keypoints):
+            if keepConfidence:
+                #new_keypoint = (int(k[0]/scaleFactor), int(k[1]/scaleFactor), k[2]) 
+                new_keypoint = ((k[0]-mean)/std, (k[1]-mean)/std, k[2]) 
+            else: 
+                #new_keypoint = (int(k[0]/scaleFactor), int(k[1]/scaleFactor)) 
+                new_keypoint = ((k[0]-mean)/std, (k[1]-mean)/std)
+            normalized_keypoints[i] = new_keypoint
+        return normalized_keypoints, 0, 0, 0
 
     elif normalizationMethod == "none":
 
-        if len(keypoints[0])>2:
-            keypointsNoConf, dummy = removeConfidence(keypoints)
-        else:
-            keypointsNoConf = keypoints
-        keypointsNP = poseUtils.keypoints2Numpy(keypointsNoConf)
-        #keypointsNP = keypointsNP.astype(np.double)
-        
-    
-        return keypointsNP, 0, 0, 0 #TODO supress the 0s
+        normalized_keypoints = keypoints.copy()
+        for i, k in enumerate(keypoints):
+            if keepConfidence:
+                #new_keypoint = (int(k[0]/scaleFactor), int(k[1]/scaleFactor), k[2]) 
+                new_keypoint = (k[0], k[1], k[2]) 
+            else: 
+                #new_keypoint = (int(k[0]/scaleFactor), int(k[1]/scaleFactor)) 
+                new_keypoint = (k[0], k[1])
+            normalized_keypoints[i] = new_keypoint
+        return normalized_keypoints, 0, 0, 0
 
     else:
         print("ERROR: unknown normalizationMethod:", normalizationMethod)
@@ -762,11 +767,11 @@ def denormalizeV2(keypoints, scaleFactor, x_displacement, y_displacement, normal
         
         return newKeypoints;
     
-    elif (normalizationMethod == "basic"):
+    elif normalizationMethod == "basic":
         
         keypointsNP = poseUtils.keypoints2Numpy(keypoints)
         
-        keypoints_denormalized = norm*keypointsNP
+        keypoints_denormalized = (keypointsNP*std)+mean
 
         return keypoints_denormalized.tolist()
 
@@ -775,7 +780,7 @@ def denormalizeV2(keypoints, scaleFactor, x_displacement, y_displacement, normal
         keypoints = keypoints.tolist()
         return keypoints
     else:
-        print("ERROR: unknown normalizationMethod:", normalizationMethod)
+        print("ERROR: unknown denormalizationMethod:", normalizationMethod)
         sys.exit()
 '''
 def removeConfidence(keypoints):

@@ -75,6 +75,7 @@ try:
         CROPPED_VARIATIONS=False
     else:
         CROPPED_VARIATIONS=True
+    NZ=int(argv[15])
     #datasetModule = eval("datasetH36M")
     #print(conf.bodyModel.POSE_BODY_25_BODY_PARTS_DICT[20])
 except ValueError:
@@ -100,6 +101,14 @@ if not KEYPOINT_RESTORATION:
     print(CRED + "KEYPOINT_RESTORATION=" + str(KEYPOINT_RESTORATION) + CEND)
 else:
     print(CGREEN + "KEYPOINT_RESTORATION=" + str(KEYPOINT_RESTORATION) + CEND)
+if MODEL=="models_mirror":
+    print(CRED + "MODEL=" + str(MODEL) + CEND)
+else:
+    print(CGREEN + "MODEL=" + str(MODEL) + CEND)
+if NZ!=100:
+    print(CRED + "NZ=" + str(NZ) + CEND)
+else:
+    print(CGREEN + "NZ=" + str(NZ) + CEND)
 
 
 ###########
@@ -191,7 +200,7 @@ image_size = numJoints*2
 nc = 1
 
 # Size of z latent vector (i.e. size of generator input)
-nz = 100
+nz = NZ
 
 # Size of feature maps in generator
 #ngf = 64
@@ -227,13 +236,13 @@ def get_mean_and_std(dataloader):
     # std = sqrt(E[X^2] - (E[X])^2)
     std = (channels_squared_sum / num_batches - mean ** 2) ** 0.5
 
-    return mean, std
+    return mean.numpy(), std.numpy()
 
 def prepare_dataset(croppedVariations = True, normalizationStrategy = "center_scale", mean=None, std=None, max_len_buffer_originals = None):
   
     #jsonDataset = dataset.JsonDataset(inputpath_cropped=DATASET_CROPPED, inputpath_original=DATASET_ORIGINAL)
 
-    jsonDataset = datasetModule.JsonDataset(inputpath_cropped=DATASET_CROPPED, inputpath_original=DATASET_ORIGINAL, bodyModel=conf.bodyModel, croppedVariations=croppedVariations, normalizationStrategy=normalizationStrategy, mean=None, std=None, max_len_buffer_originals = max_len_buffer_originals)
+    jsonDataset = datasetModule.JsonDataset(inputpath_cropped=DATASET_CROPPED, inputpath_original=DATASET_ORIGINAL, bodyModel=conf.bodyModel, croppedVariations=croppedVariations, normalizationStrategy=normalizationStrategy, mean=mean, std=std, max_len_buffer_originals = max_len_buffer_originals)
 
     dataloader = torch.utils.data.DataLoader(jsonDataset, batch_size=batch_size, 
                                              num_workers=workers)
@@ -243,17 +252,20 @@ def prepare_dataset(croppedVariations = True, normalizationStrategy = "center_sc
     
     return dataloader
 
+'''
 dataloader = prepare_dataset(croppedVariations = False, normalizationStrategy = "none", mean=None, std=None, max_len_buffer_originals = LEN_BUFFER_ORIGINALS)
-
 print("Computing mean and std...")
 mean, std = get_mean_and_std(dataloader)
+'''
+mean=  466.20676
+std=  114.26538
 
 print("mean= ", mean)
 print("std= ", std)
 
 
 #dataloader = prepare_dataset(croppedVariations = True, normalizationStrategy = "center_scale")
-dataloader = prepare_dataset(croppedVariations = CROPPED_VARIATIONS, normalizationStrategy = NORMALIZATION, mean=None, std=None, max_len_buffer_originals = LEN_BUFFER_ORIGINALS)
+dataloader = prepare_dataset(croppedVariations = CROPPED_VARIATIONS, normalizationStrategy = NORMALIZATION, mean=mean, std=std, max_len_buffer_originals = LEN_BUFFER_ORIGINALS)
 
 
 #pytorchUtils.explainDataloader(dataloader)
@@ -276,7 +288,7 @@ def weights_init(m):
 
 
 # Create the generator
-netG_ = models.Generator(ngpu, numJoints)
+netG_ = models.Generator(ngpu, numJoints, nz)
 netG = netG_.to(device)
 
 #Register my debug hook
@@ -566,8 +578,13 @@ for epoch in range(num_epochs):
                 
                	#Draw result over the original image
                 
-                fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalizeV2(fakeKeypointsOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage, NORMALIZATION, keepConfidence=False, mean=mean, std=std, norm=83156.05487275115)#conf.norm)
-               	
+               	#Denormalize
+               	#Cannot denormalize originals as we don't keep the normalization info
+                #Denormalize input
+                fakeKeypointsCroppedOneImageIntDenormalized = openPoseUtils.denormalizeV2(fakeKeypointsCroppedOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage, NORMALIZATION, keepConfidence=False, mean=mean, std=std)#conf.norm)
+                #Denormalize output
+                fakeKeypointsOneImageIntDenormalized = openPoseUtils.denormalizeV2(fakeKeypointsOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage, NORMALIZATION, keepConfidence=False, mean=mean, std=std)#conf.norm)
+
 
                	#fakeKeypointsCroppedOneImageIntRescaledNP = poseUtils.keypoints2Numpy(fakeKeypointsCroppedOneImageIntRescaled)
                 #fakeKeypointsCroppedOneImageIntRescaledNP = poseUtils.scale(fakeKeypointsCroppedOneImageIntRescaledNP, 0.01)
@@ -589,9 +606,9 @@ for epoch in range(num_epochs):
                     #poseUtils.draw_pose(blank_imageOriginal, originalReshapedAsKeypointsOneImageInt, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
                     #poseUtils.draw_pose(blank_imageCropped, fakeKeypointsCroppedOneImageInt, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
                     #poseUtils.draw_pose(blank_image, fakeKeypointsOneImageInt, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
-                    poseUtils.draw_pose_scaled_centered(blank_imageOriginal, originalReshapedAsKeypointsOneImageInt.numpy(), -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 1/(WIDTH/4), WIDTH/2, HEIGHT/2, 8)
-                    poseUtils.draw_pose_scaled_centered(blank_imageCropped, fakeKeypointsCroppedOneImageInt, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 1/(WIDTH/4), WIDTH/2, HEIGHT/2, 8)
-                    poseUtils.draw_pose_scaled_centered(blank_image, fakeKeypointsOneImageInt, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 1/(WIDTH/4), WIDTH/2, HEIGHT/2, 8)
+                    poseUtils.draw_pose_scaled_centered(blank_imageOriginal, originalReshapedAsKeypointsOneImageInt.numpy(), -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 1/(WIDTH/4), WIDTH/2, HEIGHT/2, 8)           
+                    poseUtils.draw_pose_scaled_centered(blank_imageCropped, np.array(fakeKeypointsCroppedOneImageIntDenormalized), -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 8, WIDTH/2, HEIGHT/2, 8)
+                    poseUtils.draw_pose_scaled_centered(blank_image, np.array(fakeKeypointsOneImageIntDenormalized), -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 8, WIDTH/2, HEIGHT/2, 8)
                     targetFilePathCropped = OUTPUTPATH+"/debug_input"+str(idx)+".jpg"
                     targetFilePath = OUTPUTPATH+"/debug"+str(idx)+".jpg"
                     #cv2.imwrite(targetFilePath, blank_image)

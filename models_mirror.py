@@ -19,7 +19,7 @@ CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS = 0.1
 nc = 1
 
 # Size of z latent vector (i.e. size of generator input)
-#nz = 100
+nz = 100
 
 # Size of feature maps in generator
 #ngf = 64
@@ -33,7 +33,7 @@ NEURONS_PER_LAYER_GENERATOR = 256
 NEURONS_PER_LAYER_GENERATOR_EMBEDDING = 128
 class Generator(nn.Module):
     #Receives a noise vector (nz dims) + keypoints cropped (50 dims)
-    def __init__(self, ngpu, numJoints, nz):
+    def __init__(self, ngpu, numJoints):
         super(Generator, self).__init__()
         self.ngpu = ngpu
         self.numJoints = numJoints
@@ -57,8 +57,9 @@ class Generator(nn.Module):
         )
 
     def forward(self, batch_of_keypoints_cropped, noise):
-        input = torch.cat((batch_of_keypoints_cropped, noise), -1)
-        return self.main(input)
+        #input = torch.cat((batch_of_keypoints_cropped, noise), -1)
+        intput = batch_of_keypoints_cropped
+        return intput #self.main(input)
 
 NEURONS_PER_LAYER_DISCRIMINATOR = 256
 class Discriminator(nn.Module):
