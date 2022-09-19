@@ -14,8 +14,8 @@ DATASET_CROPPED="NOTSPECIFIED"
 OUTPUTPATH="data/output/H36M"
 DATASET_CHARADE="dynamicData/charade/input/keypoints"
 DATASET_CHARADE_IMAGES="dynamicData/charade/input/images"
-#DATASET_TEST="dynamicData/H36Mtest"
-DATASET_TEST="dynamicData/H36Mtest_original_noreps"
+DATASET_TEST="dynamicData/H36Mtest_v2"
+#DATASET_TEST="dynamicData/H36Mtest_original_v2_noreps"
 DATASET_TEST_IMAGES="UNKNOWN"
 
 
@@ -25,15 +25,15 @@ DATASET_TEST_IMAGES="UNKNOWN"
 #MODELPATH="data/output/H36M/model/model_epoch4_batch12000.pt"
 #MODELPATH="data/output/H36M/model/model_epoch9_batch5000.pt"
 
-MODELPATH="data/output/H36M/model/model_epoch10_batch0.pt"
+MODELPATH="data/output/H36M/model/model_epoch6_batch1000.pt"
 #MODELPATH="dynamicData/models/H36M_GAN_epoch7_batch2000/H36M_GAN_epoch7_batch2000.pt"
 
 MODEL="models" #models models_mirror models_simple
 ONLY15=1
 BODY_MODEL="OPENPOSE_15"
-NORMALIZATION="basic" #"center_scale", "basic", "none" 
-KEYPOINT_RESTORATION=0
-NZ=0
+NORMALIZATION="center_scale" #"center_scale", "basic", "none" 
+KEYPOINT_RESTORATION=1
+NZ=100 #100 #0
 
 
 

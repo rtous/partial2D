@@ -593,8 +593,8 @@ for epoch in range(num_epochs):
                 #If we want to save the .json files of the batch
                 #openPoseUtils.keypoints2json(fakeKeypointsOneImageInt, OUTPUTPATH+"/"+f"{idx:02d}"+"_img_keypoints.json")
                 
-                json_file_without_extension = os.path.splitext(json_file)[0]
-               	json_file_without_extension = json_file_without_extension.replace('_keypoints', '')
+                #json_file_without_extension = os.path.splitext(json_file)[0]
+               	#json_file_without_extension = json_file_without_extension.replace('_keypoints', '')
                	
                	#Draw the (still normalized) results for DEBUG  
                 #NOTE: the original poses are centered at (0.5, 0.5)
@@ -606,6 +606,7 @@ for epoch in range(num_epochs):
                     #poseUtils.draw_pose(blank_imageOriginal, originalReshapedAsKeypointsOneImageInt, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
                     #poseUtils.draw_pose(blank_imageCropped, fakeKeypointsCroppedOneImageInt, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
                     #poseUtils.draw_pose(blank_image, fakeKeypointsOneImageInt, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+                    #print("fakeKeypointsCroppedOneImageIntDenormalized=",fakeKeypointsCroppedOneImageIntDenormalized)
                     poseUtils.draw_pose_scaled_centered(blank_imageOriginal, originalReshapedAsKeypointsOneImageInt.numpy(), -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 1/(WIDTH/4), WIDTH/2, HEIGHT/2, 8)           
                     poseUtils.draw_pose_scaled_centered(blank_imageCropped, np.array(fakeKeypointsCroppedOneImageIntDenormalized), -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 8, WIDTH/2, HEIGHT/2, 8)
                     poseUtils.draw_pose_scaled_centered(blank_image, np.array(fakeKeypointsOneImageIntDenormalized), -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 8, WIDTH/2, HEIGHT/2, 8)

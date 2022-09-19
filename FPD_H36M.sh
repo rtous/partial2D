@@ -9,8 +9,8 @@ else
 fi
 
 DATASET_CANDIDATE="data/output/H36M/TEST/keypoints"
-DATASET_CROPPED="dynamicData/H36Mtest"
-DATASET_ORIGNAL="dynamicData/H36Mtest_original_noreps"
+DATASET_CROPPED="dynamicData/H36Mtest_v2"
+DATASET_ORIGNAL="dynamicData/H36Mtest_original_v2_noreps"
 DATASET_CANDIDATE_MAX=35000
 
 DATASET_REFERENCE_MAX=200000

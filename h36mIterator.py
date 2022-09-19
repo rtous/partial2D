@@ -69,9 +69,12 @@ def iterator(datasetPath):
 						#We will keep only one of each poses
 						if intraframe % 10 == 0:
 							keypoints=h36mUtils.h36m2openpose(keypointsH36M)  
-							thresholdNoneBelow = 0.0
-							thresholdNotMoreThanNBelow = 0.5
-							N = 10
+							#thresholdNoneBelow = 0.0
+							#thresholdNotMoreThanNBelow = 0.5
+							#N = 10
+							thresholdNoneBelow = 0.01
+							thresholdNotMoreThanNBelow = 0.01
+							N = 0
 							if poseUtils.poseIsConfident(keypoints, thresholdNoneBelow, thresholdNotMoreThanNBelow, N):
 								referenceBoneIndex, referenceBoneSize = openPoseUtils.reference_bone(keypoints, BodyModelOPENPOSE15)
 								magnitude_bone = openPoseUtils.magnitude_bone_from_index(keypoints, referenceBoneIndex, BodyModelOPENPOSE15)

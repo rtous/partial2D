@@ -3,3 +3,12 @@
 
 #Generate test dataset for H36M
 ./datasetH36M_makelite.sh
+
+
+
+
+CRITICAL TIPS
+
+- If the dataset against we compare contains nulls, the FD grows because the model learns to complete all! (this is set in the h36mIterator)
+
+- Increasing the input buffer improves the results. The reason is that we should try to shuffle as much data as possible to avoid training over parts of the dataset (we read from files and they are quite different)

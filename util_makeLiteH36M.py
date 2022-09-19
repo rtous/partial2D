@@ -6,6 +6,8 @@ import sys
 import h36mIterator
 import openPoseUtils
 import random
+import BodyModelOPENPOSE15
+
 
 
 argv = sys.argv
@@ -13,6 +15,7 @@ try:
     OUTPUTPATH=argv[1]
     OUTPUTPATH_ORIGINAL=argv[2]
     MAX=int(argv[3])
+    DATASET_ORIGINAL=argv[4]
 except ValueError:
     print("Wrong arguments. Expecting two paths.")
 
@@ -27,7 +30,7 @@ buffer_originals = []
 buffer_variations = []
 originals_idx = []
 
-scandirIterator = h36mIterator.iterator()
+scandirIterator = h36mIterator.iterator(DATASET_ORIGINAL)
 for keypoints_original in scandirIterator:
     #We fill first a buffer of originals
     buffer_originals.append(keypoints_original)
@@ -40,7 +43,7 @@ for keypoints_original in scandirIterator:
         random.shuffle(buffer_originals)
         print("generating variations...")
         for o_idx, buffered_keypoints_original in enumerate(buffer_originals):
-            variations = openPoseUtils.crop(buffered_keypoints_original)               
+            variations = openPoseUtils.crop(buffered_keypoints_original, BodyModelOPENPOSE15)               
             for v_idx, keypoints_cropped in enumerate(variations):    
                 buffer_variations.append((buffered_keypoints_original, keypoints_cropped, o_idx))
         

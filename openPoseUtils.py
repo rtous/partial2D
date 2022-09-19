@@ -624,7 +624,7 @@ def crop(keypoints, bodyModel):
     tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "RWrist", "RElbow"], variations, bodyModel)
     #just below neck and left elbow
     tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "LElbow"], variations, bodyModel)
-     
+    
     #remove shoulders
     tryAddingNewCroppedVariation(keypoints, ["RAnkle","LAnkle", "LKnee", "RKnee", "MidHip", "LHip", "RHip", "LWrist", "RWrist", "LElbow", "RElbow", "LShoulder", "RShoulder"], variations, bodyModel)
     #just right shoulder and left wrist
