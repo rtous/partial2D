@@ -39,7 +39,7 @@ import Configuration
 
 class JsonDataset(torch.utils.data.IterableDataset):
     
-    def __init__(self, inputpath_cropped, inputpath_original, bodyModel, croppedVariations = True, normalizationStrategy = "center-scale", mean = None, std = None, max_len_buffer_originals = None):
+    def __init__(self, inputpath_cropped, inputpath_original, bodyModel, croppedVariations = True, normalizationStrategy = "center-scale", mean = None, std = None, max_len_buffer_originals = None, DISCARDINCOMPLETEPOSES = False):
         self.inputpath_cropped = inputpath_cropped
         self.inputpath_original = inputpath_original
         self.bodyModel = bodyModel
@@ -48,6 +48,7 @@ class JsonDataset(torch.utils.data.IterableDataset):
         self.mean = mean
         self.std = std
         self.max_len_buffer_originals = max_len_buffer_originals
+        self.DISCARDINCOMPLETEPOSES = DISCARDINCOMPLETEPOSES
 
     def __iter__(self):
         #jsonFiles = [f for f in listdir(self.inputpath) if isfile(join(self.inputpath, f)) and f.endswith("json") ]
@@ -56,7 +57,7 @@ class JsonDataset(torch.utils.data.IterableDataset):
         #self.scandirIterator = os.scandir(self.inputpath_original)
         buffer_originals = []
         buffer_variations = []
-        self.scandirIterator = h36mIterator.iterator(self.inputpath_original)
+        self.scandirIterator = h36mIterator.iterator(self.inputpath_original, self.DISCARDINCOMPLETEPOSES)
         print("self.max_len_buffer_originals=", self.max_len_buffer_originals)
         for keypoints_original in self.scandirIterator:
             #We fill first a buffer of originals

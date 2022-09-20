@@ -1,4 +1,4 @@
-SETUP=0 #0=laptop, 1=office
+SETUP=1 #0=laptop, 1=office
 
 if [ $SETUP -eq 0 ]
 then   
@@ -14,8 +14,9 @@ DATASET_CROPPED="NOTSPECIFIED"
 OUTPUTPATH="data/output/H36M"
 DATASET_CHARADE="dynamicData/charade/input/keypoints"
 DATASET_CHARADE_IMAGES="dynamicData/charade/input/images"
-DATASET_TEST="dynamicData/H36Mtest_v2"
-#DATASET_TEST="dynamicData/H36Mtest_original_v2_noreps"
+#DATASET_TEST="dynamicData/H36Mtest_v2" #no null keypoints
+#DATASET_TEST="dynamicData/H36Mtest"    #with null keypoints
+DATASET_TEST="dynamicData/H36Mtest_original_v2_noreps" #debug copy
 DATASET_TEST_IMAGES="UNKNOWN"
 
 
@@ -25,14 +26,14 @@ DATASET_TEST_IMAGES="UNKNOWN"
 #MODELPATH="data/output/H36M/model/model_epoch4_batch12000.pt"
 #MODELPATH="data/output/H36M/model/model_epoch9_batch5000.pt"
 
-MODELPATH="data/output/H36M/model/model_epoch6_batch1000.pt"
-#MODELPATH="dynamicData/models/H36M_GAN_epoch7_batch2000/H36M_GAN_epoch7_batch2000.pt"
+MODELPATH="data/output/H36M/model/model_epoch99_batch0.pt"
+#MODELPATH="dynamicData/models/H36M_GAN_epoch7_batch2000/H36M_GAN_epoch1_batch1000.pt"
 
 MODEL="models" #models models_mirror models_simple
 ONLY15=1
 BODY_MODEL="OPENPOSE_15"
 NORMALIZATION="center_scale" #"center_scale", "basic", "none" 
-KEYPOINT_RESTORATION=1
+KEYPOINT_RESTORATION=0 #1 (defalut)
 NZ=100 #100 #0
 
 

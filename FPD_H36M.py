@@ -38,8 +38,12 @@ try:
     DATASET_REFERENCE=argv[5]
     DATASET_REFERENCE_MAX=int(argv[6])
     numJoints=int(argv[7])
+    if argv[8]=="0":
+        DISCARDINCOMPLETEPOSES=False
+    else:
+        DISCARDINCOMPLETEPOSES=True
 except ValueError:
-    print("Wrong arguments. Expecting 6 arguments, see the code.")
+    print("Wrong arguments. Expecting two paths.")	
 
 ####### INITIAL WARNINGS ########
 if not DATASET_CANDIDATE=="data/output/H36M/TEST/keypoints":
@@ -50,6 +54,10 @@ if DATASET_REFERENCE_MAX<65536:
     print(CRED + "DATASET_REFERENCE_MAX=" + str(DATASET_REFERENCE_MAX) + CEND)
 else:
     print(CGREEN + "DATASET_REFERENCE_MAX=" + str(DATASET_REFERENCE_MAX) + CEND)
+if not DISCARDINCOMPLETEPOSES:
+    print(CRED + "DISCARDINCOMPLETEPOSES=" + str(DISCARDINCOMPLETEPOSES) + CEND)
+else:
+    print(CGREEN + "DISCARDINCOMPLETEPOSES=" + str(DISCARDINCOMPLETEPOSES) + CEND)
 ###########
 
 

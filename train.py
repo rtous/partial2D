@@ -76,6 +76,10 @@ try:
     else:
         CROPPED_VARIATIONS=True
     NZ=int(argv[15])
+    if argv[16]=="0":
+        DISCARDINCOMPLETEPOSES=False
+    else:
+        DISCARDINCOMPLETEPOSES=True
     #datasetModule = eval("datasetH36M")
     #print(conf.bodyModel.POSE_BODY_25_BODY_PARTS_DICT[20])
 except ValueError:
@@ -109,6 +113,10 @@ if NZ!=100:
     print(CRED + "NZ=" + str(NZ) + CEND)
 else:
     print(CGREEN + "NZ=" + str(NZ) + CEND)
+if not DISCARDINCOMPLETEPOSES:
+    print(CRED + "DISCARDINCOMPLETEPOSES=" + str(DISCARDINCOMPLETEPOSES) + CEND)
+else:
+    print(CGREEN + "DISCARDINCOMPLETEPOSES=" + str(DISCARDINCOMPLETEPOSES) + CEND)
 
 
 ###########
@@ -238,11 +246,11 @@ def get_mean_and_std(dataloader):
 
     return mean.numpy(), std.numpy()
 
-def prepare_dataset(croppedVariations = True, normalizationStrategy = "center_scale", mean=None, std=None, max_len_buffer_originals = None):
+def prepare_dataset(croppedVariations = True, normalizationStrategy = "center_scale", mean=None, std=None, max_len_buffer_originals = None, DISCARDINCOMPLETEPOSES=False):
   
     #jsonDataset = dataset.JsonDataset(inputpath_cropped=DATASET_CROPPED, inputpath_original=DATASET_ORIGINAL)
 
-    jsonDataset = datasetModule.JsonDataset(inputpath_cropped=DATASET_CROPPED, inputpath_original=DATASET_ORIGINAL, bodyModel=conf.bodyModel, croppedVariations=croppedVariations, normalizationStrategy=normalizationStrategy, mean=mean, std=std, max_len_buffer_originals = max_len_buffer_originals)
+    jsonDataset = datasetModule.JsonDataset(inputpath_cropped=DATASET_CROPPED, inputpath_original=DATASET_ORIGINAL, bodyModel=conf.bodyModel, croppedVariations=croppedVariations, normalizationStrategy=normalizationStrategy, mean=mean, std=std, max_len_buffer_originals = max_len_buffer_originals, DISCARDINCOMPLETEPOSES=DISCARDINCOMPLETEPOSES)
 
     dataloader = torch.utils.data.DataLoader(jsonDataset, batch_size=batch_size, 
                                              num_workers=workers)
@@ -265,7 +273,7 @@ print("std= ", std)
 
 
 #dataloader = prepare_dataset(croppedVariations = True, normalizationStrategy = "center_scale")
-dataloader = prepare_dataset(croppedVariations = CROPPED_VARIATIONS, normalizationStrategy = NORMALIZATION, mean=mean, std=std, max_len_buffer_originals = LEN_BUFFER_ORIGINALS)
+dataloader = prepare_dataset(croppedVariations = CROPPED_VARIATIONS, normalizationStrategy = NORMALIZATION, mean=mean, std=std, max_len_buffer_originals = LEN_BUFFER_ORIGINALS, DISCARDINCOMPLETEPOSES=DISCARDINCOMPLETEPOSES)
 
 
 #pytorchUtils.explainDataloader(dataloader)

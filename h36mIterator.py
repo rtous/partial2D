@@ -43,8 +43,14 @@ INPUTPATHS = [
 
 #pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
 
+CRED = '\033[91m'
+CGREEN  = '\33[32m'
+CYELLOW = '\33[33m'
+CBLUE   = '\33[34m'
+CBOLD     = '\33[1m'
+CEND = '\033[0m'
 
-def iterator(datasetPath):
+def iterator(datasetPath, discardIncompletePoses=False):
 	totalYield = 0
 	for directory in INPUTPATHS:
 		absoluteDirectory = datasetPath+directory
@@ -72,9 +78,16 @@ def iterator(datasetPath):
 							#thresholdNoneBelow = 0.0
 							#thresholdNotMoreThanNBelow = 0.5
 							#N = 10
-							thresholdNoneBelow = 0.01
-							thresholdNotMoreThanNBelow = 0.01
-							N = 0
+							if discardIncompletePoses:
+								#print(CRED + "ITERATOR: DISCARDING INCOMPLETE POSES" + CEND)
+								thresholdNoneBelow = 0.01
+								thresholdNotMoreThanNBelow = 0.01
+								N = 0
+							else:
+								#print(CGREEN + "ITERATOR: NOT DISCARDING INCOMPLETE POSES" + CEND)
+								thresholdNoneBelow = 0.0
+								thresholdNotMoreThanNBelow = 0.5
+								N = 10
 							if poseUtils.poseIsConfident(keypoints, thresholdNoneBelow, thresholdNotMoreThanNBelow, N):
 								referenceBoneIndex, referenceBoneSize = openPoseUtils.reference_bone(keypoints, BodyModelOPENPOSE15)
 								magnitude_bone = openPoseUtils.magnitude_bone_from_index(keypoints, referenceBoneIndex, BodyModelOPENPOSE15)
