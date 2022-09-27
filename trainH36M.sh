@@ -1,34 +1,29 @@
-SETUP=1 #0=laptop, 1=office
-
-if [ $SETUP -eq 0 ]
-then   
-    DATASET_ORIGINAL="/Volumes/ElementsDat/pose/H36M/H36M"
-    #DATASET_ORIGINAL="/Volumes/ElementsDat/pose/H36M/ECCV2018/ECCV18OD_no_sufix"
+if [ $# -eq 0 ]
+then
+    echo "No arguments supplied"
+    echo "USAGE: ./trainH36M CONFIGURATION_FILE.sh [0/1]"
+    echo "The optional param 0/1 signals laptop/office"
 else
-    DATASET_ORIGINAL="/mnt/f/datasets/pose/H36M/H36M"
-    #DATASET_ORIGINAL="/Volumes/ElementsDat/pose/H36M/ECCV2018/ECCV18OD_no_sufix"
+	######################
+	if [ $# -eq 2 ]
+	then
+		SETUP=$2
+	else
+		SETUP=0 #0=laptop, 1=office
+	fi
+	######################
+	if [ $SETUP -eq 0 ]
+	then   
+	    DATASET_ORIGINAL="/Volumes/ElementsDat/pose/H36M/H36M"
+	    #DATASET_ORIGINAL="/Volumes/ElementsDat/pose/H36M/ECCV2018/ECCV18OD_no_sufix"
+	else
+	    DATASET_ORIGINAL="/mnt/f/datasets/pose/H36M/H36M"
+	    #DATASET_ORIGINAL="/Volumes/ElementsDat/pose/H36M/ECCV2018/ECCV18OD_no_sufix"
+	fi
+	######################
+
+	source $1
+
+	python train.py $DATASET_CROPPED $DATASET_ORIGINAL $OUTPUTPATH $DATASET_CHARADE $DATASET_CHARADE_IMAGES $DATASET_TEST $DATASET_TEST_IMAGES $BODY_MODEL $DATASET_MODULE $MODEL $NORMALIZATION $KEYPOINT_RESTORATION $LEN_BUFFER_ORIGINALS $CROPPED_VARIATIONS $NZ $DISCARDINCOMPLETEPOSES $TRAINSPLIT
+	#python test13_plus_regression_like_context_encoder.py $DATASET_CROPPED $DATASET_ORIGINAL $OUTPUTPATH $DATASET_CHARADE $DATASET_CHARADE_IMAGES $DATASET_TEST $DATASET_TEST_IMAGES
 fi
-
-DATASET_CROPPED="NOTSPECIFIED"
-#DATASET_ORIGINAL="/Volumes/ElementsDat/pose/H36M/ECCV2018/ECCV18OD_no_sufix"
-OUTPUTPATH="data/output/H36M"
-DATASET_CHARADE="dynamicData/charade/input/keypoints"
-DATASET_CHARADE_IMAGES="dynamicData/charade/input/images"
-#DATASET_CHARADE="/Users/rtous/DockerVolume/charade_full/input/keypoints"
-#DATASET_CHARADE_IMAGES="/Users/rtous/DockerVolume/charade_full/input/images"
-DATASET_TEST="dynamicData/ECCV18OD_test_crop"
-DATASET_TEST_IMAGES="/Volumes/ElementsDat/pose/H36M/ECCV2018/ECCV18_Challenge/Train/IMG/"
-BODY_MODEL="OPENPOSE_15"
-DATASET_MODULE="datasetH36M"
-MODEL="models" #models models_mirror models_simple
-NORMALIZATION="center_scale" #"center_scale", "basic", "none" 
-KEYPOINT_RESTORATION=0
-LEN_BUFFER_ORIGINALS=200000 #1000 65536
-CROPPED_VARIATIONS=0 #1 (defalut) 0 to learn to copy
-NZ=100 #100 #10 #0
-DISCARDINCOMPLETEPOSES=1 #1
-
-
-python train.py $DATASET_CROPPED $DATASET_ORIGINAL $OUTPUTPATH $DATASET_CHARADE $DATASET_CHARADE_IMAGES $DATASET_TEST $DATASET_TEST_IMAGES $BODY_MODEL $DATASET_MODULE $MODEL $NORMALIZATION $KEYPOINT_RESTORATION $LEN_BUFFER_ORIGINALS $CROPPED_VARIATIONS $NZ $DISCARDINCOMPLETEPOSES
-#python test13_plus_regression_like_context_encoder.py $DATASET_CROPPED $DATASET_ORIGINAL $OUTPUTPATH $DATASET_CHARADE $DATASET_CHARADE_IMAGES $DATASET_TEST $DATASET_TEST_IMAGES
-

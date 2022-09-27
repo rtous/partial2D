@@ -36,6 +36,7 @@ import dataset
 import datasetBasic
 #import datasetBACKUP
 import datasetH36M
+#import datasetH36M_mem
 import time
 import Configuration
 import openPoseUtils
@@ -82,6 +83,7 @@ try:
         DISCARDINCOMPLETEPOSES=True
     #datasetModule = eval("datasetH36M")
     #print(conf.bodyModel.POSE_BODY_25_BODY_PARTS_DICT[20])
+    TRAINSPLIT=argv[17]
 except ValueError:
     print("Wrong arguments. Expecting two paths.")
 
@@ -196,7 +198,7 @@ torch.manual_seed(manualSeed)
 # Batch size during training
 #batch_size = 128
 #batch_size = 64
-batch_size = 128#128#128#64
+batch_size = 128#32#128#128#128#64
 
 # Spatial size of training images. All images will be resized to this
 #   size using a transformer.
@@ -246,19 +248,37 @@ def get_mean_and_std(dataloader):
 
     return mean.numpy(), std.numpy()
 
+def split_dataset(anIterableDataset):
+    buffer_variations = []
+    for batch_of_keypoints_cropped, batch_of_keypoints_original, confidence_values, scaleFactor, x_displacement, y_displacement, batch_of_json_file in anIterableDataset:
+        buffer_variations.append((batch_of_keypoints_cropped, batch_of_keypoints_original, confidence_values, scaleFactor, x_displacement, y_displacement, batch_of_json_file))
+    train_set_size = int(len(buffer_variations) * TRAINSPLIT)
+    valid_set_size = len(buffer_variations) - train_set_size
+    train_set, valid_set = torch.utils.data.random_split(buffer_variations, [train_set_size, valid_set_size])
+    dataloader  = torch.utils.data.DataLoader(train_set, batch_size=batch_size, num_workers=workers)
+    dataloaderValidation  = torch.utils.data.DataLoader(valid_set, batch_size=batch_size, num_workers=workers)
+    return dataloader, dataloaderValidation
+
 def prepare_dataset(croppedVariations = True, normalizationStrategy = "center_scale", mean=None, std=None, max_len_buffer_originals = None, DISCARDINCOMPLETEPOSES=False):
   
     #jsonDataset = dataset.JsonDataset(inputpath_cropped=DATASET_CROPPED, inputpath_original=DATASET_ORIGINAL)
 
+    
+
     jsonDataset = datasetModule.JsonDataset(inputpath_cropped=DATASET_CROPPED, inputpath_original=DATASET_ORIGINAL, bodyModel=conf.bodyModel, croppedVariations=croppedVariations, normalizationStrategy=normalizationStrategy, mean=mean, std=std, max_len_buffer_originals = max_len_buffer_originals, DISCARDINCOMPLETEPOSES=DISCARDINCOMPLETEPOSES)
 
-    dataloader = torch.utils.data.DataLoader(jsonDataset, batch_size=batch_size, 
-                                             num_workers=workers)
+    
+
+
+    #dataloader = torch.utils.data.DataLoader(jsonDataset, batch_size=batch_size, 
+    #                                         num_workers=workers)
+
+    dataloader, dataloaderValidation = split_dataset(jsonDataset)
 
     # Batch and shuffle data with DataLoader
     #trainloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
     
-    return dataloader
+    return dataloader, dataloaderValidation
 
 '''
 dataloader = prepare_dataset(croppedVariations = False, normalizationStrategy = "none", mean=None, std=None, max_len_buffer_originals = LEN_BUFFER_ORIGINALS)
@@ -273,7 +293,7 @@ print("std= ", std)
 
 
 #dataloader = prepare_dataset(croppedVariations = True, normalizationStrategy = "center_scale")
-dataloader = prepare_dataset(croppedVariations = CROPPED_VARIATIONS, normalizationStrategy = NORMALIZATION, mean=mean, std=std, max_len_buffer_originals = LEN_BUFFER_ORIGINALS, DISCARDINCOMPLETEPOSES=DISCARDINCOMPLETEPOSES)
+dataloader, dataloaderValidation = prepare_dataset(croppedVariations = CROPPED_VARIATIONS, normalizationStrategy = NORMALIZATION, mean=mean, std=std, max_len_buffer_originals = LEN_BUFFER_ORIGINALS, DISCARDINCOMPLETEPOSES=DISCARDINCOMPLETEPOSES)
 
 
 #pytorchUtils.explainDataloader(dataloader)
@@ -313,7 +333,7 @@ netG.apply(weights_init)
 
 # Print the model
 print(netG)
-pytorchUtils.explainModel(netG, 1, 1, 28, 28)
+#pytorchUtils.explainModel(netG, 1, 1, 28, 28)
 #pytorchUtils.computeModel(netG, 1, [{"layer":0, "output":7},{"layer":6, "output":14},{"layer":9, "output":28}])
 
 # Create the Discriminator
@@ -342,7 +362,7 @@ pytorchUtils.explainModel(netD, 28, 28, 1, 1)
 #criterion = nn.BCELoss() 
 lossFunctionD = nn.BCELoss() 
 lossFunctionG_adversarial = nn.BCELoss() 
-lossFunctionG_regression = torch.nn.MSELoss() #torch.nn.L1Loss()
+lossFunctionG_regression = torch.nn.MSELoss()#torch.nn.MSELoss() #torch.nn.L1Loss()
 
 # Create batch of latent vectors that we will use to visualize
 #  the progression of the generator
@@ -384,6 +404,7 @@ epoch_idx = 0
 MAX_BATCHES = 25000
 # For each epoch
 step_absolute = 0
+step_absolute_validation = 0
 for epoch in range(num_epochs):        
     print("EPOCH ", epoch)
     # For each batch in the dataloader
@@ -543,8 +564,8 @@ for epoch in range(num_epochs):
                 croppedReshapedAsKeypoints = np.reshape(batch_of_keypoints_cropped.cpu(), (batch_size, numJoints, 2))
                 croppedReshapedAsKeypoints = croppedReshapedAsKeypoints.numpy()
 
-            NUM_ROWS = 8
-            NUM_COLS = 8
+            NUM_ROWS = int(batch_size/16)
+            NUM_COLS = int(batch_size/16)
             WIDTH = 64
             HEIGHT = 64
             imagesCropped = np.empty(shape=(NUM_ROWS, NUM_COLS),dtype='object')
@@ -665,5 +686,25 @@ for epoch in range(num_epochs):
         sys.exit()
     '''
     epoch_idx += 1
+
+    #VALIDATION
+    '''
+    for batch_of_keypoints_cropped, batch_of_keypoints_original, confidence_values, scaleFactor, x_displacement, y_displacement, batch_of_json_file in dataloaderValidation:
+        with torch.no_grad():
+            # Generate fake image batch with G
+            batch_of_fake_original = netG(batch_of_keypoints_cropped, noise)
+
+            #Restore the original keypoints with confidence > CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS
+            if KEYPOINT_RESTORATION:
+                batch_of_fake_original = models.restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, confidence_values)
+
+            g_adv_validation = lossFunctionG_adversarial(output, label) #adversarial loss
+            g_pixel_validation = lossFunctionG_regression(batch_of_fake_original, batch_of_keypoints_original) #pixel loss
+            errG_validation = 0 * g_adv_validation + 1 * g_pixel_validation
+    tb.add_scalar("LossG_validation", errG_validation.item(), step_absolute_validation)
+    print("---->VALIDATION LOSS = ", errG_validation.item())
+    step_absolute_validation = step_absolute_validation+1
+    #ENDVALIDATION
+    '''
 tb.close()
 print("Finshed. epochs = ", epoch_idx)

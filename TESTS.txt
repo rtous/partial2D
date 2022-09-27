@@ -1,0 +1,24 @@
+
+DAE paper
+./trainH36M.sh confH36M.sh
+./inferenceH36M.sh confH36M.sh (completion)
+./FPD_H36M.sh confH36M.s
+FPD: 6000
+	- (DONE) i si NZ=0? Sembla igual o millor
+	- i si descartem nulls?
+	- i si fem mes petit el bottleneck?
+	- i si treballem amb mes dades?
+	- (DONE) i amb una normalitzacio diferent? Va fatal
+	- (DONE) i si fem el crop mes random? o posem noise en comptes de zeros?
+		- amb noise no sembla canviar gaire
+	- (DONE) i si no restoration? doncs funciona pitjor però no molt
+---------------------
+AE
+./trainH36M.sh confH36M_AE.sh
+./inferenceH36M.sh confH36M_AE.sh (completion)
+./FPD_H36M.sh confH36M_AE.s
+FPD: 14000
+./inferenceH36M_AE.sh confH36M_AE.sh (generation)
+./FPD_H36M.sh confH36M_AE.s
+FPD: 9 milions :-()
+

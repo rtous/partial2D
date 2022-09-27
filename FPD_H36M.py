@@ -21,6 +21,8 @@ import scipy.stats as stats
 import h36mIterator
 import random
 import BodyModelOPENPOSE15 #borrar
+import traceback
+import json
 
 CRED = '\033[91m'
 CGREEN  = '\33[32m'
@@ -42,8 +44,13 @@ try:
         DISCARDINCOMPLETEPOSES=False
     else:
         DISCARDINCOMPLETEPOSES=True
+    #NUMJOINTS NOT USED
+    OUTPUTPATH=argv[9]
+    #print("OUTPUTPATH=", OUTPUTPATH)
 except ValueError:
-    print("Wrong arguments. Expecting two paths.")	
+    print("Wrong arguments.")
+    traceback.print_exc()
+    sys.exit()	
 
 ####### INITIAL WARNINGS ########
 if not DATASET_CANDIDATE=="data/output/H36M/TEST/keypoints":
@@ -175,9 +182,23 @@ def testWithSlices(vectors, size, sliceSize):
 		fid = calculate_fid(act1, act2)
 		print('FID: %.3f' % fid)
 
+
+def writeRunInfoFile(run_info_json, run_info_file_path):
+    run_info_file = open(run_info_file_path, 'w')
+    json.dump(run_info_json, run_info_file)
+    run_info_file.flush()
+    run_info_file.close()
+
 d_ref, d_ref_num = readDatasetH36M(DATASET_REFERENCE_MAX, DIMENSIONS)
 
 d_can, d_can_num = readDataset(DATASET_CANDIDATE, DATASET_CANDIDATE_MAX, DIMENSIONS)
+
+if d_can_num>1000:
+    print(CRED + "WARNING! " + DATASET_CANDIDATE + "contains "+str(d_can_num) + CEND)
+
+if d_can_num==0:
+    print(CRED + "WARNING! " + DATASET_CANDIDATE + "EMPTY!! "+ CEND)
+
 
 d_crop, d_crop_num = readDataset(DATASET_CROPPED, DATASET_CANDIDATE_MAX, DIMENSIONS)
 
@@ -199,6 +220,13 @@ print('FID: %.3f' % fid)
 fid = calculate_fid(d_ref, d_can)
 print(DATASET_CANDIDATE+" size="+str(d_can_num))
 print('FID: %.3f' % fid)
+
+#write to file
+f = open(OUTPUTPATH+"/run_info.json", 'r')
+run_info_json = json.load(f)
+f.close()
+run_info_json["results"].append({'FID': fid})
+writeRunInfoFile(run_info_json, OUTPUTPATH+"/run_info.json")
 
 fid = calculate_fid(d_ref, d_crop)
 print(DATASET_CROPPED+" size="+str(d_crop_num))

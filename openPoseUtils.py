@@ -555,7 +555,11 @@ def removeBones(keypoints, boneNames, bodyModel):
             #print("len(POSE_BODY_25_BODY_PARTS)", len(bodyModel.POSE_BODY_25_BODY_PARTS))
             new_keypoint = (k[0], k[1], k[2])   
         else:
-            new_keypoint = (0.0, 0.0, 0.0)  
+            new_keypoint = (0.0, 0.0, 0.0) 
+            #mean=  466.20676
+            #std=  114.26538
+            #new_keypoint = (np.random.normal(mean, std), np.random.normal(mean, std), 0.0)  
+            #print("new_keypoint", new_keypoint)
         newKeypoints.append(new_keypoint)
 
     #check if keeps minimum bones:

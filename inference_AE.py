@@ -218,7 +218,14 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
 
     netG.eval()
     #print("input[0]=", batch_of_one_keypoints_cropped[0])
-    fake = netG(batch_of_one_keypoints_cropped, fixed_noise_N).detach().cpu()
+    #fake = netG(batch_of_one_keypoints_cropped, fixed_noise_N).detach().cpu()
+    
+
+    #latentZ = netG.encode(batch_of_one_keypoints_cropped).detach().cpu()
+    #fake = netG.decode(latentZ).detach().cpu()
+
+    fake = netG.decode(fixed_noise_N).detach().cpu()
+    
     #print("fake[0]=", fake[0])
 
     #fake = batch_of_one_keypoints_cropped # DEBUG DOING NOTHING
@@ -326,11 +333,7 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
                 print("WARNING: Cannot find "+originalImagePath)  
             #shutil.copyfile(join("/Users/rtous/DockerVolume/openpose/data/result", json_file_without_extension+"_rendered.png"), join("data/output/Test/"+json_file_without_extension+"_img_cropped_openpose.png"))
         else:
-            WIDTH = 500
-            HEIGHT = 500
-            blank_image = np.zeros((WIDTH,HEIGHT,3), np.uint8)
-            #poseUtils.draw_pose(blank_image, fakeKeypointsCroppedOneImageIntRescaled, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
-            poseUtils.draw_pose_scaled_centered(blank_image, np.array(fakeKeypointsCroppedOneImageIntRescaled), -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 500/WIDTH, WIDTH/2, HEIGHT/2, 8)           
+            blank_image = np.zeros((1000,1000,3), np.uint8)
             cv2.imwrite(outputPath+outputSubpath+"/images/"+json_file_without_extension+".jpg", blank_image)
     print('testMany() finished. Output written to '+outputPath+outputSubpath)        
 
@@ -373,7 +376,7 @@ def testImage(netG, outputPath, imagePath, keypointsPath):
 
 	
 #CHARADE DATASET
-testMany(netG, DATASET_CHARADE, DATASET_CHARADE_IMAGES, OUTPUTPATH, "/CHARADE", ".png", True)
+testMany(netG, DATASET_CHARADE, DATASET_CHARADE_IMAGES, OUTPUTPATH, "/CHARADE", ".png")
 
 #TEST DATASET
 testMany(netG, DATASET_TEST, DATASET_TEST_IMAGES, OUTPUTPATH, "/TEST", ".jpg", False)
