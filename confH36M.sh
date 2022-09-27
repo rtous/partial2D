@@ -20,7 +20,7 @@ TRAINSPLIT=1 #0.8
 DATASET_TEST="dynamicData/H36Mtest"
 #DATASET_TEST="dynamicData/H36Mtest_v2" #no null keypoints
 DATASET_TEST_IMAGES="UNKNOWN"
-MODELPATH="data/output/H36M/model/model_epoch0_batch8000.pt"
+MODELPATH="data/output/H36M/model/model_epoch0_batch12000.pt"
 ONLY15=1
 
 
