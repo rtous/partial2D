@@ -1,0 +1,6 @@
+CRED = '\033[91m'
+CGREEN  = '\33[32m'
+CYELLOW = '\33[33m'
+CBLUE   = '\33[34m'
+CBOLD     = '\33[1m'
+CEND = '\033[0m'

@@ -7,6 +7,7 @@ from pathlib import Path
 from os.path import isfile, join, splitext
 from os import listdir
 
+
 def cv2ReadFile(path):
     if isfile(path):
         filename = Path(path).name

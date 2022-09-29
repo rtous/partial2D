@@ -31,15 +31,11 @@ import shutil
 import sys
 from torch.utils.tensorboard import SummaryWriter
 import importlib
-import Configuration
+#import Configuration
 #import models
-
-CRED = '\033[91m'
-CGREEN  = '\33[32m'
-CYELLOW = '\33[33m'
-CBLUE   = '\33[34m'
-CBOLD     = '\33[1m'
-CEND = '\033[0m'
+import colors
+import BodyModelOPENPOSE15
+import BodyModelOPENPOSE25
 
 mean=  466.20676
 std=  114.26538
@@ -59,8 +55,9 @@ try:
     	ONLY15=False
     else:
     	ONLY15=True
-    conf = Configuration.Configuration()
-    conf.set_BODY_MODEL(argv[11])
+    #conf = Configuration.Configuration()
+    #conf.set_BODY_MODEL(argv[11])
+    BODY_MODEL=eval(argv[11])
     NORMALIZATION=argv[12]
     if argv[13]=="0":
         KEYPOINT_RESTORATION=False
@@ -76,26 +73,26 @@ except ValueError:
 
 ####### INITIAL WARNINGS ########
 if not DATASET_TEST=="dynamicData/H36Mtest":
-    print(CRED + "DATASET_TEST=" + str(DATASET_TEST) + CEND)
+    print(colors.CRED + "DATASET_TEST=" + str(DATASET_TEST) + colors.CEND)
 else:
-    print(CGREEN + "DATASET_TEST=" + str(DATASET_TEST) + CEND)
+    print(colors.CGREEN + "DATASET_TEST=" + str(DATASET_TEST) + colors.CEND)
 
 if not NORMALIZATION=="center_scale":
-    print(CRED + "NORMALIZATION=" + str(NORMALIZATION) + CEND)
+    print(colors.CRED + "NORMALIZATION=" + str(NORMALIZATION) + colors.CEND)
 else:
-    print(CGREEN + "NORMALIZATION=" + str(NORMALIZATION) + CEND)
+    print(colors.CGREEN + "NORMALIZATION=" + str(NORMALIZATION) + colors.CEND)
 if not KEYPOINT_RESTORATION:
-    print(CRED + "KEYPOINT_RESTORATION=" + str(KEYPOINT_RESTORATION) + CEND)
+    print(colors.CRED + "KEYPOINT_RESTORATION=" + str(KEYPOINT_RESTORATION) + colors.CEND)
 else:
-    print(CGREEN + "KEYPOINT_RESTORATION=" + str(KEYPOINT_RESTORATION) + CEND)
+    print(colors.CGREEN + "KEYPOINT_RESTORATION=" + str(KEYPOINT_RESTORATION) + colors.CEND)
 if MODEL=="models_mirror":
-    print(CRED + "MODEL=" + str(MODEL) + CEND)
+    print(colors.CRED + "MODEL=" + str(MODEL) + colors.CEND)
 else:
-    print(CGREEN + "MODEL=" + str(MODEL) + CEND)
+    print(colors.CGREEN + "MODEL=" + str(MODEL) + colors.CEND)
 if NZ!=100:
-    print(CRED + "NZ=" + str(NZ) + CEND)
+    print(colors.CRED + "NZ=" + str(NZ) + colors.CEND)
 else:
-    print(CGREEN + "NZ=" + str(NZ) + CEND)
+    print(colors.CGREEN + "NZ=" + str(NZ) + colors.CEND)
 
 ###########
 models = importlib.import_module(MODEL)
@@ -111,7 +108,7 @@ batch_size = 64
 # Spatial size of training images. All images will be resized to this
 #   size using a transformer.
 #numJoints = 15#25
-numJoints = len(conf.bodyModel.POSE_BODY_25_BODY_PARTS)  #15
+numJoints = len(BODY_MODEL.POSE_BODY_25_BODY_PARTS)  #15
 image_size = numJoints*2
 
 # Number of channels in the training images. For color images this is 3
@@ -168,7 +165,7 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
                 only15joints=True
             else:
                 only15joints=False
-            keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(keypointsPath, filename), conf.bodyModel, only15joints, NORMALIZATION, mean, std)
+            keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(keypointsPath, filename), BODY_MODEL, only15joints, NORMALIZATION, mean, std)
             #print("keypoints_cropped[0]=", keypoints_cropped[0])
 
             #We have worked with jut 15 keypoints, need to restore the other 10
@@ -318,7 +315,7 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
             
         if saveImages:
             imgWithKyepoints = pytorchUtils.cv2ReadFile(originalImagePath)
-            poseUtils.draw_pose(imgWithKyepoints, fakeKeypointsCroppedOneImageIntRescaled, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+            poseUtils.draw_pose(imgWithKyepoints, fakeKeypointsCroppedOneImageIntRescaled, -1, BODY_MODEL.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
             try:
                 cv2.imwrite(outputPath+outputSubpath+"/images/"+json_file_without_extension+".jpg", imgWithKyepoints)
                 #print("written data/output/Test/"+json_file_without_extension+".jpg")
@@ -329,14 +326,14 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
             WIDTH = 500
             HEIGHT = 500
             blank_image = np.zeros((WIDTH,HEIGHT,3), np.uint8)
-            #poseUtils.draw_pose(blank_image, fakeKeypointsCroppedOneImageIntRescaled, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
-            poseUtils.draw_pose_scaled_centered(blank_image, np.array(fakeKeypointsCroppedOneImageIntRescaled), -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 500/WIDTH, WIDTH/2, HEIGHT/2, 8)           
+            #poseUtils.draw_pose(blank_image, fakeKeypointsCroppedOneImageIntRescaled, -1, BODY_MODEL.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+            poseUtils.draw_pose_scaled_centered(blank_image, np.array(fakeKeypointsCroppedOneImageIntRescaled), -1, BODY_MODEL.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 500/WIDTH, WIDTH/2, HEIGHT/2, 8)           
             cv2.imwrite(outputPath+outputSubpath+"/images/"+json_file_without_extension+".jpg", blank_image)
     print('testMany() finished. Output written to '+outputPath+outputSubpath)        
 
 def testImage(netG, outputPath, imagePath, keypointsPath):
     #Test over the test image
-    keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(keypointsPath, conf.bodyModel)
+    keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(keypointsPath, BODY_MODEL)
     print("scaleFactor=",scaleFactor)
     keypoints_cropped, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
     keypoints_cropped = [item for sublist in keypoints_cropped for item in sublist]
