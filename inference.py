@@ -95,56 +95,24 @@ else:
     print(colors.CGREEN + "NZ=" + str(NZ) + colors.CEND)
 
 ###########
+
 models = importlib.import_module(MODEL)
 
 pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
-#pathlib.Path(OUTPUTPATH+"/Test/").mkdir(parents=True, exist_ok=True) 
-#pathlib.Path(OUTPUTPATH+"/Test/keypoints").mkdir(parents=True, exist_ok=True) 
-#pathlib.Path(OUTPUTPATH+"/Test/images").mkdir(parents=True, exist_ok=True) 
 
-
-batch_size = 64
-
-# Spatial size of training images. All images will be resized to this
-#   size using a transformer.
-#numJoints = 15#25
 numJoints = len(BODY_MODEL.POSE_BODY_25_BODY_PARTS)  #15
-image_size = numJoints*2
-
-# Number of channels in the training images. For color images this is 3
-nc = 1
 
 # Size of z latent vector (i.e. size of generator input)
 nz = NZ
 
-# Size of feature maps in generator
-#ngf = 64
-ngf = 16
-
-# Size of feature maps in discriminator
-#ndf = 64
-ndf = 16
-
-# Number of training epochs
-num_epochs = 100
-
-# Learning rate for optimizers
-lr = 0.0002
-
-# Beta1 hyperparam for Adam optimizers
-beta1 = 0.5
-
 # Number of GPUs available. Use 0 for CPU mode.
 ngpu = 0
 
-print("numJoints=", str(numJoints))
-netG = models.Generator(ngpu, numJoints, nz)
-netG.load_state_dict(torch.load(MODELPATH))
-#model.eval()
+theModels = models.Models(ngpu, numJoints, nz, KEYPOINT_RESTORATION, device = torch.device("cpu"))
 
+models.load(theModels, MODELPATH)
 
-
-def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageExtension, saveImages=True):
+def testMany(theModels, keypointsPath, imagesPath, outputPath, outputSubpath, imageExtension, saveImages=True):
     print('testMany('+keypointsPath+')')
     pathlib.Path(outputPath+outputSubpath+"/images").mkdir(parents=True, exist_ok=True)
     pathlib.Path(outputPath+outputSubpath+"/keypoints").mkdir(parents=True, exist_ok=True)
@@ -199,86 +167,20 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
             #print('Skipping '+filename)
 
     sys.stdout.write("\n")
-	#batch_of_one_keypoints_cropped = torch.tensor(batch_of_one_keypoints_cropped)
-	#batch_of_one_confidence_values = torch.tensor(batch_of_one_confidence_values)
+	
     batch_of_one_keypoints_cropped = torch.stack(batch_of_one_keypoints_cropped)
     batch_of_one_confidence_values = torch.stack(batch_of_one_confidence_values)
-    #fixed_noise_N = torch.randn(n, nz, device=device)
     fixed_noise_N = torch.randn(n, nz)
 
-
-    #batch_of_one_keypoints_cropped = batch_of_one_keypoints_cropped.to(device)
-    #fixed_noise_N = fixed_noise_N.to(device)
-
-    print("batch_of_one_keypoints_cropped.shape:")
-    print(batch_of_one_keypoints_cropped.shape)
-
-    netG.eval()
-    #print("input[0]=", batch_of_one_keypoints_cropped[0])
-    fake = netG(batch_of_one_keypoints_cropped, fixed_noise_N).detach().cpu()
-    #print("fake[0]=", fake[0])
-
-    #fake = batch_of_one_keypoints_cropped # DEBUG DOING NOTHING
-
-    #print("cropped before restoring:", batch_of_one_keypoints_cropped[0])
-    #print("fake before restoring:", fake[0])
-    #print("fake before restoring have len %d" % len(fake[0]))
-    #fakeDeflatten = poseUtils.deflatten(fake[0], False)
-    #print("fake before restoring:", poseUtils.deflatten(fake[0], False))
-    #print("batch_of_one_confidence_values:", batch_of_one_confidence_values[0])
+    #Perform inference over ALL the poses
+    fakeReshapedAsKeypoints = models.inference(theModels, n, fixed_noise_N, numJoints, batch_of_one_keypoints_cropped, batch_of_one_confidence_values)
     
-
-
-
-    if KEYPOINT_RESTORATION:
-        fake = models.restoreOriginalKeypoints(fake, batch_of_one_keypoints_cropped, batch_of_one_confidence_values)
-    
-    
-
-    #fakeRestoredDeflatten = poseUtils.deflatten(fake[0], False)
-    
-    #print("after restoring:", fakeRestoredDeflatten)
-    
-
-    ######## DEBUG RESTORATION PROCESS 
-    '''
-    for idx in range(len(fake)):
-        print(batch_filenames[idx])
-        fakeDeflatten = poseUtils.deflatten(fake[idx], False)
-        fakeRestoredDeflatten = poseUtils.deflatten(fakeRestored[idx], False)
-        batch_of_one_keypoints_croppedDeflatten = poseUtils.deflatten(batch_of_one_keypoints_cropped[idx], False)
-        for i, k in enumerate(fakeDeflatten):
-            #print("[%d,%d]" % (fakeDeflatten[i][0], fakeDeflatten[i][1]))
-            if batch_of_one_confidence_values[idx][i] > 0.1 and ((fakeDeflatten[i][0] == fakeRestoredDeflatten[i][0]) and (fakeDeflatten[i][0] == fakeRestoredDeflatten[i][0])):
-                print("REST(%d)[%f,%f,\033[94m%f\033[0m]->[%f,%f]->\033[91m[%f,%f]\033[0m" % (i, batch_of_one_keypoints_croppedDeflatten[i][0], batch_of_one_keypoints_croppedDeflatten[i][1], batch_of_one_confidence_values[idx][i], fakeDeflatten[i][0], fakeDeflatten[i][1], fakeRestoredDeflatten[i][0], fakeRestoredDeflatten[i][1]))
-            elif batch_of_one_confidence_values[idx][i] > 0.1 :
-                print("REST(%d)[%f,%f,\033[94m%f\033[0m]->[%f,%f]->\033[92m[%f,%f]\033[0m" % (i, batch_of_one_keypoints_croppedDeflatten[i][0], batch_of_one_keypoints_croppedDeflatten[i][1], batch_of_one_confidence_values[idx][i], fakeDeflatten[i][0], fakeDeflatten[i][1], fakeRestoredDeflatten[i][0], fakeRestoredDeflatten[i][1]))
-            elif batch_of_one_confidence_values[idx][i] <= 0.1 and ((fakeDeflatten[i][0] != fakeRestoredDeflatten[i][0]) or (fakeDeflatten[i][0] != fakeRestoredDeflatten[i][0])):
-                print("GUES(%d)[%f,%f,\033[93m%f\033[0m]->[%f,%f]->\033[91m[%f,%f]\033[0m" % (i, batch_of_one_keypoints_croppedDeflatten[i][0], batch_of_one_keypoints_croppedDeflatten[i][1], batch_of_one_confidence_values[idx][i], fakeDeflatten[i][0], fakeDeflatten[i][1], fakeRestoredDeflatten[i][0], fakeRestoredDeflatten[i][1]))
-            elif batch_of_one_confidence_values[idx][i] <= 0.1:
-                print("GUES(%d)[%f,%f,\033[93m%f\033[0m]->[%f,%f]->\033[92m[%f,%f]\033[0m" % (i, batch_of_one_keypoints_croppedDeflatten[i][0], batch_of_one_keypoints_croppedDeflatten[i][1], batch_of_one_confidence_values[idx][i], fakeDeflatten[i][0], fakeDeflatten[i][1], fakeRestoredDeflatten[i][0], fakeRestoredDeflatten[i][1]))
-            else:
-                print("????(%d)[%f,%f,%f]->[%f,%f]\033[0m" % (i, batch_of_one_keypoints_croppedDeflatten[i][0], batch_of_one_keypoints_croppedDeflatten[i][1], batch_of_one_confidence_values[idx][i], fakeDeflatten[i][0], fakeDeflatten[i][1], fakeRestoredDeflatten[i][0], fakeRestoredDeflatten[i][1]))
-    '''
-    ########
-    
-    netG.train()
-    fakeReshapedAsKeypoints = np.reshape(fake, (n, numJoints, 2))
-    fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
-
-
+    #Process inference results
     for idx in range(len(fakeReshapedAsKeypoints)):
         #Write keypoints to a file
         fakeKeypointsOneImage = fakeReshapedAsKeypoints[idx]
         
-        #???? this was here before
-        #fakeKeypointsOneImage, dummy, dummy, dummy = openPoseUtils.normalize(fakeKeypointsOneImage)
-        #print("before denormalize: ", fakeKeypointsOneImage[14])
         fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalizeV2(fakeKeypointsOneImage, batch_scaleFactor[idx], batch_x_displacement[idx], batch_y_displacement[idx], NORMALIZATION, keepConfidence=False, mean=mean, std=std, norm=None)
-        #print("after denormalize: ", fakeKeypointsCroppedOneImageIntRescaled[14])
-        #if idx == 0:
-        #    print("writing: ", batch_filenames[idx])
-        #    print("written: ", fakeKeypointsCroppedOneImageIntRescaled)
         
         #FIX
 		#We have worked with jut 15 keypoints, need to restore the other 10
@@ -331,6 +233,7 @@ def testMany(netG, keypointsPath, imagesPath, outputPath, outputSubpath, imageEx
             cv2.imwrite(outputPath+outputSubpath+"/images/"+json_file_without_extension+".jpg", blank_image)
     print('testMany() finished. Output written to '+outputPath+outputSubpath)        
 
+#old and should be fixed but not used in the workflow
 def testImage(netG, outputPath, imagePath, keypointsPath):
     #Test over the test image
     keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(keypointsPath, BODY_MODEL)
@@ -370,10 +273,10 @@ def testImage(netG, outputPath, imagePath, keypointsPath):
 
 	
 #CHARADE DATASET
-testMany(netG, DATASET_CHARADE, DATASET_CHARADE_IMAGES, OUTPUTPATH, "/CHARADE", ".png", True)
+testMany(theModels, DATASET_CHARADE, DATASET_CHARADE_IMAGES, OUTPUTPATH, "/CHARADE", ".png", True)
 
 #TEST DATASET
-testMany(netG, DATASET_TEST, DATASET_TEST_IMAGES, OUTPUTPATH, "/TEST", ".jpg", False)
+testMany(theModels, DATASET_TEST, DATASET_TEST_IMAGES, OUTPUTPATH, "/TEST", ".jpg", False)
 
 #testMany(netG, DATASET_TEST, DATASET_TEST_IMAGES, OUTPUTPATH, "/TEST", ".jpg")
 

@@ -21,13 +21,13 @@ DAE over H36M (default)
 ---------------------------------------
 AE
 ---------------------------------------
-./trainH36M.sh confH36M_AE.sh
-./inferenceH36M.sh confH36M_AE.sh (completion)
-./FPD_H36M.sh confH36M_AE.s
+./trainH36M.sh confH36M_AE.sh 0
+./inferenceH36M.sh confH36M_AE.sh 0 (generation)
+./FPD_H36M.sh confH36M_AE.sh 0
 ---------------------------------------
-FPD: 14000
-./inferenceH36M_AE.sh confH36M_AE.sh (generation)
-./FPD_H36M.sh confH36M_AE.s
-FPD: 9 milions :-()
+- FPD: 927,954 :-()
+- To learn the identity you need to change inference so that it 
+does encode and decode (FPD: 14000 I guess)
 ---------------------------------------
 ---------------------------------------
+

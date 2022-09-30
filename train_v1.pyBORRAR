@@ -182,25 +182,87 @@ std=  114.26538
 print("mean= ", mean)
 print("std= ", std)
 
+
 #dataloader = prepare_dataset(croppedVariations = True, normalizationStrategy = "center_scale")
 dataloader, dataloaderValidation = prepare_dataset(croppedVariations = CROPPED_VARIATIONS, normalizationStrategy = NORMALIZATION, mean=mean, std=std, max_len_buffer_originals = LEN_BUFFER_ORIGINALS, DISCARDINCOMPLETEPOSES=DISCARDINCOMPLETEPOSES)
+
+
+#pytorchUtils.explainDataloader(dataloader)
+##########################
+
 
 # Decide which device we want to run on
 device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
 print("Device detected: ", device)
 
-theModels = models.Models(ngpu, numJoints, nz, KEYPOINT_RESTORATION, device)
-theTrainSetup = models.TrainSetup(theModels, ngpu, numJoints, nz, lr, beta1, PIXELLOSS_WEIGHT, device)
+# Create the generator
+netG_ = models.Generator(ngpu, numJoints, nz)
+netG = netG_.to(device)
 
+#Register my debug hook
+if arguments.debug:
+	pytorchUtils.registerDebugHook(netG_)
+
+# Handle multi-gpu if desired
+if (device.type == 'cuda') and (ngpu > 1):
+    netG = nn.DataParallel(netG, list(range(ngpu)))
+
+# Apply the weights_init function to randomly initialize all weights
+#  to mean=0, stdev=0.2.
+netG.apply(train_utils.weights_init)
+
+# Print the model
+print(netG)
+#pytorchUtils.explainModel(netG, 1, 1, 28, 28)
+#pytorchUtils.computeModel(netG, 1, [{"layer":0, "output":7},{"layer":6, "output":14},{"layer":9, "output":28}])
+
+# Create the Discriminator
+netD_ = models.Discriminator(ngpu, numJoints)
+netD = netD_.to(device)
+
+#Register my debug hook
+if arguments.debug:
+	pytorchUtils.registerDebugHook(netD_)
+
+# Handle multi-gpu if desired
+if (device.type == 'cuda') and (ngpu > 1):
+    netD = nn.DataParallel(netD, list(range(ngpu)))
+
+# Apply the weights_init function to randomly initialize all weights
+#  to mean=0, stdev=0.2.
+netD.apply(train_utils.weights_init)
+
+# Print the model
+print(netD)
+pytorchUtils.explainModel(netD, 28, 28, 1, 1)
+
+# Initialize BCELoss function
+#criterion = nn.BCELoss() according to https://github.com/soumith/ganhacks/issues/363
+#criterion = torch.nn.BCEWithLogitsLoss
+#criterion = nn.BCELoss() 
+lossFunctionD = nn.BCELoss() 
+lossFunctionG_adversarial = nn.BCELoss() 
+lossFunctionG_regression = torch.nn.MSELoss()#torch.nn.MSELoss() #torch.nn.L1Loss()
 
 # Create batch of latent vectors that we will use to visualize
 #  the progression of the generator
 fixed_noise = torch.randn(batch_size, nz, device=device)
 
+# Establish convention for real and fake labels during training
+real_label = 1.
+fake_label = 0.
+
+# Setup Adam optimizers for both G and D
+optimizerD = optim.Adam(netD.parameters(), lr=lr, betas=(beta1, 0.999))
+optimizerG = optim.Adam(netG.parameters(), lr=lr, betas=(beta1, 0.999))
+
+
+
+
 # Lists to keep track of progress
 img_list = []
-#G_losses = []
-#D_losses = []
+G_losses = []
+D_losses = []
 iters = 0
 
 #Setup tensorboard
@@ -248,27 +310,134 @@ for epoch in range(num_epochs):
         batch_of_keypoints_original = batch_of_keypoints_original.to(device)
         b_size = batch_of_keypoints_cropped.size(0)
 
-        #train step
-        models.trainStep(theModels, theTrainSetup, b_size, device, tb, step_absolute, num_epochs, epoch, i, batch_of_keypoints_cropped, batch_of_keypoints_original, confidence_values, scaleFactor, x_displacement, y_displacement, batch_of_json_file)
+        ############################
+        # (1) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
+        ###########################
+
+        ## Train with all-real batch
+        netD.zero_grad()
+     
+     	#Batch of real labels
+        label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
+        
+        # Forward pass real batch through D
+        output = netD(batch_of_keypoints_cropped, batch_of_keypoints_original).view(-1)
+        
+        # Calculate loss on all-real batch
+        errD_real = lossFunctionD(output, label)
+
+        # Calculate gradients for D in backward pass
+        errD_real.backward()
+        D_x = output.mean().item()
+
+        ## Train with all-fake batch
+        # Generate batch of latent vectors
+        noise = torch.randn(b_size, nz, device=device)
+        
+        # Generate fake image batch with G
+        batch_of_fake_original = netG(batch_of_keypoints_cropped, noise)
+
+        #Restore the original keypoints with confidence > CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS
+        if KEYPOINT_RESTORATION:
+            batch_of_fake_original = models.restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, confidence_values)
+
+        #As they are fake images let's prepare a batch of labels FAKE
+        label.fill_(fake_label)
+       
+        # Classify all fake batch with D
+        output = netD(batch_of_keypoints_cropped, batch_of_fake_original.detach()).view(-1)
+        
+        # Calculate D's loss on the all-fake batch
+        errD_fake = lossFunctionD(output, label)
+        
+        # Calculate the gradients for this batch, accumulated (summed) with previous gradients
+        errD_fake.backward()
+        
+        D_G_z1 = output.mean().item()
+        
+        # Compute error of D as sum over the fake and the real batches
+        errD = errD_real + errD_fake
+        
+        # Update D
+        optimizerD.step()
+
+        ############################
+        # (2) Update G network: maximize log(D(G(z)))
+        ###########################
+        netG.zero_grad()
+        
+        label.fill_(real_label)  # fake labels are real for generator cost
+        
+        # Since we just updated D, perform another forward pass of all-fake batch through D
+        output = netD(batch_of_keypoints_cropped, batch_of_fake_original).view(-1)
+        
+        # Calculate G's loss based on this output
+        #errG = criterion(output, label)
+
+        ##############
+
+        g_adv = lossFunctionG_adversarial(output, label) #adversarial loss
+        g_pixel = lossFunctionG_regression(batch_of_fake_original, batch_of_keypoints_original) #pixel loss
+
+        errG = (1-PIXELLOSS_WEIGHT) * g_adv + PIXELLOSS_WEIGHT * g_pixel
+
+        
+        ###############
+
+        # Calculate gradients for G
+        errG.backward()
+        
+        D_G_z2 = output.mean().item()
+        
+        # Update G
+        optimizerG.step()
+
+        tb.add_scalar("LossG", errG.item(), step_absolute)
+        tb.add_scalar("g_adv", g_adv.item(), step_absolute)
+        tb.add_scalar("g_pixel", g_pixel.item(), step_absolute)
+        tb.add_scalar("LossD", errD.item(), step_absolute)
+        tb.add_scalar("errD_real", errD_real.item(), step_absolute)
+        tb.add_scalar("errD_fake", errD_fake.item(), step_absolute)
+
+        # Output training stats each 50 batches
+        if i % 50 == 0:
+            print("**************************************************************")
+            print('[%d/%d][%d/?]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f'
+                  % (epoch, num_epochs, i, #len(dataloader),
+                     errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
+            print('errD_real: %.4f, errD_fake: %.4f\t'
+                  % (errD_real.item(), errD_fake.item()))
+
+            print('loss g_adv: %.4f, loss g_pixel: %.4f\t'
+                  % (g_adv.item(), g_pixel.item()))
 
         # Save model and display the first 64 results each 1000 batches
         if i % 1000 == 0: 
-            #save model
             print("1000 steps, saving model...")
-            models.save(theModels, OUTPUTPATH, epoch, i)
+            torch.save(netG.state_dict(), OUTPUTPATH+"/model/model_epoch"+str(epoch)+"_batch"+str(i)+".pt")
 
-            #run_info_json["results"].append({'epoch': epoch, 'batch': i, 'lossG':errG.item()})
-            #train_utils.writeRunInfoFile(run_info_json, run_info_file_path, OUTPUTPATH)
+            run_info_json["results"].append({'epoch': epoch, 'batch': i, 'lossG':errG.item()})
+            train_utils.writeRunInfoFile(run_info_json, run_info_file_path, OUTPUTPATH)
 
-            #display the batch
-            originalReshapedAsKeypoints = np.reshape(batch_of_keypoints_original.cpu(), (batch_size, numJoints, 2))
-            croppedReshapedAsKeypoints = np.reshape(batch_of_keypoints_cropped.cpu(), (batch_size, numJoints, 2))
-            croppedReshapedAsKeypoints = croppedReshapedAsKeypoints.numpy()
+            with torch.no_grad():
+                print("drawing batch...")
+                fake = netG(batch_of_keypoints_cropped, fixed_noise).detach().cpu()
+                #We restore the original keypoints (before denormalizing)
+                if KEYPOINT_RESTORATION:
+                    fake = models.restoreOriginalKeypoints(fake, batch_of_keypoints_cropped, confidence_values)
+                print("Shape of fake: ", fake.shape)
+                fakeReshapedAsKeypoints = np.reshape(fake, (batch_size, numJoints, 2))
+                fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
+                originalReshapedAsKeypoints = np.reshape(batch_of_keypoints_original.cpu(), (batch_size, numJoints, 2))
+                croppedReshapedAsKeypoints = np.reshape(batch_of_keypoints_cropped.cpu(), (batch_size, numJoints, 2))
+                croppedReshapedAsKeypoints = croppedReshapedAsKeypoints.numpy()
 
-            fakeReshapedAsKeypoints = models.inference(theModels, b_size, fixed_noise, numJoints, batch_of_keypoints_cropped, confidence_values)
+                train_utils.drawGrid(fakeReshapedAsKeypoints, originalReshapedAsKeypoints, croppedReshapedAsKeypoints, OUTPUTPATH, batch_size, BODY_MODEL, scaleFactor, x_displacement, y_displacement, batch_of_json_file, NORMALIZATION, mean, std)
 
-            train_utils.drawGrid(fakeReshapedAsKeypoints, originalReshapedAsKeypoints, croppedReshapedAsKeypoints, OUTPUTPATH, batch_size, BODY_MODEL, scaleFactor, x_displacement, y_displacement, batch_of_json_file, NORMALIZATION, mean, std)
-    
+        # Save Losses for plotting later
+        G_losses.append(errG.item())
+        D_losses.append(errD.item())
+
         iters += 1
         
         i += 1
