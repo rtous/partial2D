@@ -11,6 +11,7 @@ import traceback
 import poseUtilsBaseline
 import Configuration
 import sys
+import normalization_heatmaps
 
 '''
 OPENPOSE INFO
@@ -730,6 +731,8 @@ def normalizeV2(keypoints, bodyModel, normalizationMethod, keepConfidence=False,
 
         keypoints_normalized, scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, referenceBoneSize, WIDTH, HEIGHT, referenceBoneIndex, keepConfidence)
 
+        #keypoints_normalized = poseUtils.keypointsListFlatten(keypoints_normalized)
+
         return keypoints_normalized, scaleFactor, x_displacement, y_displacement
     
     elif normalizationMethod == "basic":
@@ -744,6 +747,12 @@ def normalizeV2(keypoints, bodyModel, normalizationMethod, keepConfidence=False,
                 new_keypoint = ((k[0]-mean)/std, (k[1]-mean)/std)
             normalized_keypoints[i] = new_keypoint
         return normalized_keypoints, 0, 0, 0
+
+    elif normalizationMethod == "heatmaps":
+        #TODO: do this just once and parametrize
+        normalizer = normalization_heatmaps.NormalizationHeatmaps(outputRes=64, sigma=2)
+        normalized_keypoints, scaleFactor, x_displacement, y_displacement = normalizer.normalize(keypoints, keepConfidence=False)
+        return normalized_keypoints, scaleFactor, x_displacement, y_displacement
 
     elif normalizationMethod == "none":
 
@@ -766,19 +775,20 @@ def denormalizeV2(keypoints, scaleFactor, x_displacement, y_displacement, normal
     #discards confidence
     
     if (normalizationMethod == "center_scale"):
-        
-        newKeypoints = poseUtils.denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, keepConfidence)
-        
+        newKeypoints = poseUtils.denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, keepConfidence) 
         return newKeypoints;
     
-    elif normalizationMethod == "basic":
-        
+    elif normalizationMethod == "basic": 
         keypointsNP = poseUtils.keypoints2Numpy(keypoints)
-        
         keypoints_denormalized = (keypointsNP*std)+mean
-
         return keypoints_denormalized.tolist()
 
+    elif normalizationMethod == "heatmaps":
+        #TODO: do this just once and parametrize
+        normalizer = normalization_heatmaps.NormalizationHeatmaps(outputRes=64, sigma=2)
+        keypoints_denormalized = normalizer.denormalizeBatch(keypointsNP, scaleFactor, x_displacement, y_displacement)
+        return normalized_keypoints, 0, 0, 0
+    
     elif normalizationMethod == "none":
 
         keypoints = keypoints.tolist()

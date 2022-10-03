@@ -55,12 +55,6 @@ def transform(pt, center, scale, rot, res, invert = False):
 	new_point = new_point.astype(np.int32)
 	return new_point
 
-
-
-
-
-
-
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 

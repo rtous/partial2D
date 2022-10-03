@@ -30,7 +30,7 @@ import traceback
 import shutil
 import sys
 from torch.utils.tensorboard import SummaryWriter
-import models
+#import models
 import random
 #import h36mIterator_tiny as h36mIterator #DEBUG import h36mIterator
 import h36mIterator
@@ -82,9 +82,17 @@ class JsonDataset(torch.utils.data.IterableDataset):
 
             keypoints_original_norm, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalizeV2(buffered_keypoints_original, BodyModelOPENPOSE15, self.normalizationStrategy, keepConfidence=False, mean=self.mean, std=self.std)
             #NOTE: scaleFactor, x_displacement, y_displacement not used if croppedVariations
-            keypoints_original_norm_noconfidence_flat = [item for sublist in keypoints_original_norm for item in sublist]
-            keypoints_original_norm_noconfidence_flatFloat = [float(k) for k in keypoints_original_norm_noconfidence_flat]
+            
+            #Flatten
+            #keypoints_original_norm_noconfidence_flat = [item for sublist in keypoints_original_norm for item in sublist]
+            #keypoints_original_norm_noconfidence_flatFloat = [float(k) for k in keypoints_original_norm_noconfidence_flat]
+            
+            keypoints_original_norm_noconfidence_flatFloat = poseUtils.keypointsListFlatten(keypoints_original_norm)
+
             keypoints_original_flat = torch.tensor(keypoints_original_norm_noconfidence_flatFloat)
+            
+
+
             #keypoints_original_flat = torch.tensor(keypoints_original_norm_noconfidence_flat)
             
             #keypoints_original_norm, dummy, dummy, dummy = openPoseUtils.normalize(buffered_keypoints_original, BodyModelOPENPOSE15, keepConfidence=False)

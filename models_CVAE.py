@@ -8,6 +8,10 @@ import torchvision.datasets as dset
 import torchvision.transforms as transforms
 from torchvision.transforms import ToTensor, Lambda, Compose
 import torchvision.utils as vutils
+import train_utils
+import numpy as np
+from torch.nn import functional as F
+
 
 CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS = 0.1 
 
@@ -211,3 +215,114 @@ def restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped,
     print(batch_of_fake_original)
     '''
     return batch_of_fake_original
+
+def loss_function(recon_x, x, mu, logvar):
+    #BCE = F.binary_cross_entropy(recon_x, x.view(-1, numJoints*2), reduction='sum')
+    #BCE = F.binary_cross_entropy(recon_x, x, reduction='sum')
+    BCE = F.mse_loss(recon_x, x, size_average=None, reduce=None, reduction='sum')#mean
+
+
+    # see Appendix B from VAE paper:
+    # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
+    # https://arxiv.org/abs/1312.6114
+    # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
+    KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+    return BCE + KLD
+
+class Models():
+    #Receives a noise vector (nz dims) + keypoints cropped (50 dims)
+    def __init__(self, ngpu, numJoints, nz, KEYPOINT_RESTORATION, device = torch.device("cpu")):
+        super(Models, self).__init__()
+        #generator
+        #netG_ = Generator(ngpu, numJoints, nz)
+
+        netG_ = CVAE(numJoints*2, nz, numJoints*2)
+
+
+        netG = netG_.to(device)
+        if (device.type == 'cuda') and (ngpu > 1):
+            netG = nn.DataParallel(netG, list(range(ngpu)))
+        netG.apply(train_utils.weights_init)
+        print(netG)
+
+        #pytorchUtils.explainModel(netD, 28, 28, 1, 1)
+        #if arguments.debug:
+        #    pytorchUtils.registerDebugHook(netD_)
+
+        self.netG = netG
+        
+        self.KEYPOINT_RESTORATION = KEYPOINT_RESTORATION
+
+
+
+class TrainSetup():
+    #Receives a noise vector (nz dims) + keypoints cropped (50 dims)
+    def __init__(self, models, ngpu, numJoints, nz, lr, beta1, PIXELLOSS_WEIGHT, device = "cpu"):
+        super(TrainSetup, self).__init__()
+
+        #loss function
+        self.lossFunctionG_adversarial = nn.BCELoss() 
+        self.lossFunctionG_regression = torch.nn.MSELoss()#torch.nn.MSELoss() #torch.nn.L1Loss()
+
+        # Establish convention for real and fake labels during training
+        self.real_label = 1.
+        self.fake_label = 0.
+
+        # Setup Adam optimizers for both G and D
+        self.optimizerG = optim.Adam(models.netG.parameters(), lr=1e-3)
+
+        self.nz = nz
+
+
+def trainStep(models, trainSetup, b_size, device, tb, step_absolute, num_epochs, epoch, i, batch_of_keypoints_cropped, batch_of_keypoints_original, confidence_values, scaleFactor, x_displacement, y_displacement, batch_of_json_file):
+    #Batch of real labels
+    label = torch.full((b_size,), trainSetup.real_label, dtype=torch.float, device=device)
+
+    ## Train with all-fake batch
+    # Generate batch of latent vectors
+    noise = torch.randn(b_size, trainSetup.nz, device=device)
+    
+    # Generate fake image batch with G
+    batch_of_fake_original, mu, logvar = models.netG(batch_of_keypoints_original, batch_of_keypoints_cropped)
+
+    #Restore the original keypoints with confidence > CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS
+    if models.KEYPOINT_RESTORATION:
+        batch_of_fake_original = restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, confidence_values)
+
+    models.netG.zero_grad()
+        
+    errG = loss_function(batch_of_fake_original, batch_of_keypoints_original, mu, logvar)
+
+    errG.backward()
+    
+    trainSetup.optimizerG.step()
+
+    tb.add_scalar("LossG", errG.item(), step_absolute)
+
+    # Output training stats each 50 batches
+        
+    if i % 50 == 0:
+        print("**************************************************************")
+        print('[%d/%d][%d/?]\tLoss_G: %.4f'
+              % (epoch, num_epochs, i, errG.item()))
+
+def inference(models, b_size, noise, numJoints, batch_of_keypoints_cropped, confidence_values):
+    with torch.no_grad():
+        print("drawing batch...")
+        
+        fake = models.netG.decode(noise, batch_of_keypoints_cropped).detach().cpu()
+
+        #We restore the original keypoints (before denormalizing)
+        if models.KEYPOINT_RESTORATION:
+            fake = restoreOriginalKeypoints(fake, batch_of_keypoints_cropped, confidence_values)
+        print("Shape of fake: ", fake.shape)
+        fakeReshapedAsKeypoints = np.reshape(fake, (b_size, numJoints, 2))
+        fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
+        
+        return fakeReshapedAsKeypoints
+
+def save(models, OUTPUTPATH, epoch, i):
+    torch.save(models.netG.state_dict(), OUTPUTPATH+"/model/model_epoch"+str(epoch)+"_batch"+str(i)+".pt")
+
+def load(models, MODELPATH):
+    models.netG.load_state_dict(torch.load(MODELPATH))

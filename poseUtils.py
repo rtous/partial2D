@@ -19,7 +19,8 @@ def keypoints2Numpy(keypoints):
 def keypointsListFlatten(keypoints):
 	keypointsNP = np.vstack(keypoints)
 	keypointsNPflat = keypointsNP.flatten()
-	return keypointsNPflat
+	keypointsNPflatFloat = [float(k) for k in keypointsNPflat]
+	return keypointsNPflatFloat
 
 def deflatten(keypointsFlat, haveConfidence):
 	if haveConfidence: 
@@ -349,6 +350,9 @@ def displayImage(image, width, height):
 
 def concat_tile(im_list_2d):
     return cv2.vconcat([cv2.hconcat(im_list_h) for im_list_h in im_list_2d])
+
+
+
 
 '''def copyKeypoints(keypoints):
 	newKeypoints = [] 

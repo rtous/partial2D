@@ -19,7 +19,7 @@ DAE over H36M (default)
 
 ---------------------------------------
 ---------------------------------------
-AE
+AE over H36M
 ---------------------------------------
 ./trainH36M.sh confH36M_AE.sh 0
 ./inferenceH36M.sh confH36M_AE.sh 0 (generation)
@@ -28,6 +28,49 @@ AE
 - FPD: 927,954 :-()
 - To learn the identity you need to change inference so that it 
 does encode and decode (FPD: 14000 I guess)
+---------------------------------------
+---------------------------------------
+
+---------------------------------------
+---------------------------------------
+VAE over H36M
+---------------------------------------
+./trainH36M.sh confH36M_VAE.sh 0
+./inferenceH36M.sh confH36M_VAE.sh 0 (generation)
+./FPD_H36M.sh confH36M_VAE.sh 0
+---------------------------------------
+- FPD: 40000
+- 
+---------------------------------------
+---------------------------------------
+
+---------------------------------------
+---------------------------------------
+CVAE over H36M
+---------------------------------------
+./trainH36M.sh confH36M_CVAE.sh 0
+./inferenceH36M.sh confH36M_CVAE.sh 0 (generation)
+./FPD_H36M.sh confH36M_CVAE.sh 0
+---------------------------------------
+- FPD: 8539 (en 1 epoch)
+- 
+---------------------------------------
+---------------------------------------
+
+---------------------------------------
+---------------------------------------
+DAE over H36M with heatmaps
+---------------------------------------
+./trainH36M.sh confH36M_DAE_heatmaps.sh 0 
+./inferenceH36M.sh confH36M_DAE_heatmaps.sh 0
+./FPD_H36M.sh confH36M_DAE_heatmaps.sh 0
+---------------------------------------
+- Pose completion
+- FPD: 5000-6000
+- Currently with NZ=0
+- Basic noramlization: very bad
+- Noise instead of zeros in cropped bones: no change
+- No restoration: almost the same (?)
 ---------------------------------------
 ---------------------------------------
 
