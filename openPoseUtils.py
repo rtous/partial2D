@@ -533,9 +533,6 @@ def getConfidence(keypoints):
 
 def removeConfidence(keypoints):
     #If confidence below theshold (0.1) the keypoint will be 0,0
-    #print("DEBUG: removeConfidence...")
-    #print("keypoints:")
-    #print(keypoints)
     newKeypoints = []  
     confidence_values = []
     for i, k in enumerate(keypoints):
@@ -546,6 +543,12 @@ def removeConfidence(keypoints):
         newKeypoints.append(new_keypoint)
         confidence_values.append(k[2])
     return newKeypoints, confidence_values
+
+def getConfidence(keypoints):
+    confidence_values = []
+    for i, k in enumerate(keypoints):
+        confidence_values.append(k[2])
+    return confidence_values
 
 def removeBones(keypoints, boneNames, bodyModel):
     #newKeypoints = poseUtils.copyKeypoints(keypoints)
@@ -731,7 +734,7 @@ def normalizeV2(keypoints, bodyModel, normalizationMethod, keepConfidence=False,
 
         keypoints_normalized, scaleFactor, x_displacement, y_displacement = poseUtils.normalize_pose(keypoints, bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, referenceBoneSize, WIDTH, HEIGHT, referenceBoneIndex, keepConfidence)
 
-        #keypoints_normalized = poseUtils.keypointsListFlatten(keypoints_normalized)
+        keypoints_normalized = poseUtils.keypointsListFlatten(keypoints_normalized)
 
         return keypoints_normalized, scaleFactor, x_displacement, y_displacement
     
@@ -746,6 +749,9 @@ def normalizeV2(keypoints, bodyModel, normalizationMethod, keepConfidence=False,
                 #new_keypoint = (int(k[0]/scaleFactor), int(k[1]/scaleFactor)) 
                 new_keypoint = ((k[0]-mean)/std, (k[1]-mean)/std)
             normalized_keypoints[i] = new_keypoint
+
+            normalized_keypoints = poseUtils.keypointsListFlatten(normalized_keypoints)
+
         return normalized_keypoints, 0, 0, 0
 
     elif normalizationMethod == "heatmaps":
@@ -765,6 +771,9 @@ def normalizeV2(keypoints, bodyModel, normalizationMethod, keepConfidence=False,
                 #new_keypoint = (int(k[0]/scaleFactor), int(k[1]/scaleFactor)) 
                 new_keypoint = (k[0], k[1])
             normalized_keypoints[i] = new_keypoint
+
+            normalized_keypoints = poseUtils.keypointsListFlatten(normalized_keypoints)
+
         return normalized_keypoints, 0, 0, 0
 
     else:
@@ -775,6 +784,10 @@ def denormalizeV2(keypoints, scaleFactor, x_displacement, y_displacement, normal
     #discards confidence
     
     if (normalizationMethod == "center_scale"):
+        #deflatten first
+        #np.reshape(batch_of_keypoints_original.cpu(), (batch_size, numJoints, 2))
+        keypoints = poseUtils.deflatten(keypoints, False)
+
         newKeypoints = poseUtils.denormalize_pose(keypoints, scaleFactor, x_displacement, y_displacement, keepConfidence) 
         return newKeypoints;
     
@@ -785,9 +798,10 @@ def denormalizeV2(keypoints, scaleFactor, x_displacement, y_displacement, normal
 
     elif normalizationMethod == "heatmaps":
         #TODO: do this just once and parametrize
-        normalizer = normalization_heatmaps.NormalizationHeatmaps(outputRes=64, sigma=2)
-        keypoints_denormalized = normalizer.denormalizeBatch(keypointsNP, scaleFactor, x_displacement, y_displacement)
-        return normalized_keypoints, 0, 0, 0
+        #normalizer = normalization_heatmaps.NormalizationHeatmaps(outputRes=64, sigma=2)
+        #keypoints_denormalized = normalizer.denormalizeBatch(keypointsNP, scaleFactor, x_displacement, y_displacement)
+        keypoints_denormalized = normalization_heatmaps.denormalize(keypoints.numpy(), scaleFactor, x_displacement, y_displacement)
+        return keypoints_denormalized.tolist()
     
     elif normalizationMethod == "none":
 

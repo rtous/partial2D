@@ -87,9 +87,9 @@ class JsonDataset(torch.utils.data.IterableDataset):
             #keypoints_original_norm_noconfidence_flat = [item for sublist in keypoints_original_norm for item in sublist]
             #keypoints_original_norm_noconfidence_flatFloat = [float(k) for k in keypoints_original_norm_noconfidence_flat]
             
-            keypoints_original_norm_noconfidence_flatFloat = poseUtils.keypointsListFlatten(keypoints_original_norm)
+            #keypoints_original_norm_noconfidence_flatFloat = poseUtils.keypointsListFlatten(keypoints_original_norm)
 
-            keypoints_original_flat = torch.tensor(keypoints_original_norm_noconfidence_flatFloat)
+            keypoints_original_flat = torch.tensor(keypoints_original_norm)
             
 
 
@@ -127,9 +127,9 @@ class JsonDataset(torch.utils.data.IterableDataset):
                 #print("Normalized: keypoints_croppedNoConf[0]", keypoints_croppedNoConf[k])
                 #print("---------------------------------")
 
-                keypoints_croppedFlat = [item for sublist in keypoints_cropped_norm for item in sublist]
-                keypoints_croppedFlatFloat = [float(k) for k in keypoints_croppedFlat]
-                keypoints_croppedFlatFloatTensor = torch.tensor(keypoints_croppedFlatFloat)
+                #keypoints_croppedFlat = [item for sublist in keypoints_cropped_norm for item in sublist]
+                #keypoints_croppedFlatFloat = [float(k) for k in keypoints_croppedFlat]
+                keypoints_croppedFlatFloatTensor = torch.tensor(keypoints_cropped_norm)
                 
                 #The confidence_values of the cropped skeletons signal which bones to fake and which to keep
                 confidence_values = torch.tensor(confidence_values)

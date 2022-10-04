@@ -279,6 +279,7 @@ def trainStep(models, trainSetup, b_size, device, tb, step_absolute, num_epochs,
               % (g_adv.item(), g_pixel.item()))
 
 def inference(models, b_size, fixed_noise, numJoints, batch_of_keypoints_cropped, confidence_values):
+    #receives normalized and returns a normalized value (needs to be normalized)
     with torch.no_grad():
         print("drawing batch...")
         fake = models.netG(batch_of_keypoints_cropped, fixed_noise).detach().cpu()
@@ -286,8 +287,11 @@ def inference(models, b_size, fixed_noise, numJoints, batch_of_keypoints_cropped
         if models.KEYPOINT_RESTORATION:
             fake = restoreOriginalKeypoints(fake, batch_of_keypoints_cropped, confidence_values)
         print("Shape of fake: ", fake.shape)
-        fakeReshapedAsKeypoints = np.reshape(fake, (b_size, numJoints, 2))
-        fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
+        
+
+        #fakeReshapedAsKeypoints = np.reshape(fake, (b_size, numJoints, 2))
+        #fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
+        fakeReshapedAsKeypoints = fake
         
         return fakeReshapedAsKeypoints
 

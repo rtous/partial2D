@@ -30,11 +30,13 @@ import traceback
 import shutil
 import sys
 from torch.utils.tensorboard import SummaryWriter
-import models
+#import models
 import random
 import h36mIterator
-import normalization
+import normalization_heatmaps as normalization
 import time
+import BodyModelOPENPOSE15
+
 
 
 class JsonDataset(torch.utils.data.IterableDataset):
@@ -75,7 +77,7 @@ class JsonDataset(torch.utils.data.IterableDataset):
                     #keypoints_original_flat = torch.tensor(keypoints_original_norm_noconfidence_flat)
                     keypoints_original_norm = torch.tensor(keypoints_original_norm)
 
-                    variations = openPoseUtils.crop(buffered_keypoints_original)               
+                    variations = openPoseUtils.crop(buffered_keypoints_original, BodyModelOPENPOSE15)               
                     for v_idx, keypoints_cropped in enumerate(variations):    
                         #The normalization is performed over the cropped skeleton
                         keypoints_cropped_norm, scaleFactor, x_displacement, y_displacement = normalizer.normalize(keypoints_cropped, keepConfidence=True)              

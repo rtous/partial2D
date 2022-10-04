@@ -30,12 +30,12 @@ import traceback
 import shutil
 import sys
 from torch.utils.tensorboard import SummaryWriter
-
 import models_heatmaps
 import dataset
 import datasetH36M_heatmaps
-import normalization
+import normalization_heatmaps as normalization
 import time
+import BodyModelOPENPOSE15
 
 CRED = '\033[91m'
 CEND = '\033[0m'
@@ -518,9 +518,15 @@ for epoch in range(num_epochs):
                 #originalReshapedAsKeypoints = np.reshape(batch_of_keypoints_original.cpu(), (batch_size, 25, 2))
                 #croppedReshapedAsKeypoints = np.reshape(batch_of_keypoints_cropped.cpu(), (batch_size, 25, 2))
                 #croppedReshapedAsKeypoints = croppedReshapedAsKeypoints.numpy()
-                originalReshapedAsKeypoints = normalization.denormalizeBatch(batch_of_keypoints_original.cpu().numpy(), scaleFactor, x_displacement, y_displacement)
-                croppedReshapedAsKeypoints = normalization.denormalizeBatch(batch_of_keypoints_cropped.cpu().numpy(), scaleFactor, x_displacement, y_displacement)
-                fakeReshapedAsKeypoints = normalization.denormalizeBatch(fake.cpu().numpy(), scaleFactor, x_displacement, y_displacement)
+                
+
+                #originalReshapedAsKeypoints = normalization.denormalizeBatch(batch_of_keypoints_original.cpu().numpy(), scaleFactor, x_displacement, y_displacement)
+                #croppedReshapedAsKeypoints = normalization.denormalizeBatch(batch_of_keypoints_cropped.cpu().numpy(), scaleFactor, x_displacement, y_displacement)
+                #fakeReshapedAsKeypoints = normalization.denormalizeBatch(fake.cpu().numpy(), scaleFactor, x_displacement, y_displacement)
+                originalReshapedAsKeypoints = batch_of_keypoints_original
+                croppedReshapedAsKeypoints = batch_of_keypoints_cropped
+                fakeReshapedAsKeypoints = fake
+
 
             NUM_ROWS = 8
             NUM_COLS = 8
@@ -556,11 +562,26 @@ for epoch in range(num_epochs):
                 
                 #fakeKeypointsCroppedOneImageInt = poseUtils.keypointsToInteger(fakeKeypointsCroppedOneImage)
                 #fakeKeypointsOneImageInt = poseUtils.keypointsToInteger(fakeKeypointsOneImage)
-                originalReshapedAsKeypointsOneImageInt = originalReshapedAsKeypointsOneImage
-                fakeKeypointsCroppedOneImageInt = fakeKeypointsCroppedOneImage
-                fakeKeypointsOneImageInt = fakeKeypointsOneImage
                 
+
+                #originalReshapedAsKeypointsOneImageInt = originalReshapedAsKeypointsOneImage
+                #fakeKeypointsCroppedOneImageInt = fakeKeypointsCroppedOneImage
+                #fakeKeypointsOneImageInt = fakeKeypointsOneImage
+
+                print("originalReshapedAsKeypointsOneImage.shape: ", originalReshapedAsKeypointsOneImage.shape)
+                print(originalReshapedAsKeypointsOneImage)
+                #originalReshapedAsKeypointsOneImageInt = openPoseUtils.denormalizeV2(originalReshapedAsKeypointsOneImage, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage, "heatmaps", keepConfidence=False, mean=0, std=0)#conf.norm)
+                originalReshapedAsKeypointsOneImageInt = normalization.denormalize(originalReshapedAsKeypointsOneImage.numpy(), scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage)
                 
+
+                print("fakeKeypointsCroppedOneImage.shape: ", fakeKeypointsCroppedOneImage.shape)
+                #fakeKeypointsCroppedOneImageInt = openPoseUtils.denormalizeV2(fakeKeypointsCroppedOneImage, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage, "heatmaps", keepConfidence=False, mean=0, std=0)#conf.norm)
+                fakeKeypointsCroppedOneImageInt = normalization.denormalize(fakeKeypointsCroppedOneImage.numpy(), scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage)
+                
+                #fakeKeypointsOneImageInt = openPoseUtils.denormalizeV2(fakeKeypointsOneImage, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage, "heatmaps", keepConfidence=False, mean=0, std=0)#conf.norm)
+                fakeKeypointsOneImageInt = normalization.denormalize(fakeKeypointsOneImage.numpy(), scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage)
+                
+
                	#Draw result over the original image
                 fakeKeypointsCroppedOneImageIntRescaled = fakeKeypointsOneImageInt
                 #fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalize(fakeKeypointsOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage)
@@ -573,9 +594,11 @@ for epoch in range(num_epochs):
                	
                	#Draw the pairs  
                 try:
-                    poseUtils.draw_pose_scale(blank_imageOriginal, originalReshapedAsKeypointsOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
-                    poseUtils.draw_pose_scale(blank_imageCropped, fakeKeypointsCroppedOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
-                    poseUtils.draw_pose_scale(blank_image, fakeKeypointsOneImageInt, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+                    #def draw_pose_scaled_centered(img, keypoints, threshold, keypoint_index_pairs, colors, haveThreshold, scaleFactor, centerX, centerY, centerKeypointIndex, thickness=1):            
+
+                    poseUtils.draw_pose_scaled_centered(blank_imageOriginal, originalReshapedAsKeypointsOneImageInt, -1, BodyModelOPENPOSE15.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 8, WIDTH/2, HEIGHT/2, 8)
+                    poseUtils.draw_pose_scaled_centered(blank_imageCropped, fakeKeypointsCroppedOneImageInt, -1, BodyModelOPENPOSE15.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 8, WIDTH/2, HEIGHT/2, 8)
+                    poseUtils.draw_pose_scaled_centered(blank_image, fakeKeypointsOneImageInt, -1, BodyModelOPENPOSE15.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 8, WIDTH/2, HEIGHT/2, 8)
                     targetFilePathCropped = OUTPUTPATH+"/debug_input"+str(idx)+".jpg"
                     targetFilePath = OUTPUTPATH+"/debug"+str(idx)+".jpg"
                     #cv2.imwrite(targetFilePath, blank_image)

@@ -307,6 +307,7 @@ def trainStep(models, trainSetup, b_size, device, tb, step_absolute, num_epochs,
               % (epoch, num_epochs, i, errG.item()))
 
 def inference(models, b_size, noise, numJoints, batch_of_keypoints_cropped, confidence_values):
+    #returns normalized and flat values
     with torch.no_grad():
         print("drawing batch...")
         
@@ -316,10 +317,10 @@ def inference(models, b_size, noise, numJoints, batch_of_keypoints_cropped, conf
         if models.KEYPOINT_RESTORATION:
             fake = restoreOriginalKeypoints(fake, batch_of_keypoints_cropped, confidence_values)
         print("Shape of fake: ", fake.shape)
-        fakeReshapedAsKeypoints = np.reshape(fake, (b_size, numJoints, 2))
-        fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
+        #fakeReshapedAsKeypoints = np.reshape(fake, (b_size, numJoints, 2))
+        #fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
         
-        return fakeReshapedAsKeypoints
+        return fake
 
 def save(models, OUTPUTPATH, epoch, i):
     torch.save(models.netG.state_dict(), OUTPUTPATH+"/model/model_epoch"+str(epoch)+"_batch"+str(i)+".pt")

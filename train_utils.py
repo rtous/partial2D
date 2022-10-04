@@ -128,6 +128,9 @@ def drawGrid(fakeReshapedAsKeypoints, originalReshapedAsKeypoints, croppedReshap
         #Denormalize output
         fakeKeypointsOneImageIntDenormalized = openPoseUtils.denormalizeV2(fakeKeypointsOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage, NORMALIZATION, keepConfidence=False, mean=mean, std=std)#conf.norm)
 
+        #test
+        #originalReshapedAsKeypointsOneImageInt = openPoseUtils.denormalizeV2(originalReshapedAsKeypointsOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage, NORMALIZATION, keepConfidence=False, mean=mean, std=std)#conf.norm)
+
 
         #fakeKeypointsCroppedOneImageIntRescaledNP = poseUtils.keypoints2Numpy(fakeKeypointsCroppedOneImageIntRescaled)
         #fakeKeypointsCroppedOneImageIntRescaledNP = poseUtils.scale(fakeKeypointsCroppedOneImageIntRescaledNP, 0.01)
@@ -150,7 +153,8 @@ def drawGrid(fakeReshapedAsKeypoints, originalReshapedAsKeypoints, croppedReshap
             #poseUtils.draw_pose(blank_imageCropped, fakeKeypointsCroppedOneImageInt, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
             #poseUtils.draw_pose(blank_image, fakeKeypointsOneImageInt, -1, conf.bodyModel.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
             #print("fakeKeypointsCroppedOneImageIntDenormalized=",fakeKeypointsCroppedOneImageIntDenormalized)
-            poseUtils.draw_pose_scaled_centered(blank_imageOriginal, originalReshapedAsKeypointsOneImageInt.numpy(), -1, BODY_MODEL.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 1/(WIDTH/4), WIDTH/2, HEIGHT/2, 8)           
+            
+            #poseUtils.draw_pose_scaled_centered(blank_imageOriginal, np.array(originalReshapedAsKeypointsOneImageInt), -1, BODY_MODEL.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 1/(WIDTH/4), WIDTH/2, HEIGHT/2, 8)           
             poseUtils.draw_pose_scaled_centered(blank_imageCropped, np.array(fakeKeypointsCroppedOneImageIntDenormalized), -1, BODY_MODEL.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 8, WIDTH/2, HEIGHT/2, 8)
             poseUtils.draw_pose_scaled_centered(blank_image, np.array(fakeKeypointsOneImageIntDenormalized), -1, BODY_MODEL.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False, 8, WIDTH/2, HEIGHT/2, 8)
             targetFilePathCropped = OUTPUTPATH+"/debug_input"+str(idx)+".jpg"

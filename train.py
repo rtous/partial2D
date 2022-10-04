@@ -120,6 +120,7 @@ run_info_file_path = "/run_info.json"
 workers = 1 #4
 
 #os.environ['OMP_NUM_THREADS'] = "1" 
+#os.environ['OMP_NUM_THREADS'] = "1"
 #print("WARNING: Disabling paralelism to avoid error in macOS")
 #Also run export OMP_NUM_THREADS=1 in the terminal
 
@@ -139,7 +140,7 @@ torch.manual_seed(manualSeed)
 # Batch size during training
 #batch_size = 128
 #batch_size = 64
-batch_size = 128#32#128#128#128#64
+batch_size = 128#128
 
 # Spatial size of training images. All images will be resized to this
 #   size using a transformer.
@@ -261,9 +262,11 @@ for epoch in range(num_epochs):
             #train_utils.writeRunInfoFile(run_info_json, run_info_file_path, OUTPUTPATH)
 
             #display the batch
-            originalReshapedAsKeypoints = np.reshape(batch_of_keypoints_original.cpu(), (batch_size, numJoints, 2))
-            croppedReshapedAsKeypoints = np.reshape(batch_of_keypoints_cropped.cpu(), (batch_size, numJoints, 2))
-            croppedReshapedAsKeypoints = croppedReshapedAsKeypoints.numpy()
+            #originalReshapedAsKeypoints = np.reshape(batch_of_keypoints_original.cpu(), (batch_size, numJoints, 2))
+            #croppedReshapedAsKeypoints = np.reshape(batch_of_keypoints_cropped.cpu(), (batch_size, numJoints, 2))
+            #croppedReshapedAsKeypoints = croppedReshapedAsKeypoints.numpy()
+            originalReshapedAsKeypoints = batch_of_keypoints_original
+            croppedReshapedAsKeypoints = batch_of_keypoints_cropped
 
             fakeReshapedAsKeypoints = models.inference(theModels, b_size, fixed_noise, numJoints, batch_of_keypoints_cropped, confidence_values)
 

@@ -8,7 +8,9 @@ import torchvision.datasets as dset
 import torchvision.transforms as transforms
 from torchvision.transforms import ToTensor, Lambda, Compose
 import torchvision.utils as vutils
+import train_utils
 import numpy as np
+import colors
 
 #pix2pix: https://github.com/znxlwm/pytorch-pix2pix/blob/master/network.py
 
@@ -35,7 +37,7 @@ ngf = 16
 #ndf = 64
 ndf = 4#16
 
-NEURONS_PER_LAYER_GENERATOR = 32
+NEURONS_PER_LAYER_GENERATOR = 4#32
 
 def noiseSquareBatch(outputRes, batchsize):
     #noiseSquareBatch = np.zeros((batchsize, 1, outputRes, outputRes), dtype="float32")
@@ -99,7 +101,7 @@ class Generator(nn.Module):
     #the Gaussian noise nz × 1 × 1 is spatially replicated to nz × H × W along H and W dimension. 
     #After concatenation along channel dimension, the shape of resulting concatenated layer will be (C + nz) × H × W.
     def forward(self, input):
-        #print("Generator received: ", x.shape)
+        print("Generator received: ", input.shape)
         #print("Generator...")
         batchsize = input.shape[0]
         channels = input.shape[1]
@@ -117,7 +119,7 @@ class Generator(nn.Module):
         return self.model(input)
 
 
-NEURONS_PER_LAYER_DISCRIMINATOR = 16
+NEURONS_PER_LAYER_DISCRIMINATOR = 4#16
 class Discriminator64(nn.Module):
     def __init__(self, ngpu):
         super(Discriminator64, self).__init__()
@@ -234,7 +236,7 @@ class Models():
         super(Models, self).__init__()
         #generator
         #netG_ = Generator(ngpu, numJoints, nz)
-        netG_ = models_heatmaps.Generator(channels=numJoints)
+        netG_ = Generator(channels=numJoints)
         netG = netG_.to(device)
         if (device.type == 'cuda') and (ngpu > 1):
             netG = nn.DataParallel(netG, list(range(ngpu)))
@@ -256,7 +258,7 @@ class Models():
         self.netD = netD
         self.KEYPOINT_RESTORATION = KEYPOINT_RESTORATION
 
-
+        print(colors.CRED + "run export OMP_NUM_THREADS=1 in the terminal to avoid parallelization warning and block" + colors.CEND)
 
 class TrainSetup():
     #Receives a noise vector (nz dims) + keypoints cropped (50 dims)
@@ -302,7 +304,7 @@ def trainStep(models, trainSetup, b_size, device, tb, step_absolute, num_epochs,
     noise = torch.randn(b_size, trainSetup.nz, device=device)
     
     # Generate fake image batch with G
-    batch_of_fake_original = models.netG(batch_of_keypoints_cropped, noise)
+    batch_of_fake_original = models.netG(batch_of_keypoints_cropped)
 
     #Restore the original keypoints with confidence > CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS
     if models.KEYPOINT_RESTORATION:
@@ -388,10 +390,10 @@ def inference(models, b_size, fixed_noise, numJoints, batch_of_keypoints_cropped
         if models.KEYPOINT_RESTORATION:
             fake = restoreOriginalKeypoints(fake, batch_of_keypoints_cropped, confidence_values)
         print("Shape of fake: ", fake.shape)
-        fakeReshapedAsKeypoints = np.reshape(fake, (b_size, numJoints, 2))
-        fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
+        #fakeReshapedAsKeypoints = np.reshape(fake, (b_size, numJoints, 2))
+        #fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
         
-        return fakeReshapedAsKeypoints
+        return fake
 
 def save(models, OUTPUTPATH, epoch, i):
     torch.save(models.netG.state_dict(), OUTPUTPATH+"/model/model_epoch"+str(epoch)+"_batch"+str(i)+".pt")

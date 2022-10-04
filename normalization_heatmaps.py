@@ -4,6 +4,7 @@ import poseUtils
 import openPoseUtils
 import util_viz
 import math
+import BodyModelOPENPOSE15
 
 #from scipy.stats import multivariate_normal
 
@@ -186,7 +187,7 @@ def denormalizeBatch(batch, scaleFactor, x_displacement, y_displacement):
 			
 def visualize(keypoints, width, height):
 	blank_image = np.zeros((width,height,3), np.uint8)
-	poseUtils.draw_pose(blank_image, keypoints, 0.1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
+	poseUtils.draw_pose(blank_image, keypoints, 0.1, BodyModelOPENPOSE15.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
 	poseUtils.displayImage(blank_image, width, height)
 
 #Useful for debugging
@@ -198,29 +199,4 @@ def nullPoseBatch(nJoints, outputRes, batchsize):
 def onesConfidentValuesBatch(nJoints, batchsize):
 	onesConfidentValuesBatch = np.ones((batchsize, nJoints), dtype="float32")
 	return onesConfidentValuesBatch
-
-
-
-'''
-normalizer = NormalizationHeatmaps(outputRes=128, sigma=2)
-        
-#ORIGINAL	
-keypoints = openPoseUtils.json2Keypoints('dynamicData/012_keypoints.json')
-referenceBoneIndex, dummy = openPoseUtils.reference_bone(keypoints)
-#visualize(keypoints, 1000, 1000)
-
-#NORMALIZED (HEATMAPS)
-poseHeatmaps, scaleFactor, x_displacement, y_displacement = normalizer.normalize(keypoints)
-print("poseHeatmaps[0]: ",poseHeatmaps[0][0])
-print("poseHeatmaps shape: ",poseHeatmaps.shape)
-#poseHeatmapsDisplay = poseHeatmaps.transpose(-1, 0, 1)
-print("poseHeatmaps shape: ",poseHeatmaps.shape)
-cv2.imshow("hm"+str(0), poseHeatmaps[0])
-
-#DENORMALIZED
-print(poseHeatmaps.shape)
-keypoints = denormalize(poseHeatmaps, scaleFactor, x_displacement, y_displacement)
-visualize(keypoints, 1000, 1000)
-
-'''
 

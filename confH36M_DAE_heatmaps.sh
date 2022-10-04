@@ -10,7 +10,7 @@ DATASET_MODULE="datasetH36M"
 MODEL="models_DAE_heatmaps" #models models_mirror models_simple
 NORMALIZATION="heatmaps" #"center_scale", "basic", "none" 
 KEYPOINT_RESTORATION=1
-LEN_BUFFER_ORIGINALS=1000 #1000 65536
+LEN_BUFFER_ORIGINALS=256 #1000 65536
 CROPPED_VARIATIONS=1 #1 (defalut) 0 to learn to copy
 NZ=0 #100 #10 #0
 DISCARDINCOMPLETEPOSES=1 #1
@@ -21,7 +21,7 @@ PIXELLOSS_WEIGHT=1 #It's a DAE
 DATASET_TEST="dynamicData/H36Mtest"
 #DATASET_TEST="dynamicData/H36Mtest_v2" #no null keypoints
 DATASET_TEST_IMAGES="UNKNOWN"
-MODELPATH=$OUTPUTPATH"/model/model_epoch0_batch4000.pt"
+MODELPATH=$OUTPUTPATH"/model/model_epoch0_batch0.pt"
 ONLY15=1
 
 

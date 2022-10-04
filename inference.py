@@ -133,25 +133,25 @@ def testMany(theModels, keypointsPath, imagesPath, outputPath, outputSubpath, im
                 only15joints=True
             else:
                 only15joints=False
-            keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(keypointsPath, filename), BODY_MODEL, only15joints, NORMALIZATION, mean, std)
-            #print("keypoints_cropped[0]=", keypoints_cropped[0])
+            #keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(keypointsPath, filename), BODY_MODEL, only15joints, NORMALIZATION, mean, std)
+
+            keypoints_cropped = openPoseUtils.json2Keypoints(join(keypointsPath, filename), only15joints)
+            confidence_values = openPoseUtils.getConfidence(keypoints_cropped)
+            keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalizeV2(keypoints_cropped, BODY_MODEL, NORMALIZATION, False, mean, std)
+
+            #print("keypoints_cropped.shape:", keypoints_cropped.shape)
 
             #We have worked with jut 15 keypoints, need to restore the other 10
             keypoints_cropped25 = openPoseUtils.json2Keypoints(join(keypointsPath, filename), False)
-            #print("keypoints_cropped25[0]=", keypoints_cropped25[0])
-            #print("Read %d keypoints." % (len(keypoints_cropped25)))
             sys.stdout.write(".")
             batch_of_one_keypoints_cropped25.append(keypoints_cropped25)
 
-
-            #print("normalized keypoints_cropped=", keypoints_cropped)
-            #print("obtained scaleFactor=",scaleFactor)
-            keypoints_cropped, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
-            keypoints_cropped = [item for sublist in keypoints_cropped for item in sublist]
-            keypoints_cropped = [float(k) for k in keypoints_cropped]
+            #keypoints_cropped, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
+            #keypoints_cropped = [item for sublist in keypoints_cropped for item in sublist]
+            #keypoints_cropped = [float(k) for k in keypoints_cropped]
             keypoints_cropped = torch.tensor(keypoints_cropped)
             confidence_values = torch.tensor(confidence_values)
-            keypoints_cropped = keypoints_cropped.flatten()
+            #keypoints_cropped = keypoints_cropped.flatten()
             batch_of_one_keypoints_cropped.append(keypoints_cropped)
             batch_of_one_confidence_values.append(confidence_values)
             batch_scaleFactor.append(scaleFactor)
