@@ -34,10 +34,14 @@ from torch.utils.tensorboard import SummaryWriter
 import random
 
 class JsonDataset(torch.utils.data.IterableDataset):
-    def __init__(self, inputpath_cropped, inputpath_original, bodyModel):
+    #def __init__(self, inputpath_cropped, inputpath_original, bodyModel):
+    def __init__(self, inputpath_cropped, inputpath_original, bodyModel, croppedVariations = True, normalizationStrategy = "center-scale", mean = None, std = None, max_len_buffer_originals = None, DISCARDINCOMPLETEPOSES = False):
         self.inputpath_cropped = inputpath_cropped
         self.inputpath_original = inputpath_original
         self.bodyModel = bodyModel
+        self.normalization = normalizationStrategy
+        self.mean = mean
+        self.std = std
         #self.count = countFiles(self.inputpath_cropped, ".json")
         #self.jsonFiles = [f for f in listdir(self.inputpath_cropped) if isfile(join(self.inputpath_cropped, f)) and f.endswith("json") ]
         
@@ -52,13 +56,20 @@ class JsonDataset(torch.utils.data.IterableDataset):
             json_file = str(item.name)
             if json_file.endswith(".json"):
                 try:
-                    #print("Processing file: "+json_file)
-                    keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(self.inputpath_cropped, json_file), self.bodyModel)
+                    #keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(self.inputpath_cropped, json_file), self.bodyModel)
+                    
+
+                    keypoints_cropped = openPoseUtils.json2Keypoints(join(self.inputpath_cropped, json_file), only15joints)
+                    confidence_values = openPoseUtils.getConfidence(keypoints_cropped)
+                    keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalizeV2(keypoints_cropped, self.bodyModel, self.normalization, False, self.mean, self.std)
+
+                    '''
                     keypoints_cropped, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
                     keypoints_cropped = [item for sublist in keypoints_cropped for item in sublist]
                     keypoints_cropped = [float(k) for k in keypoints_cropped]
                     keypoints_cropped = torch.tensor(keypoints_cropped)
                     keypoints_cropped = keypoints_cropped.flatten()
+                    '''
 
                     #Read the file with the original keypoints
                     #They are normalized
@@ -69,17 +80,25 @@ class JsonDataset(torch.utils.data.IterableDataset):
                     if not os.path.isfile(original_keypoints_path):
                         print("FATAL ERROR: original keypoints path not found: "+original_keypoints_path)
                         sys.exit()
+
+                    '''
                     keypoints_original, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(original_keypoints_path, self.bodyModel)
                     keypoints_original, dummy = openPoseUtils.removeConfidence(keypoints_original)
                     keypoints_original = [item for sublist in keypoints_original for item in sublist]
                     keypoints_original = [float(k) for k in keypoints_original]
                     keypoints_original = torch.tensor(keypoints_original)
                     keypoints_original = keypoints_original.flatten()
-                    
                     confidence_values = torch.tensor(confidence_values)
+                    '''
+                    keypoints_original = openPoseUtils.json2Keypoints(original_keypoints_path, only15joints)
+                    confidence_values = openPoseUtils.getConfidence(keypoints_original)
+                    keypoints_original, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalizeV2(keypoints_original, self.bodyModel, self.normalization, False, self.mean, self.std)
+
+
                     #print("confidence_values:")
                     #print(confidence_values)
                     yield keypoints_cropped, keypoints_original, confidence_values, scaleFactor, x_displacement, y_displacement, json_file
+
                 except ValueError as ve:
                     print(ve)
                 #except OSError as oe:

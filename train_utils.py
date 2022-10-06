@@ -38,7 +38,7 @@ import datasetBasic
 import datasetH36M
 #import datasetH36M_mem
 import time
-import Configuration
+#import Configuration
 import openPoseUtils
 import importlib
 

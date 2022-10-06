@@ -35,7 +35,7 @@ import random
 #import h36mIterator_tiny as h36mIterator #DEBUG import h36mIterator
 import h36mIterator
 import BodyModelOPENPOSE15
-import Configuration
+#import Configuration
 
 class JsonDataset(torch.utils.data.IterableDataset):
     

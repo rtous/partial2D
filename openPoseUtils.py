@@ -9,7 +9,7 @@ from os.path import isfile, join, splitext
 import pathlib
 import traceback
 import poseUtilsBaseline
-import Configuration
+#import Configuration
 import sys
 import normalization_heatmaps
 

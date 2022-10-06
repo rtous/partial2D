@@ -4,9 +4,9 @@ NOTE: Last param (0=laptop 1=office)
 ---------------------------------------
 DAE over H36M (default)
 ---------------------------------------
-./trainH36M.sh confH36M_DAE.sh 0 
-./inferenceH36M.sh confH36M_DAE.sh 0
-./FPD_H36M.sh confH36M_DAE.sh 0
+./train.sh conf_DAE.sh confDataset_H36M.sh 0 
+./inference.sh conf_DAE.sh confDataset_H36M.sh 0
+./FPD.sh conf_DAE.sh confDataset_H36M.sh 0
 ---------------------------------------
 - Pose completion
 - FPD: 5000-6000
@@ -65,12 +65,18 @@ DAE over H36M with heatmaps
 ./inferenceH36M.sh confH36M_DAE_heatmaps.sh 0
 ./FPD_H36M.sh confH36M_DAE_heatmaps.sh 0
 ---------------------------------------
-- Pose completion
-- FPD: 5000-6000
-- Currently with NZ=0
-- Basic noramlization: very bad
-- Noise instead of zeros in cropped bones: no change
-- No restoration: almost the same (?)
+- 
 ---------------------------------------
 ---------------------------------------
 
+---------------------------------------
+---------------------------------------
+WGAN over H36M (Wasserstein GAN)
+---------------------------------------
+./trainH36M.sh confH36M_WGAN.sh 0 
+./inferenceH36M.sh confH36M_WGAN.sh 0
+./FPD_H36M.sh confH36M_WGAN.sh 0
+---------------------------------------
+-
+---------------------------------------
+---------------------------------------
