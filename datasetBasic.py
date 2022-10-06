@@ -42,6 +42,10 @@ class JsonDataset(torch.utils.data.IterableDataset):
         self.normalization = normalizationStrategy
         self.mean = mean
         self.std = std
+        if bodyModel.numJoints == 15:
+            self.only15joints = True
+        else:
+            self.only15joints = False
         #self.count = countFiles(self.inputpath_cropped, ".json")
         #self.jsonFiles = [f for f in listdir(self.inputpath_cropped) if isfile(join(self.inputpath_cropped, f)) and f.endswith("json") ]
         
@@ -52,6 +56,7 @@ class JsonDataset(torch.utils.data.IterableDataset):
         #jsonFiles = [f for f in listdir(self.inputpath) if isfile(join(self.inputpath, f)) and f.endswith("json") ]
         #Important, the scandir iterator needs to be created each time
         self.scandirIterator = os.scandir(self.inputpath_cropped)
+        i = 0
         for item in self.scandirIterator:
             json_file = str(item.name)
             if json_file.endswith(".json"):
@@ -59,7 +64,7 @@ class JsonDataset(torch.utils.data.IterableDataset):
                     #keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(self.inputpath_cropped, json_file), self.bodyModel)
                     
 
-                    keypoints_cropped = openPoseUtils.json2Keypoints(join(self.inputpath_cropped, json_file), only15joints)
+                    keypoints_cropped = openPoseUtils.json2Keypoints(join(self.inputpath_cropped, json_file), self.only15joints)
                     confidence_values = openPoseUtils.getConfidence(keypoints_cropped)
                     keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalizeV2(keypoints_cropped, self.bodyModel, self.normalization, False, self.mean, self.std)
 
@@ -90,13 +95,16 @@ class JsonDataset(torch.utils.data.IterableDataset):
                     keypoints_original = keypoints_original.flatten()
                     confidence_values = torch.tensor(confidence_values)
                     '''
-                    keypoints_original = openPoseUtils.json2Keypoints(original_keypoints_path, only15joints)
+                    keypoints_original = openPoseUtils.json2Keypoints(original_keypoints_path, self.only15joints)
                     confidence_values = openPoseUtils.getConfidence(keypoints_original)
                     keypoints_original, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalizeV2(keypoints_original, self.bodyModel, self.normalization, False, self.mean, self.std)
 
 
                     #print("confidence_values:")
                     #print(confidence_values)
+                    print("WARNING: OK reading ", join(self.inputpath_cropped, json_file))
+                    print("i=",i)
+                    i=i+1
                     yield keypoints_cropped, keypoints_original, confidence_values, scaleFactor, x_displacement, y_displacement, json_file
 
                 except ValueError as ve:
