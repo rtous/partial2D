@@ -1,3 +1,4 @@
+numJoints=15
 POSE_BODY_25_BODY_PARTS = [
         "Nose",
         "Neck",

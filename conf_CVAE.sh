@@ -1,5 +1,5 @@
-MODEL_NAME="DAE"
-MODEL="models_DAE" #models models_mirror models_simple
+MODEL_NAME="CVAE"
+MODEL="models_CVAE" #models models_mirror models_simple
 NORMALIZATION="center_scale" #"center_scale", "basic", "none" 
 KEYPOINT_RESTORATION=1
 LEN_BUFFER_ORIGINALS=65536 #1000 65536
@@ -11,7 +11,6 @@ PIXELLOSS_WEIGHT=1 #It's a DAE
 
 #INFERENCE
 MODELFILE="model_epoch0_batch0.pt"
-
 
 
 
