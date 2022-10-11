@@ -21,9 +21,9 @@ DAE over H36M (default)
 ---------------------------------------
 AE over H36M
 ---------------------------------------
-./trainH36M.sh confH36M_AE.sh 0
-./inferenceH36M.sh confH36M_AE.sh 0 (generation)
-./FPD_H36M.sh confH36M_AE.sh 0
+./train.sh conf_AE.sh confDataset_H36M.sh 0 
+./inference.sh confH36M_AE.sh confDataset_H36M.sh 0 (generation)
+./FPD.sh conf_AE.sh confDataset_H36M.sh 0
 ---------------------------------------
 - FPD: 927,954 :-()
 - To learn the identity you need to change inference so that it 
@@ -35,9 +35,9 @@ does encode and decode (FPD: 14000 I guess)
 ---------------------------------------
 VAE over H36M
 ---------------------------------------
-./trainH36M.sh confH36M_VAE.sh 0
-./inferenceH36M.sh confH36M_VAE.sh 0 (generation)
-./FPD_H36M.sh confH36M_VAE.sh 0
+./train.sh conf_VAE.sh confDataset_H36M.sh 0
+./inference.sh conf_VAE.sh confDataset_H36M.sh 0 (generation)
+./FPD.sh conf_VAE.sh confDataset_H36M.sh 0
 ---------------------------------------
 - FPD: 40000
 - 
@@ -48,9 +48,9 @@ VAE over H36M
 ---------------------------------------
 CVAE over H36M
 ---------------------------------------
-./trainH36M.sh confH36M_CVAE.sh 0
-./inferenceH36M.sh confH36M_CVAE.sh 0 (generation)
-./FPD_H36M.sh confH36M_CVAE.sh 0
+./train.sh conf_CVAE.sh confDataset_H36M.sh 0
+./inference.sh conf_CVAE.sh confDataset_H36M.sh 0 (generation)
+./FPD.sh conf_CVAE.sh confDataset_H36M.sh 0
 ---------------------------------------
 - FPD: 8539 (en 1 epoch)
 - 
@@ -61,9 +61,9 @@ CVAE over H36M
 ---------------------------------------
 DAE over H36M with heatmaps
 ---------------------------------------
-./trainH36M.sh confH36M_DAE_heatmaps.sh 0 
-./inferenceH36M.sh confH36M_DAE_heatmaps.sh 0
-./FPD_H36M.sh confH36M_DAE_heatmaps.sh 0
+./train.sh conf_DAE_heatmaps.sh confDataset_H36M.sh 0 
+./inference.sh conf_DAE_heatmaps.sh confDataset_H36M.sh 0
+./FPD.sh conf_DAE_heatmaps.sh confDataset_H36M.sh 0
 ---------------------------------------
 - 
 ---------------------------------------
@@ -73,9 +73,9 @@ DAE over H36M with heatmaps
 ---------------------------------------
 WGAN over H36M (Wasserstein GAN)
 ---------------------------------------
-./trainH36M.sh confH36M_WGAN.sh 0 
-./inferenceH36M.sh confH36M_WGAN.sh 0
-./FPD_H36M.sh confH36M_WGAN.sh 0
+./train.sh conf_WGAN.sh confDataset_H36M.sh 0 
+./inference.sh conf_WGAN.sh confDataset_H36M.sh 0
+./FPD.sh conf_WGAN.sh confDataset_H36M.sh 0
 ---------------------------------------
 -
 ---------------------------------------

@@ -23,7 +23,6 @@ else
 	######################
 
 	source $1
-
 	source $2
 
 	OUTPUTPATH="data/output/"$MODEL_NAME"_"$DATASET_NAME

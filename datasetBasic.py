@@ -42,6 +42,7 @@ class JsonDataset(torch.utils.data.IterableDataset):
         self.normalization = normalizationStrategy
         self.mean = mean
         self.std = std
+        self.max_len_buffer_originals = max_len_buffer_originals
         if bodyModel.numJoints == 15:
             self.only15joints = True
         else:
@@ -63,10 +64,13 @@ class JsonDataset(torch.utils.data.IterableDataset):
                 try:
                     #keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.json2normalizedKeypoints(join(self.inputpath_cropped, json_file), self.bodyModel)
                     
+                    if i>self.max_len_buffer_originals:
+                    	break
 
                     keypoints_cropped = openPoseUtils.json2Keypoints(join(self.inputpath_cropped, json_file), self.only15joints)
                     confidence_values = openPoseUtils.getConfidence(keypoints_cropped)
                     keypoints_cropped, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalizeV2(keypoints_cropped, self.bodyModel, self.normalization, False, self.mean, self.std)
+                    keypoints_cropped = torch.tensor(keypoints_cropped)
 
                     '''
                     keypoints_cropped, confidence_values = openPoseUtils.removeConfidence(keypoints_cropped)
@@ -97,8 +101,9 @@ class JsonDataset(torch.utils.data.IterableDataset):
                     '''
                     keypoints_original = openPoseUtils.json2Keypoints(original_keypoints_path, self.only15joints)
                     confidence_values = openPoseUtils.getConfidence(keypoints_original)
+                    confidence_values = torch.tensor(confidence_values)
                     keypoints_original, scaleFactor, x_displacement, y_displacement = openPoseUtils.normalizeV2(keypoints_original, self.bodyModel, self.normalization, False, self.mean, self.std)
-
+                    keypoints_original = torch.tensor(keypoints_original)
 
                     #print("confidence_values:")
                     #print(confidence_values)
