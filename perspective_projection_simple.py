@@ -41,6 +41,8 @@ def map_to_pixel(point3d,focal_distance, ppx, ppy, scale_x, scale_y):
 	inhomogeneous_point = [homogeneous_point[0] / homogeneous_point[2], homogeneous_point[1] / homogeneous_point[2]]
 	return inhomogeneous_point
 
+
+
 pixel_plot, ax = plt.subplots()
 #pixel_plot = plt.figure()
 plt.rcParams["figure.figsize"] = [10, 10]
@@ -56,7 +58,7 @@ points3d = np.array([[1,1,1], [1,5,1], [5,5,1], [5,1,1],  #fron square
 
 lines = np.array([[0,1],[1,2],[2,3],[3,0], #fron square
 	             [4,5],[5,6],[6,7],[7,4], #back square
-	             [1,5], [3,7]]
+	             [0,4],[1,5],[2,6],[3,7]]
 	             )
 
 focal_distance = 0.8#1
@@ -67,16 +69,38 @@ for i, point3d in enumerate(points3d):
 	pixel = map_to_pixel(point3d, focal_distance,focal_pane_width/2,focal_pane_height/2, scalex, scaley)
 	plt.plot(pixel[0],pixel[1], marker='o', markersize=5, markeredgecolor="red", markerfacecolor="red") 
 	ax.annotate(str(i), (pixel[0], pixel[1]))
+	print("point3d("+str(i)+"):"+str(pixel[0])+","+str(pixel[1]))
 
-for line in lines:
+for l, line in enumerate(lines):
 	from_point3d = points3d[line[0]]
-	print("from_point3d:", from_point3d)
+	print("from_point3d("+str(line[0])+"):", from_point3d)
 	to_point3d = points3d[line[1]]
-	print("to_point3d:", to_point3d)
+	print("to_point3d("+str(line[1])+"):", to_point3d)
 	from_pixel = map_to_pixel(from_point3d, focal_distance,focal_pane_width/2,focal_pane_height/2, scalex, scaley)
 	to_pixel = map_to_pixel(to_point3d, focal_distance,focal_pane_width/2,focal_pane_height/2, scalex, scaley)
+	print("from_pixel:", from_pixel)
+	print("to_pixel:", to_pixel)
 	#plt.plot(pixel[0],pixel[1], marker='o', markersize=5, markeredgecolor="red", markerfacecolor="red") 
 	print("line from "+str(line[0])+" to "+str(line[1]))
-	plt.plot(from_pixel, to_pixel, 'go--', linewidth=2, markersize=0)
+	
+	from_pixel_matplotlib = np.array([from_pixel[0], to_pixel[0]])
+	to_pixel_matplotlib = np.array([from_pixel[1], to_pixel[1]])
+	plt.plot(to_pixel_matplotlib, to_pixel_matplotlib, 'go--', linewidth=2, markersize=0)
+'''
+from_point3d = points3d[0]
+print("from_point3d("+str(0)+"):", from_point3d)
+to_point3d = points3d[3]
+print("to_point3d("+str(3)+"):", to_point3d)
+from_pixel = map_to_pixel(from_point3d, focal_distance,focal_pane_width/2,focal_pane_height/2, scalex, scaley)
+print("from_pixel:", from_pixel)
+to_pixel = map_to_pixel(to_point3d, focal_distance,focal_pane_width/2,focal_pane_height/2, scalex, scaley)
+print("to_pixel:", to_pixel)
+#plt.plot([5,5], [4,4], 'go--', linewidth=2, markersize=2)
 
+x = [1,2]
+y = [3,3]
+  
+# plot lines
+plt.plot([1,3], [1,3], label = "line 1")
+'''
 plt.show()
