@@ -6,7 +6,7 @@ DAE over ECCV18OP
 ---------------------------------------
 ./train.sh conf_DAE.sh confDataset_ECCV18OP.sh 0 
 ./inference.sh conf_DAE.sh confDataset_ECCV18OP.sh 0
-./FPD.sh conf_DAE.sh confDataset_ECCV18OP.sh 0
+./FPD.sh conf_DAE.sh confDataset_ECCV18OP.sh 0 (AIXÒ NO TÉ SENTIT)
 ---------------------------------------
 - Pose completion
 ---------------------------------------

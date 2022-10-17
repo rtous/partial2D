@@ -1,0 +1,38 @@
+REFS:
+- https://stackoverflow.com/questions/67517809/mapping-3d-vertex-to-pixel-using-pyreder-pyglet-opengl
+
+Coordinate systems: 
+
+https://medium.com/comerge/what-are-the-coordinates-225f1ec0dd78
+#blender is right handed (thumb is x, index is y, middle is z) shown with z up
+#unity is left handed (thumb is x, index is y, middle is z) shown with y up
+#pyrender camera:
+#the camera z-axis points away from the scene, 
+#the x-axis points right in image space, 
+#and the y-axis points up in image space.
+#it's like openGL
+
+Projective (pinhole) model of a camera.: 
+https://www.imatest.com/support/docs/pre-5-2/geometric-calibration-deprecated/projective-camera/
+#optical axis:
+#focal pane: where the 2D is projected
+#5 parameters: focal length in the x and y directions, principle point in the x and y directions, and skew between the x and y directions.
+#pinhole to the focal plane along the optical axis
+#the principle point (pp) which is the pixel coordinate of the intersection of the optical axis with the focal plane. 
+#intrinsic matrix is an upper-triangular matrix that transforms a world coordinate relative to the camera into a homogeneous image coordinate
+'''
+K=
+fx 0  ppx
+0  fy ppy
+0  0  1
+'''
+
+#homogeneous image point (vertical vector of three) = K * 3D point (three values)
+#typically the 3dpoint is transposed to become vertical
+
+
+#here
+#https://stackoverflow.com/questions/724219/how-to-convert-a-3d-point-into-2d-perspective-projection
+#homogenous coordinates are explained
+
+f
