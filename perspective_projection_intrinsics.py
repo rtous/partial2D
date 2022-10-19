@@ -83,9 +83,10 @@ for l, line in enumerate(lines):
 	#plt.plot(pixel[0],pixel[1], marker='o', markersize=5, markeredgecolor="red", markerfacecolor="red") 
 	print("line from "+str(line[0])+" to "+str(line[1]))
 	
-	from_pixel_matplotlib = np.array([from_pixel[0], to_pixel[0]])
-	to_pixel_matplotlib = np.array([from_pixel[1], to_pixel[1]])
-	plt.plot(to_pixel_matplotlib, to_pixel_matplotlib, 'go--', linewidth=2, markersize=0)
+	#plt.plot([from_pixel[0],to_pixel[0]], [from_pixel[1],to_pixel[1]], 'go--', linewidth=2, markersize=0)
+	plt.plot([from_pixel[0],to_pixel[0]], [from_pixel[1],to_pixel[1]], linewidth=1, markersize=0)
+
+
 '''
 from_point3d = points3d[0]
 print("from_point3d("+str(0)+"):", from_point3d)
@@ -96,11 +97,6 @@ print("from_pixel:", from_pixel)
 to_pixel = map_to_pixel(to_point3d, focal_distance,focal_pane_width/2,focal_pane_height/2, scalex, scaley)
 print("to_pixel:", to_pixel)
 #plt.plot([5,5], [4,4], 'go--', linewidth=2, markersize=2)
-
-x = [1,2]
-y = [3,3]
-  
-# plot lines
-plt.plot([1,3], [1,3], label = "line 1")
 '''
+
 plt.show()
