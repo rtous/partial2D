@@ -7,9 +7,9 @@
 from numpy.linalg import inv
 import numpy as np
 import matplotlib
-matplotlib.use('TkAgg')
+#matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
-import pyrender
+#import pyrender
 import math
 
 def homogenize(cartesian_vector: np.array):
@@ -172,4 +172,6 @@ for l, line in enumerate(lines):
 	to_pixel = points2d[line[1]]
 	plt.plot([from_pixel[0],to_pixel[0]], [from_pixel[1],to_pixel[1]], linewidth=1, markersize=0)
 
-plt.show()
+#plt.show()
+plt.savefig('perspective_projection_extrinsics.png')
+

@@ -28,14 +28,17 @@ class Generator(nn.Module):
           nn.Linear(self.image_size+nz, NEURONS_PER_LAYER_GENERATOR, bias=False),
           nn.BatchNorm1d(NEURONS_PER_LAYER_GENERATOR, 0.8),
           nn.LeakyReLU(0.25),
+          #nn.Dropout(0.25),
           # Second upsampling
           nn.Linear(NEURONS_PER_LAYER_GENERATOR, NEURONS_PER_LAYER_GENERATOR_EMBEDDING, bias=False),
           nn.BatchNorm1d(NEURONS_PER_LAYER_GENERATOR_EMBEDDING, 0.8),
           nn.LeakyReLU(0.25),
+          #nn.Dropout(0.25),
           # Third upsampling
           nn.Linear(NEURONS_PER_LAYER_GENERATOR_EMBEDDING, NEURONS_PER_LAYER_GENERATOR, bias=False),
           nn.BatchNorm1d(NEURONS_PER_LAYER_GENERATOR, 0.8),
           nn.LeakyReLU(0.25),
+          #nn.Dropout(0.25),
           # Final upsampling
           nn.Linear(NEURONS_PER_LAYER_GENERATOR, self.image_size, bias=False),
           #nn.Tanh() # result in [-1,1] 

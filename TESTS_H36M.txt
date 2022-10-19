@@ -14,6 +14,7 @@ DAE over H36M (default)
 - Basic noramlization: very bad
 - Noise instead of zeros in cropped bones: no change
 - No restoration: almost the same (?)
+- dropout: no change
 ---------------------------------------
 ---------------------------------------
 
