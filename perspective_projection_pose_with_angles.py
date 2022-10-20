@@ -12,6 +12,29 @@ import matplotlib.pyplot as plt
 #import pyrender
 import math
 import perspective_projection_extrinsics as pp
+import BodyModelOPENPOSE15
+
+#BodyModelOPENPOSE15.POSE_BODY_25_BODY_PARTS_DICT  
+#BodyModelOPENPOSE15.POSE_BODY_25_PAIRS_RENDER_GP contains the pairs
+#[parent_joint, children_joint]
+#14 bones
+#POSE_BODY_25_PAIRS_RENDER_GP[13] is the neck and will be our reference
+#13 = 1,0 neckJ->noseJ
+
+#calcular fills de (joint=1) bone=[1,0] (HARCODED)
+#busquem bones que tinguin 1 com a primer:
+        #e.g. [1,8] (següent a cercar serà el 8)
+        #calulem l'angle pare-fill
+        #calcular fills de (joint=8) bone=[1,8] 
+        #busquem bones que tinguin 8 com a primer:
+            #e.g. [8,9] (següent a cercar serà el 9)
+            #calulem l'angle pare-fill
+            #calcular fills de (9) el pare és [8,9]
+
+
+
+
+
 
 def angleTwoVectors(vector1, vector2):
     #θ = cos-1 [ (a · b) / (|a| |b|) ]
