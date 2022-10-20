@@ -31,7 +31,15 @@ import BodyModelOPENPOSE15
             #calulem l'angle pare-fill
             #calcular fills de (9) el pare és [8,9]
 
-
+'''
+def processChildrenBones(joint, parentBone):
+    for b in BodyModelOPENPOSE15.POSE_BODY_25_PAIRS_RENDER_GP:
+        #arrenca de joint i no és ell mateix
+        if b[0] == joint and (b[0] != parentBone[0] and b[1] != parentBone[1]):
+            compact_angle = relativeAngle(childFromPoint, childToPoint, parentFromPoint, parentToPoint)
+            save angle
+            processChildrenBones(b[1], b)
+'''
 
 
 
