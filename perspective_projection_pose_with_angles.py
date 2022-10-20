@@ -119,19 +119,27 @@ for l, line in enumerate(lines):
 #they share a point but this does not matter to compute their angle (will be useful to reconstruct)
 
 #line0
-childPoint = points3d[lines[0][0]]
-parentPoint = points3d[lines[0][1]]
-print("original childPoint=", childPoint)
+childFromPoint = points3d[lines[0][0]]
+childToPoint = points3d[lines[0][1]]
 
-#Representation
-relative_child_vector = parentPoint-childPoint
-childParentVectorMagnitude = np.linalg.norm(relative_child_vector) #this is not part of the representation
-relative_child_vector = relative_child_vector/childParentVectorMagnitude
+print("original childFromPoint=", childFromPoint)
+print("original childToPoint=", childToPoint)
 
-#Reconstruction
-relative_child_vector = relative_child_vector*childParentVectorMagnitude
-childPoint = parentPoint-relative_child_vector
-print("reconstructed childPoint=", childPoint)
+#line1
+parentFromPoint = points3d[lines[1][0]]
+parentToPoint = points3d[lines[1][1]]
+
+#previous information
+childVector = childToPoint-childFromPoint
+childVectorMagnitude = np.linalg.norm(childVector)
+
+#obtain representation
+compact_axis_angle = relativeAngle(childFromPoint, childToPoint, parentFromPoint, parentToPoint)
+
+#back to 3D point
+childFromPoint, childToPoint = childVectorFromParentVectorAndRelativeAngle(parentFromPoint, parentToPoint, compact_axis_angle, childVectorMagnitude)
+print("reconstructed childFromPoint=", childFromPoint)
+print("reconstructed childToPoint=", childToPoint)
 
 ######################################
 #Apply camera pose (extrinsics)
