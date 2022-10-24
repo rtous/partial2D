@@ -3,6 +3,7 @@
 - https://towardsdatascience.com/camera-extrinsic-matrix-with-example-in-python-cfe80acab8dd
 '''	
 
+#IMPORTANT: We asume childFromPoint = parentToPoint
 
 from numpy.linalg import inv
 import numpy as np
@@ -13,6 +14,7 @@ import matplotlib.pyplot as plt
 import math
 import perspective_projection_extrinsics as pp
 import BodyModelOPENPOSE15
+import openPoseUtils
 
 #BodyModelOPENPOSE15.POSE_BODY_25_BODY_PARTS_DICT  
 #BodyModelOPENPOSE15.POSE_BODY_25_PAIRS_RENDER_GP contains the pairs
@@ -32,18 +34,60 @@ import BodyModelOPENPOSE15
             #calcular fills de (9) el pare és [8,9]
 
 '''
-def processChildrenBones(joint, parentBone):
+#These parts define a tree as they are [parent, child] being the neck (1) the main parent
+#POSE_BODY_25_PAIRS_RENDER_GP = [[1,8],   [1,2],   [1,5],   [2,3],   [3,4],   [5,6],   [6,7],   [8,9],   [9,10],  [10,11], [8,12],  [12,13], [13,14],  [1,0]]
+
+def processChildrenBones(joint, parentBone, resultsList):
+    #The result should be this
+    resultsList = angles relative to their parent of ([1,8], [8,9], [9,10], [10,11], [8,12], [12,13], [13, 14], [1,2], [2,3], [3,4], [1,5], [5,6], [7,7]
+    #Does not include information about neck bone
+    #to reconstruct need to keep the position of joint 1
+
     for b in BodyModelOPENPOSE15.POSE_BODY_25_PAIRS_RENDER_GP:
         #arrenca de joint i no és ell mateix
         if b[0] == joint and (b[0] != parentBone[0] and b[1] != parentBone[1]):
             compact_angle = relativeAngle(childFromPoint, childToPoint, parentFromPoint, parentToPoint)
             save angle
-            processChildrenBones(b[1], b)
+            processChildrenBones(b[1], b, resultsList)
+    
+   
+
+def reconstructPose(anglelist):
+    bone 1 = reconstruct bone 1
+    reconstructChildrens(bone 1)
+
+def reconstructChildrens(parent [1,0], anglelist)
+    buscar en anglelist bones con parent bone [1,0]
+        bonechild = childVectorFromParentVectorAndRelativeAngle(parentFromPoint, parentToPoint, compact_axis_angle, childVectorMagnitude):
+
+
+
+processChildrenBones(1, [1,0], resultsList)
 '''
 
+#These parts define a tree as they are [parent, child] being the neck (1) the main parent
+#POSE_BODY_25_PAIRS_RENDER_GP = [[1,8],   [1,2],   [1,5],   [2,3],   [3,4],   [5,6],   [6,7],   [8,9],   [9,10],  [10,11], [8,12],  [12,13], [13,14],  [1,0]]
+def processChildrenBones(jointNumber, parentBonePair, keypoints):
+    #The result should be this
+    #resultsList = angles relative to their parent of ([1,8], [8,9], [9,10], [10,11], [8,12], [12,13], [13, 14], [1,2], [2,3], [3,4], [1,5], [5,6], [7,7]
+    #Does not include information about neck bone
+    #to reconstruct need to keep the position of joint 1
+    for b in BodyModelOPENPOSE15.POSE_BODY_25_PAIRS_RENDER_GP:
+        #arrenca de joint i no és ell mateix
+        #print("checking ",b)
+        if b[0] == jointNumber and (b[0] != parentBonePair[0] or b[1] != parentBonePair[1]):
+            childFromPoint=keypoints[b[0]]
+            childToPoint=keypoints[b[1]]
+            parentFromPoint=keypoints[parentBonePair[0]]
+            parentToPoint=childFromPoint
+            #compact_axis_angle = relativeAngle(childFromPoint, childToPoint, parentFromPoint, parentToPoint)
+            print("parentBonePair: ", parentBonePair)
+            print("childBonePair: ", b)
+            #print("angle: ", compact_axis_angle)
+            processChildrenBones(b[1], b, keypoints)
+    
 
-
-
+  
 def angleTwoVectors(vector1, vector2):
     #θ = cos-1 [ (a · b) / (|a| |b|) ]
     unit_vector1 = vector1 / np.linalg.norm(vector1)
@@ -125,6 +169,13 @@ plt.rcParams["figure.figsize"] = [10, 10]
 plt.xlim(0, 10)
 plt.ylim(0, 10)
 plt.grid()
+
+path =  "dynamicData/H36Mtest_original_v2_noreps/100.json"
+keypoints = openPoseUtils.json2Keypoints(path) 
+keypoints, dummy = openPoseUtils.removeConfidence(keypoints)
+keypoints = np.array(keypoints) 
+print(keypoints)
+processChildrenBones(1, [1,0], keypoints)
 
 #A cube
 points3d = np.array([[1,1,1], [1,5,1], [5,5,1], [5,1,1],  #fron square
