@@ -89,6 +89,8 @@ def processChildrenBones(jointNumber, parentBonePair, keypoints):
 
   
 def angleTwoVectors(vector1, vector2):
+    #TODO: THIS ANGLE DOES NOT RETURN NEGATIVE VALUES
+    #A CORRECTED VERSION IN THE 2D EDITION
     #θ = cos-1 [ (a · b) / (|a| |b|) ]
     unit_vector1 = vector1 / np.linalg.norm(vector1)
     unit_vector2 = vector2 / np.linalg.norm(vector2)
