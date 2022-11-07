@@ -270,7 +270,10 @@ for epoch in range(num_epochs):
 
             fakeReshapedAsKeypoints = models.inference(theModels, b_size, fixed_noise, numJoints, batch_of_keypoints_cropped, confidence_values)
 
-            train_utils.drawGrid(fakeReshapedAsKeypoints, originalReshapedAsKeypoints, croppedReshapedAsKeypoints, OUTPUTPATH, batch_size, BODY_MODEL, scaleFactor, x_displacement, y_displacement, batch_of_json_file, NORMALIZATION, mean, std)
+            #print("fakeReshapedAsKeypoints:")
+            #print(fakeReshapedAsKeypoints[0])
+
+            train_utils.drawGrid(fakeReshapedAsKeypoints, originalReshapedAsKeypoints, croppedReshapedAsKeypoints, OUTPUTPATH, batch_size, BODY_MODEL, scaleFactor.numpy(), x_displacement.numpy(), y_displacement.numpy(), batch_of_json_file, NORMALIZATION, mean, std)
     
         iters += 1
         

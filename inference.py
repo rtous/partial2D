@@ -126,6 +126,7 @@ def testMany(theModels, keypointsPath, imagesPath, outputPath, outputSubpath, im
     batch_of_one_keypoints_cropped25 = []
     jsonFiles = [f for f in listdir(keypointsPath) if isfile(join(keypointsPath, f))]
     n = 0
+    n_errors = 0
     for filename in jsonFiles:
         #print('Testing '+filename)
         try:
@@ -163,10 +164,15 @@ def testMany(theModels, keypointsPath, imagesPath, outputPath, outputSubpath, im
             print('Skipping '+filename+": "+str(e))
             #print(e)
             traceback.print_exc()
+            n_errors = n_errors + 1
             #pass
             #print('Skipping '+filename)
 
     sys.stdout.write("\n")
+
+    print("Inference complete, properly processed=", n)
+    print("Errors=", n_errors)
+    print("Saving...")
 	
     batch_of_one_keypoints_cropped = torch.stack(batch_of_one_keypoints_cropped)
     batch_of_one_confidence_values = torch.stack(batch_of_one_confidence_values)

@@ -55,7 +55,7 @@ rootBone = [1,0]
 
 def removeRootJoint(valuesWithRoot):
     #rootJoint (pos 1) has no angle neither length associated
-    valuesWithoutRoot = np.zeros(len(BodyModelOPENPOSE15.POSE_BODY_25_BODY_PARTS_DICT)-1)
+    valuesWithoutRoot = np.zeros(len(BodyModelOPENPOSE15.POSE_BODY_25_BODY_PARTS_DICT)-1, dtype="float32")
     valuesWithoutRoot[0] = valuesWithRoot[0]
     for i in range(2, len(valuesWithRoot)):
         valuesWithoutRoot[i-1] = valuesWithRoot[i]
@@ -63,7 +63,7 @@ def removeRootJoint(valuesWithRoot):
 
 def addRootJoint(valuesWithoutRoot):
     #normalization removes rootJoint (pos 1) as it has no angle neither length associated
-    valuesWithRoot = np.zeros(len(BodyModelOPENPOSE15.POSE_BODY_25_BODY_PARTS_DICT))
+    valuesWithRoot = np.zeros(len(BodyModelOPENPOSE15.POSE_BODY_25_BODY_PARTS_DICT), dtype="float32")
     valuesWithRoot[0] = valuesWithoutRoot[0]
     valuesWithRoot[1] = 0
     for i in range(1, len(valuesWithoutRoot)):
@@ -76,18 +76,28 @@ def normalize(keypoints):
     #joint 0 need to be initialized with respect to the axis
     #joint 1 will not be used as is not terminal of any part
     
-    angleList = np.zeros(len(BodyModelOPENPOSE15.POSE_BODY_25_BODY_PARTS_DICT ))
-    lengthList = np.zeros(len(BodyModelOPENPOSE15.POSE_BODY_25_BODY_PARTS_DICT ))
+    angleList = np.zeros(len(BodyModelOPENPOSE15.POSE_BODY_25_BODY_PARTS_DICT ), dtype="float32")
+    lengthList = np.zeros(len(BodyModelOPENPOSE15.POSE_BODY_25_BODY_PARTS_DICT ), dtype="float32")
     #rotation of the rootBone with respect to the horizontal axis
 
     angleList[0]=normalizeAngle(-relativeAngle(keypoints[rootBone[0]], keypoints[rootBone[1]], np.array([0,0]), np.array([1,0])))
     rootBoneVector = keypoints[rootBone[1]]-keypoints[rootBone[0]]
     rootBoneVectorLength = np.linalg.norm(rootBoneVector)
+
+    if rootBoneVectorLength==0:
+        raise Exception("cannot normalize if rootBoneVectorLength==0")
+
     #lengthList[0]=rootBoneVectorLength # without normalizing length
     lengthList[0]=1 #root bone will have lenght 1
     processChildrenBones(rootJoint, rootBone, keypoints, angleList, lengthList, rootBoneVectorLength) 
     
-    return removeRootJoint(angleList), removeRootJoint(lengthList), keypoints[rootBone[0]], rootBoneVectorLength
+
+    angleList = removeRootJoint(angleList)
+    lengthList = removeRootJoint(lengthList)
+
+    angleListAndlengthList = np.concatenate((angleList, lengthList), axis=0)
+
+    return angleListAndlengthList, keypoints[rootBone[0]], rootBoneVectorLength
 
    
 def processChildrenBones(jointNumber, parentBonePair, keypoints, angleList, lengthList, rootBoneVectorLength):
@@ -118,6 +128,10 @@ def processChildrenBones(jointNumber, parentBonePair, keypoints, angleList, leng
             angleList[b[1]]=normalizeAngle(angle)
             childVector = childToPoint-childFromPoint
             length = np.linalg.norm(childVector)
+
+            if length==0:
+                raise Exception("cannot normalize if length==0 (["+str(childToPoint)+"]-["+str(childFromPoint)+"])")
+
             #lengthList[b[1]]=length # without normalizing length
             lengthList[b[1]]=rootBoneVectorLength/length
             processChildrenBones(b[1], b, keypoints, angleList, lengthList, rootBoneVectorLength)
@@ -157,8 +171,10 @@ def denormalizeAngle(normalizedAngle):
     #return angle/2
 
 #################### Reconstruction functions ####################
-def denormalize(angleList, lengthList, rootJointValue, rootBoneVectorLength):
-    
+def denormalize(angleListAndlengthList, rootJointValue, rootBoneVectorLength):
+    angleListAndlengthList = np.split(angleListAndlengthList, 2)
+    angleList = angleListAndlengthList[0]
+    lengthList = angleListAndlengthList[1]
     angleList = addRootJoint(angleList)
     lengthList = addRootJoint(lengthList)
 
@@ -166,8 +182,9 @@ def denormalize(angleList, lengthList, rootJointValue, rootBoneVectorLength):
 
     originUnitVectorWithRootBoneAngle = rotateVector2D(np.array([1,0]), denormalizeAngle(angleList[rootBone[1]]))
     #originVectorWithRootBoneAngleAndMagnitude = originUnitVectorWithRootBoneAngle * lengthList[rootBone[1]] #without normalizing lenthgs
+
     originVectorWithRootBoneAngleAndMagnitude = originUnitVectorWithRootBoneAngle * (rootBoneVectorLength/lengthList[rootBone[1]]) 
-    parentFromPoint = keypoints[rootBone[0]] #need the rootJoint (is the offset)
+    parentFromPoint = rootJointValue#keypoints[rootBone[0]] #need the rootJoint (is the offset)
     parentToPoint = originVectorWithRootBoneAngleAndMagnitude + parentFromPoint
 
     reconstructedKeypoints[rootBone[0]]=parentFromPoint
@@ -222,6 +239,8 @@ def reconstructChildrens(jointNumber, parentBonePair, angleList, lengthList, rec
 ############################################################
 
 #Test keypoints
+
+'''
 path =  "dynamicData/H36Mtest_original_v2_noreps/100.json"
 keypoints = openPoseUtils.json2Keypoints(path) 
 keypoints, dummy = openPoseUtils.removeConfidence(keypoints)
@@ -229,11 +248,13 @@ keypoints = np.array(keypoints)
 print(keypoints)
 
 #normalize
-angleList, lengthList, rootJointValue, rootBoneVectorLength = normalize(keypoints)
-print("lengthList=", lengthList)
-print("angleList=", angleList)
+angleListAndLengthList, rootJointValue, rootBoneVectorLength, dummy = normalize(keypoints)
+print("angleListAndLengthList=", angleListAndLengthList)
+print("angleListAndLengthList.shape=", angleListAndLengthList.shape)
+
 
 #denormalize
-reconstructedKeypoints = denormalize(angleList, lengthList, rootJointValue, rootBoneVectorLength)
+reconstructedKeypoints = denormalize(angleListAndLengthList, rootJointValue, rootBoneVectorLength)
 
 print(reconstructedKeypoints)
+'''

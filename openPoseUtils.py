@@ -12,6 +12,7 @@ import poseUtilsBaseline
 #import Configuration
 import sys
 import normalization_heatmaps
+import perspective_projection_pose_with_angles2D
 
 '''
 OPENPOSE INFO
@@ -760,6 +761,22 @@ def normalizeV2(keypoints, bodyModel, normalizationMethod, keepConfidence=False,
         normalized_keypoints, scaleFactor, x_displacement, y_displacement = normalizer.normalize(keypoints, keepConfidence=False)
         return normalized_keypoints, scaleFactor, x_displacement, y_displacement
 
+    elif normalizationMethod == "angles":
+        normalized_keypoints = keypoints.copy()
+        for i, k in enumerate(keypoints):
+            if keepConfidence:
+                #new_keypoint = (int(k[0]/scaleFactor), int(k[1]/scaleFactor), k[2]) 
+                new_keypoint = (k[0], k[1], k[2]) 
+            else: 
+                #new_keypoint = (int(k[0]/scaleFactor), int(k[1]/scaleFactor)) 
+                new_keypoint = (k[0], k[1])
+            normalized_keypoints[i] = new_keypoint
+        normalized_keypoints = np.array(normalized_keypoints) 
+        #print("normalizing ", normalized_keypoints)
+        angleListAndLengthList, rootJointValue, rootBoneVectorLength = perspective_projection_pose_with_angles2D.normalize(normalized_keypoints)
+        #print("angleListAndLengthList.dtype=",angleListAndLengthList.dtype)
+        return angleListAndLengthList, rootJointValue, rootBoneVectorLength, 0
+
     elif normalizationMethod == "none":
 
         normalized_keypoints = keypoints.copy()
@@ -803,6 +820,10 @@ def denormalizeV2(keypoints, scaleFactor, x_displacement, y_displacement, normal
         keypoints_denormalized = normalization_heatmaps.denormalize(keypoints.numpy(), scaleFactor, x_displacement, y_displacement)
         return keypoints_denormalized.tolist()
     
+    elif normalizationMethod == "angles":
+        keypoints_denormalized = perspective_projection_pose_with_angles2D.denormalize(keypoints.numpy(), scaleFactor, x_displacement)
+        return keypoints_denormalized.tolist()
+
     elif normalizationMethod == "none":
 
         keypoints = keypoints.tolist()

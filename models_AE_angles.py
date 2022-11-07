@@ -11,68 +11,22 @@ import torchvision.utils as vutils
 import train_utils
 import numpy as np
 
-COPY_OR_GEN = "gen" #gen or copy
+COPY_OR_GEN = "gen" #copy or gen
 
 CONFIDENCE_THRESHOLD_TO_KEEP_JOINTS = 0.1 
 
-'''
-NEURONS_PER_LAYER_GENERATOR = 32 #256
+NEURONS_PER_LAYER_GENERATOR = 32
 BIAS = False
 class Generator(nn.Module):
     def __init__(self, ngpu, numJoints, nz):
         super(Generator, self).__init__()
+        numJoints = 14 
         self.ngpu = ngpu
         self.numJoints = numJoints
         self.image_size = self.numJoints*2
         self.nz = nz
         self.encoder = nn.Sequential(
-          
-          nn.Linear(self.image_size, NEURONS_PER_LAYER_GENERATOR, bias=False),
-          nn.BatchNorm1d(NEURONS_PER_LAYER_GENERATOR, 0.8),
-          nn.LeakyReLU(0.25),
-          
-          nn.Linear(NEURONS_PER_LAYER_GENERATOR, int(NEURONS_PER_LAYER_GENERATOR*2), bias=False),
-          nn.BatchNorm1d(int(NEURONS_PER_LAYER_GENERATOR*2), 0.8),
-          nn.LeakyReLU(0.25),
-
-          nn.Linear(int(NEURONS_PER_LAYER_GENERATOR*2), nz, bias=False),
-          nn.BatchNorm1d(nz, 0.8),
-          nn.LeakyReLU(0.25),
-        )
-        self.decoder = nn.Sequential(
-          
-          nn.Linear(nz, int(NEURONS_PER_LAYER_GENERATOR*2), bias=False),
-          nn.BatchNorm1d(int(NEURONS_PER_LAYER_GENERATOR*2), 0.8),
-          nn.LeakyReLU(0.25),
-
-          nn.Linear(int(NEURONS_PER_LAYER_GENERATOR*2), NEURONS_PER_LAYER_GENERATOR, bias=False),
-          nn.BatchNorm1d(NEURONS_PER_LAYER_GENERATOR, 0.8),
-          nn.LeakyReLU(0.25),
-          
-          nn.Linear(NEURONS_PER_LAYER_GENERATOR, self.image_size, bias=False),
-        )
-
-    def encode(self, batch_of_keypoints_cropped): # Q(z|x, c)
-        return self.encoder(batch_of_keypoints_cropped)
-
-    def decode(self, z): # P(x|z, c)
-        return self.decoder(z)
-
-    def forward(self, batch_of_keypoints_cropped, noise):#noise not used here but for compatibility with others
-        return self.decode(self.encode(batch_of_keypoints_cropped))
-'''
-
-NEURONS_PER_LAYER_GENERATOR = 32 #256
-BIAS = False
-class Generator(nn.Module):
-    def __init__(self, ngpu, numJoints, nz):
-        super(Generator, self).__init__()
-        self.ngpu = ngpu
-        self.numJoints = numJoints
-        self.image_size = self.numJoints*2
-        self.nz = nz
-        self.encoder = nn.Sequential(
-          
+          # First upsampling
           nn.Linear(self.image_size, NEURONS_PER_LAYER_GENERATOR, bias=False),
           nn.BatchNorm1d(NEURONS_PER_LAYER_GENERATOR, 0.8),
           nn.LeakyReLU(0.25),
@@ -114,8 +68,6 @@ class Generator(nn.Module):
 
     def forward(self, batch_of_keypoints_cropped, noise):#noise not used here but for compatibility with others
         return self.decode(self.encode(batch_of_keypoints_cropped))
-
-
 
 def restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, batch_of_confidence_values):
     '''
@@ -192,7 +144,7 @@ class TrainSetup():
 
 
 def trainStep(models, trainSetup, b_size, device, tb, step_absolute, num_epochs, epoch, i, batch_of_keypoints_cropped, batch_of_keypoints_original, confidence_values, scaleFactor, x_displacement, y_displacement, batch_of_json_file):
-    
+
     models.netG.zero_grad()
     
     # Generate batch of latent vectors
@@ -229,7 +181,7 @@ def inference(models, b_size, noise, numJoints, batch_of_keypoints_cropped, conf
         #We restore the original keypoints (before denormalizing)
         if models.KEYPOINT_RESTORATION:
             fake = restoreOriginalKeypoints(fake, batch_of_keypoints_cropped, confidence_values)
-        print("Shape of fake: ", fake.shape)
+        #print("Shape of fake: ", fake.shape)
         #fakeReshapedAsKeypoints = np.reshape(fake, (b_size, numJoints, 2))
         #fakeReshapedAsKeypoints = fakeReshapedAsKeypoints.numpy()
         

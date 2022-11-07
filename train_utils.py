@@ -104,16 +104,6 @@ def drawGrid(fakeReshapedAsKeypoints, originalReshapedAsKeypoints, croppedReshap
 
         json_file = batch_of_json_file[idx]
         
-
-        #??????????????????????
-        '''
-        fakeKeypointsOneImage, dummy, dummy, dummy = openPoseUtils.normalize(fakeKeypointsOneImage)
-        if (idx == 0):
-            print("normalizedFakeKeypointsOneImage (output normalized):", fakeKeypointsOneImage)
-        '''
-        
-        #fakeKeypointsCroppedOneImageInt = poseUtils.keypointsToInteger(fakeKeypointsCroppedOneImage)
-        #fakeKeypointsOneImageInt = poseUtils.keypointsToInteger(fakeKeypointsOneImage)
         originalReshapedAsKeypointsOneImageInt = originalReshapedAsKeypointsOneImage
         fakeKeypointsCroppedOneImageInt = fakeKeypointsCroppedOneImage
         fakeKeypointsOneImageInt = fakeKeypointsOneImage
@@ -127,6 +117,8 @@ def drawGrid(fakeReshapedAsKeypoints, originalReshapedAsKeypoints, croppedReshap
         fakeKeypointsCroppedOneImageIntDenormalized = openPoseUtils.denormalizeV2(fakeKeypointsCroppedOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage, NORMALIZATION, keepConfidence=False, mean=mean, std=std)#conf.norm)
         #Denormalize output
         fakeKeypointsOneImageIntDenormalized = openPoseUtils.denormalizeV2(fakeKeypointsOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage, NORMALIZATION, keepConfidence=False, mean=mean, std=std)#conf.norm)
+        #print("fakeKeypointsCroppedOneImageIntDenormalized:", fakeKeypointsCroppedOneImageIntDenormalized)
+        #print("fakeKeypointsOneImageIntDenormalized:",fakeKeypointsOneImageIntDenormalized)
 
         #test
         #originalReshapedAsKeypointsOneImageInt = openPoseUtils.denormalizeV2(originalReshapedAsKeypointsOneImageInt, scaleFactorOneImage, x_displacementOneImage, y_displacementOneImage, NORMALIZATION, keepConfidence=False, mean=mean, std=std)#conf.norm)

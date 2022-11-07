@@ -9,15 +9,25 @@ DATASET_CHARADE_IMAGES="dynamicData/charade/input/images"
 BODY_MODEL=BodyModelOPENPOSE15
 DATASET_MODULE="datasetH36M"
 LEN_BUFFER_ORIGINALS=65536 #1000 65536
-CROPPED_VARIATIONS=1 #1 (defalut) 0 to learn to copy
-DISCARDINCOMPLETEPOSES=1 #1
+#CROPPED_VARIATIONS=1 #1 (defalut) 0 to learn to copy
+#DISCARDINCOMPLETEPOSES=1 #1
 
 #INFERENCE
 if [ $DISCARDINCOMPLETEPOSES -eq 1 ]
 then
-    DATASET_TEST="dynamicData/H36Mtest_v2"
+	if [ $CROPPED_VARIATIONS -eq 1 ]
+	then
+    	DATASET_TEST="dynamicData/H36Mtest_v2"
+    else
+		DATASET_TEST="dynamicData/H36Mtest_original_v2_noreps"
+	fi
 else
-	DATASET_TEST="dynamicData/H36Mtest"
+	if [ $CROPPED_VARIATIONS -eq 1 ]
+	then
+    	DATASET_TEST="dynamicData/H36Mtest"
+    else
+		DATASET_TEST="dynamicData/H36Mtest_original_noreps"
+	fi
 fi
 #DATASET_TEST="dynamicData/H36Mtest_v2" #no null keypoints
 DATASET_TEST_IMAGES="UNKNOWN"

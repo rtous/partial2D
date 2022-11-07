@@ -20,6 +20,7 @@ class Generator(nn.Module):
     #Receives a noise vector (nz dims) + keypoints cropped (50 dims)
     def __init__(self, ngpu, numJoints, nz):
         super(Generator, self).__init__()
+        numJoints = 14 
         self.ngpu = ngpu
         self.numJoints = numJoints
         self.image_size = self.numJoints*2
@@ -52,6 +53,7 @@ NEURONS_PER_LAYER_DISCRIMINATOR = 256
 class Discriminator(nn.Module):
     def __init__(self, ngpu, numJoints):
         super(Discriminator, self).__init__()
+        numJoints = 14 
         self.ngpu = ngpu
         self.numJoints = numJoints
         self.image_size = self.numJoints*2
@@ -88,12 +90,13 @@ class Discriminator(nn.Module):
         )
 
     def forward(self, batch_of_keypoints_cropped, batch_of_keypoints_original): 
-        #print("Discriminator batch_of_keypoints_cropped shape:",batch_of_keypoints_cropped.shape)
-        #print("Discriminator batch_of_keypoints_original shape:",batch_of_keypoints_original.shape)
+        #input = torch.cat((batch_of_keypoints_cropped, batch_of_keypoints_original), -1)  
         input = torch.cat((batch_of_keypoints_cropped, batch_of_keypoints_original), -1)  
-        #print("Discriminator input:",input.shape)
-        #print("Discriminator input:",input[0])
-        #print("Discriminator input.shape:",input.shape)
+        #intput = input.double()
+        input = input.float()
+        print("input[0]=", input[0])
+        print("input.shape=", input.shape)
+
         return self.main(input)
 
 def restoreOriginalKeypoints(batch_of_fake_original, batch_of_keypoints_cropped, batch_of_confidence_values):
@@ -167,6 +170,8 @@ class TrainSetup():
     def __init__(self, models, ngpu, numJoints, nz, lr, beta1, PIXELLOSS_WEIGHT, device = "cpu"):
         super(TrainSetup, self).__init__()
 
+
+
         #loss function
         self.lossFunctionD = nn.BCELoss() #torch.nn.BCEWithLogitsLoss
         self.lossFunctionG_adversarial = nn.BCELoss() 
@@ -195,6 +200,8 @@ def trainStep(models, trainSetup, b_size, device, tb, step_absolute, num_epochs,
     output = models.netD(batch_of_keypoints_cropped, batch_of_keypoints_original).view(-1)
     
     # Calculate loss on all-real batch
+    print(output[0])
+    print(label[0])
     errD_real = trainSetup.lossFunctionD(output, label)
 
     # Calculate gradients for D in backward pass

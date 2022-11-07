@@ -22,13 +22,64 @@ DAE over H36M (default)
 ---------------------------------------
 AE over H36M
 ---------------------------------------
+NOTA: inference pot copiar o samplejar, cal canviar el
+paràmetre COPY_OR_GEN al fitxer del model.
+
+(during training COPY_OR_GEN will affect the displayed results)
+
 ./train.sh conf_AE.sh confDataset_H36M.sh 0 
-./inference.sh confH36M_AE.sh confDataset_H36M.sh 0 (generation)
+./inference.sh conf_AE.sh confDataset_H36M.sh 0 (copy or gen)
 ./FPD.sh conf_AE.sh confDataset_H36M.sh 0
 ---------------------------------------
-- FPD: 927,954 :-()
-- To learn the identity you need to change inference so that it 
-does encode and decode (FPD: 14000 I guess)
+two layers of 256 neurons:
+	nz=10,  
+	- FPD copy = 1960
+	- FPD gen = 1,882,722
+
+	nz=100
+	- FPD copy = 1591
+	- FPD gen = 1,230,776
+
+two layers of 128 neurons:
+	nz=10,  
+	- FPD copy = 
+	- FPD gen = 
+
+	nz=100
+	- FPD copy = 1612
+	- FPD gen = 653663
+
+two layers of 64 neurons:
+	nz=10,  
+	- FPD copy = 
+	- FPD gen = 
+
+	nz=100
+	- FPD copy = 1995
+	- FPD gen = 586760
+
+two layers of 32 neurons:
+	nz=10,  
+	- FPD copy = 
+	- FPD gen = 656265 (amb nz=32 millora a 550299)
+
+	nz=100
+	- FPD copy = 2802
+	- FPD gen = 382362
+
+	nz=256
+	- FPD gen = 300264
+
+menys neurons no funciona.
+
+- amb 3 capes en forma de rombe (l'inrevés del normal) obtinc uns 100000. 
+- L'epoch que agafes varia molt, overfitting?
+
+- three layers all of 32 neurons:
+	- nz=32, 
+		- FPD gen = 140984 (2 epochs)
+
+
 ---------------------------------------
 ---------------------------------------
 
@@ -81,3 +132,49 @@ WGAN over H36M (Wasserstein GAN)
 -
 ---------------------------------------
 ---------------------------------------
+
+---------------------------------------
+---------------------------------------
+DAE over H36M (angles)
+---------------------------------------
+./train.sh conf_DAE_angles.sh confDataset_H36M.sh 0 
+./inference.sh conf_DAE_angles.sh confDataset_H36M.sh 0
+./FPD.sh conf_DAE_angles.sh confDataset_H36M.sh 0
+---------------------------------------
+- Pose completion
+- FPD: 5000-6000
+- Currently with NZ=0
+- Basic noramlization: very bad
+- Noise instead of zeros in cropped bones: no change
+- No restoration: almost the same (?)
+- dropout: no change
+---------------------------------------
+---------------------------------------
+
+---------------------------------------
+---------------------------------------
+AE over H36M (angles)
+---------------------------------------
+NOTA: inference pot copiar o samplejar, cal canviar el
+paràmetre COPY_OR_GEN.
+
+./train.sh conf_AE_angles.sh confDataset_H36M.sh 0 
+./inference.sh conf_AE_angles.sh confDataset_H36M.sh 0 (generation)
+./FPD.sh conf_AE_angles.sh confDataset_H36M.sh 0
+---------------------------------------
+nz = 10, two layers of 256 neurons 
+	- FPD (copy): 34889 
+	- FPD (generation): 242,769,438
+
+nz = 100 two layers of 256 neurons 
+	- FPD (copy):  
+	- FPD (generation): 
+
+nz = 32, three layers of 32 neurons 
+	- FPD (copy): 147896
+	- FPD (generation): 50,771,306
+
+
+---------------------------------------
+---------------------------------------
+
