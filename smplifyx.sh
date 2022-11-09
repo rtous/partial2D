@@ -1,15 +1,7 @@
-#INPUTPATH="/Users/rtous/DockerVolume/charade/results/H36M_autoencoder"
-#OUTPUTPATH="/Users/rtous/DockerVolume/charade/results/H36M_autoencoder/3D"
-INPUTPATH="/Users/rtous/DockerVolume/partial2D/data/output/ECCV18OP_FINAL/CHARADE"
-OUTPUTPATH="/Users/rtous/DockerVolume/partial2D/data/output/ECCV18OP_FINAL/CHARADE/3D"
+#
 
-
-
-#mkdir -p /Users/rtous/DockerVolume/charade/results/H36M_autoencoder/keypoints
-#mkdir -p /Users/rtous/DockerVolume/charade/results/H36M_autoencoder/images
-
-#cp /Users/rtous/DockerVolume/partial2D/data/output/H36M/CHARADE/keypoints/*.json /Users/rtous/DockerVolume/charade/results/H36M_autoencoder/keypoints 
-#cp /Users/rtous/DockerVolume/charade/input/images/*.png /Users/rtous/DockerVolume/charade/results/H36M_autoencoder/images
+INPUTPATH=$1
+OUTPUTPATH=$2
 
 cd $HOME/DockerVolume/flashback_smplify-x
 

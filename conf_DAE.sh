@@ -10,7 +10,7 @@ TRAINSPLIT=1 #0.8
 PIXELLOSS_WEIGHT=1 #It's a DAE
 
 #INFERENCE
-MODELFILE="model_epoch1_batch4000.pt"
+MODELFILE="model_epoch2_batch4000.pt"
 
 
 
