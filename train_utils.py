@@ -42,6 +42,8 @@ import time
 import openPoseUtils
 import importlib
 
+sys.set_int_max_str_digits(0)
+
 
 
 def get_mean_and_std(dataloader):

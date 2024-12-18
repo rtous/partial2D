@@ -32,6 +32,7 @@ pathlib.Path(OUTPUTPATH_ORIGINAL).mkdir(parents=True, exist_ok=True)
 scandirIterator = os.scandir(INPUTPATH)
 
 n = 0
+print("Reading files from "+INPUTPATH)
 for file in scandirIterator:
 	copyfile(join(INPUTPATH, str(file.name)), join(OUTPUTPATH, str(file.name)))
 	indexUnderscore = file.name.find('_')
