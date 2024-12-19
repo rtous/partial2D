@@ -4,7 +4,7 @@
 
 This repository contains the code related to the paper ["Human pose completion in partial body camera shots"](https://upcommons.upc.edu/bitstream/handle/2117/394207/main.pdf;jsessionid=F7BEA81F9053C26DE28BE39BCAD8FAF5?sequence=1)
 
-## 2 Acknowledgements
+## 2. Acknowledgements
 
 If you find this repository useful for your research, please cite the original publication:
 ```
@@ -22,7 +22,7 @@ If you find this repository useful for your research, please cite the original p
    }
 ```
 
-## Setup
+## 3. Setup dependencies
 ```
 git clone https://github.com/rtous/partial2D.git
 cd partial2D
@@ -39,9 +39,9 @@ pip install tensorboard==2.18.0
 pip install cdflib==1.3.2
 pip install scipy==1.14.1
 ```
-## Dataset
+## 4. Dataset
 
-### H36M (training dataset and used for quantitative evaluation)
+### 4.1 H36M (training dataset and used for quantitative evaluation)
 
 Download H36M 2D poses:
 
@@ -61,7 +61,7 @@ Download H36M 2D poses:
       rm data/H36M/2D/*.tgz
 ```
 
-### CHARADE (test dataset for qualitative evaluation)
+### 4.2 CHARADE (test dataset for qualitative evaluation)
 
 ```
       mkdir -p data/CHARADE/keypoints
@@ -74,7 +74,7 @@ Download H36M 2D poses:
       rm images.zip
 ```
 
-## Test
+## 5. Test
 
 ```
    ./datasetH36M_makelite.sh
@@ -91,7 +91,7 @@ Download H36M 2D poses:
 ```
 
 
-## Monitoring training
+## 6. Monitoring training
 
 tensorboard --logdir runs
 
