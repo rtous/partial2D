@@ -23,7 +23,7 @@ If you find this repository useful for your research, please cite the original p
 ```
 
 ## Setup
-
+```
 git clone https://github.com/rtous/partial2D.git
 cd partial2D
 
@@ -38,7 +38,7 @@ pip install numpy==1.26.0
 pip install tensorboard==2.18.0
 pip install cdflib==1.3.2
 pip install scipy==1.14.1
-
+```
 ## Dataset
 
 H36M
