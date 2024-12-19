@@ -41,7 +41,7 @@ pip install scipy==1.14.1
 ```
 ## Dataset
 
-H36M
+### H36M (training dataset and used for quantitative evaluation)
 
 Download H36M 2D poses:
 
@@ -60,6 +60,8 @@ Download H36M 2D poses:
       tar -xvf data/H36M/Poses_D2_Positions_S11.tgz -C data/H36M/2D
       rm data/H36M/2D/*.tgz
 ```
+
+### CHARADE (test dataset for qualitative evaluation)
 
 ```
       mkdir -p data/CHARADE/keypoints
