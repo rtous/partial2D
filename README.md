@@ -47,7 +47,7 @@ Download H36M 2D poses:
 
    - Request access to https://vision.imar.ro/human3.6m
    - Download by subject (for all of them): Poses_D2_Positions
-   - Decompress the files into a data/H36M folder (asuming you're in the repo's root)
+   - Decompress the files into a data/H36M/2D folder (asuming you're in the repo's root)
 ```
       mkdir -p data/H36M/2D
       mv $HOME/Downloads/Poses* data/H36M/2D
@@ -73,10 +73,6 @@ Download H36M 2D poses:
       unzip images.zip -d data/CHARADE/images  
       rm images.zip
 ```
-
-
-git clone ../https://github.com/rtous/charade
-unzip ../keypointsOpenPose.zip -d data
 
 ## Test
 
