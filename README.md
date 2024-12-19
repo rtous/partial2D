@@ -7,7 +7,7 @@ This repository contains the code related to the paper ["Human pose completion i
 ## 2 Acknowledgements
 
 If you find this repository useful for your research, please cite the original publication:
-
+```
    @article{Tous28072023},
       author = {Ruben Tous, Jordi Nin and Laura Igual},
       title = {Human pose completion in partial body camera shots},
@@ -20,6 +20,7 @@ If you find this repository useful for your research, please cite the original p
       doi = {10.1080/0952813X.2023.2241575},
       URL = { https://doi.org/10.1080/0952813X.2023.2241575}
    }
+```
 
 ## Setup
 
@@ -77,16 +78,19 @@ unzip ../keypointsOpenPose.zip -d data
 
 ## Test
 
-./datasetH36M_makelite.sh
-./train.sh conf_GAN.sh confDataset_H36M.sh 0 
-./inference.sh conf_GAN.sh confDataset_H36M.sh 0
-./FPD.sh conf_GAN.sh confDataset_H36M.sh 0
+```
+   ./datasetH36M_makelite.sh
+   ./train.sh conf_GAN.sh confDataset_H36M.sh 0 
+   ./inference.sh conf_GAN.sh confDataset_H36M.sh 0
+   ./FPD.sh conf_GAN.sh confDataset_H36M.sh 0
+```
 
-./datasetH36M_makelite.sh
-./train.sh conf_DAE.sh confDataset_H36M.sh 0 
-./inference.sh conf_DAE.sh confDataset_H36M.sh 0
-./FPD.sh conf_DAE.sh confDataset_H36M.sh 0
-
+```
+   ./datasetH36M_makelite.sh
+   ./train.sh conf_DAE.sh confDataset_H36M.sh 0 
+   ./inference.sh conf_DAE.sh confDataset_H36M.sh 0
+   ./FPD.sh conf_DAE.sh confDataset_H36M.sh 0
+```
 
 
 ## Monitoring training
