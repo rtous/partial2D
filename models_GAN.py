@@ -254,7 +254,7 @@ def trainStep(models, trainSetup, b_size, device, tb, step_absolute, num_epochs,
         
     if i % 50 == 0:
         print("**************************************************************")
-        print('[%d/%d][%d/?]\tLoss_G: %.4f \tLoss_D: %.4f'
+        print('[epoch %d/%d][batch %d]\tLoss_G: %.4f \tLoss_D: %.4f'
               % (epoch, num_epochs, i, errG.item(), errD.item()))
 
 def inference(models, b_size, noise, numJoints, batch_of_keypoints_cropped, confidence_values):

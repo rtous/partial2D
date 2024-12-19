@@ -274,7 +274,7 @@ def trainStep(models, trainSetup, b_size, device, tb, step_absolute, num_epochs,
         
     if i % 50 == 0:
         print("**************************************************************")
-        print('[%d/%d][%d/?]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f'
+        print('[epoch %d/%d][batch %d]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f'
               % (epoch, num_epochs, i, #len(dataloader),
                  errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
         print('errD_real: %.4f, errD_fake: %.4f\t'

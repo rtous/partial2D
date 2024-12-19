@@ -37,81 +37,6 @@ import colors
 import BodyModelOPENPOSE15
 import BodyModelOPENPOSE25
 
-mean=  466.20676
-std=  114.26538
-
-argv = sys.argv
-try:
-    DATASET_CROPPED=argv[1]
-    DATASET_ORIGINAL=argv[2]
-    OUTPUTPATH=argv[3]
-    DATASET_CHARADE=argv[4]
-    DATASET_CHARADE_IMAGES=argv[5]
-    DATASET_TEST=argv[6]
-    DATASET_TEST_IMAGES=argv[7]
-    MODELPATH=argv[8]
-    MODEL=argv[9]
-    if argv[10]=="0":
-    	ONLY15=False
-    else:
-    	ONLY15=True
-    #conf = Configuration.Configuration()
-    #conf.set_BODY_MODEL(argv[11])
-    BODY_MODEL=eval(argv[11])
-    NORMALIZATION=argv[12]
-    if argv[13]=="0":
-        KEYPOINT_RESTORATION=False
-    else:
-        KEYPOINT_RESTORATION=True
-    NZ=int(argv[14])
-
-
-except ValueError:
-    print("Wrong arguments. Expecting two paths.")
-
-
-
-####### INITIAL WARNINGS ########
-if not DATASET_TEST=="dynamicData/H36Mtest":
-    print(colors.CRED + "DATASET_TEST=" + str(DATASET_TEST) + colors.CEND)
-else:
-    print(colors.CGREEN + "DATASET_TEST=" + str(DATASET_TEST) + colors.CEND)
-
-if not NORMALIZATION=="center_scale":
-    print(colors.CRED + "NORMALIZATION=" + str(NORMALIZATION) + colors.CEND)
-else:
-    print(colors.CGREEN + "NORMALIZATION=" + str(NORMALIZATION) + colors.CEND)
-if not KEYPOINT_RESTORATION:
-    print(colors.CRED + "KEYPOINT_RESTORATION=" + str(KEYPOINT_RESTORATION) + colors.CEND)
-else:
-    print(colors.CGREEN + "KEYPOINT_RESTORATION=" + str(KEYPOINT_RESTORATION) + colors.CEND)
-if MODEL=="models_mirror":
-    print(colors.CRED + "MODEL=" + str(MODEL) + colors.CEND)
-else:
-    print(colors.CGREEN + "MODEL=" + str(MODEL) + colors.CEND)
-if NZ!=100:
-    print(colors.CRED + "NZ=" + str(NZ) + colors.CEND)
-else:
-    print(colors.CGREEN + "NZ=" + str(NZ) + colors.CEND)
-
-###########
-
-models = importlib.import_module(MODEL)
-
-pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
-
-numJoints = len(BODY_MODEL.POSE_BODY_25_BODY_PARTS)  #15
-
-# Size of z latent vector (i.e. size of generator input)
-nz = NZ
-
-# Number of GPUs available. Use 0 for CPU mode.
-ngpu = 0
-
-theModels = models.Models(ngpu, numJoints, nz, KEYPOINT_RESTORATION, device = torch.device("cpu"))
-
-models.load(theModels, MODELPATH)
-
 def testMany(theModels, keypointsPath, imagesPath, outputPath, outputSubpath, imageExtension, saveImages=True):
     print('testMany('+keypointsPath+')')
     pathlib.Path(outputPath+outputSubpath+"/images").mkdir(parents=True, exist_ok=True)
@@ -173,7 +98,7 @@ def testMany(theModels, keypointsPath, imagesPath, outputPath, outputSubpath, im
     print("Inference complete, properly processed=", n)
     print("Errors=", n_errors)
     print("Saving...")
-	
+    
     batch_of_one_keypoints_cropped = torch.stack(batch_of_one_keypoints_cropped)
     batch_of_one_confidence_values = torch.stack(batch_of_one_confidence_values)
     fixed_noise_N = torch.randn(n, nz)
@@ -189,11 +114,11 @@ def testMany(theModels, keypointsPath, imagesPath, outputPath, outputSubpath, im
         fakeKeypointsCroppedOneImageIntRescaled = openPoseUtils.denormalizeV2(fakeKeypointsOneImage, batch_scaleFactor[idx], batch_x_displacement[idx], batch_y_displacement[idx], NORMALIZATION, keepConfidence=False, mean=mean, std=std, norm=None)
         
         #FIX
-		#We have worked with jut 15 keypoints, need to restore the other 10
+        #We have worked with jut 15 keypoints, need to restore the other 10
         #print("fakeKeypointsCroppedOneImageIntRescaled PRE", fakeKeypointsCroppedOneImageIntRescaled)
         keypoints_cropped25 = batch_of_one_keypoints_cropped25[idx]
         for i in range(len(fakeKeypointsCroppedOneImageIntRescaled), len(batch_of_one_keypoints_cropped25[idx])):
-        	fakeKeypointsCroppedOneImageIntRescaled.append(keypoints_cropped25[i])
+            fakeKeypointsCroppedOneImageIntRescaled.append(keypoints_cropped25[i])
         #print("fakeKeypointsCroppedOneImageIntRescaled POST", fakeKeypointsCroppedOneImageIntRescaled)
         #till here
         if idx == 0:
@@ -277,13 +202,90 @@ def testImage(netG, outputPath, imagePath, keypointsPath):
     poseUtils.draw_pose(imgWithKyepoints, fakeKeypointsCroppedOneImageIntRescaled, -1, openPoseUtils.POSE_BODY_25_PAIRS_RENDER_GP, openPoseUtils.POSE_BODY_25_COLORS_RENDER_GPU, False)
     cv2.imwrite(outputPath+"/test_keypoints.jpg", imgWithKyepoints)
 
-	
-#CHARADE DATASET
-testMany(theModels, DATASET_CHARADE, DATASET_CHARADE_IMAGES, OUTPUTPATH, "/CHARADE", ".png", True)
 
-#TEST DATASET
-testMany(theModels, DATASET_TEST, DATASET_TEST_IMAGES, OUTPUTPATH, "/TEST", ".jpg", False)
+if __name__ == "__main__":
 
-#testMany(netG, DATASET_TEST, DATASET_TEST_IMAGES, OUTPUTPATH, "/TEST", ".jpg")
+    mean=  466.20676
+    std=  114.26538
+
+    argv = sys.argv
+    try:
+        DATASET_CROPPED=argv[1]
+        DATASET_ORIGINAL=argv[2]
+        OUTPUTPATH=argv[3]
+        DATASET_CHARADE=argv[4]
+        DATASET_CHARADE_IMAGES=argv[5]
+        DATASET_TEST=argv[6]
+        DATASET_TEST_IMAGES=argv[7]
+        MODELPATH=argv[8]
+        MODEL=argv[9]
+        if argv[10]=="0":
+        	ONLY15=False
+        else:
+        	ONLY15=True
+        #conf = Configuration.Configuration()
+        #conf.set_BODY_MODEL(argv[11])
+        BODY_MODEL=eval(argv[11])
+        NORMALIZATION=argv[12]
+        if argv[13]=="0":
+            KEYPOINT_RESTORATION=False
+        else:
+            KEYPOINT_RESTORATION=True
+        NZ=int(argv[14])
+
+
+    except ValueError:
+        print("Wrong arguments. Expecting two paths.")
+
+
+
+    ####### INITIAL WARNINGS ########
+    if not DATASET_TEST=="dynamicData/H36Mtest":
+        print(colors.CRED + "DATASET_TEST=" + str(DATASET_TEST) + colors.CEND)
+    else:
+        print(colors.CGREEN + "DATASET_TEST=" + str(DATASET_TEST) + colors.CEND)
+
+    if not NORMALIZATION=="center_scale":
+        print(colors.CRED + "NORMALIZATION=" + str(NORMALIZATION) + colors.CEND)
+    else:
+        print(colors.CGREEN + "NORMALIZATION=" + str(NORMALIZATION) + colors.CEND)
+    if not KEYPOINT_RESTORATION:
+        print(colors.CRED + "KEYPOINT_RESTORATION=" + str(KEYPOINT_RESTORATION) + colors.CEND)
+    else:
+        print(colors.CGREEN + "KEYPOINT_RESTORATION=" + str(KEYPOINT_RESTORATION) + colors.CEND)
+    if MODEL=="models_mirror":
+        print(colors.CRED + "MODEL=" + str(MODEL) + colors.CEND)
+    else:
+        print(colors.CGREEN + "MODEL=" + str(MODEL) + colors.CEND)
+    if NZ!=100:
+        print(colors.CRED + "NZ=" + str(NZ) + colors.CEND)
+    else:
+        print(colors.CGREEN + "NZ=" + str(NZ) + colors.CEND)
+
+    ###########
+
+    models = importlib.import_module(MODEL)
+
+    pathlib.Path(OUTPUTPATH).mkdir(parents=True, exist_ok=True) 
+
+    numJoints = len(BODY_MODEL.POSE_BODY_25_BODY_PARTS)  #15
+
+    # Size of z latent vector (i.e. size of generator input)
+    nz = NZ
+
+    # Number of GPUs available. Use 0 for CPU mode.
+    ngpu = 0
+
+    theModels = models.Models(ngpu, numJoints, nz, KEYPOINT_RESTORATION, device = torch.device("cpu"))
+
+    models.load(theModels, MODELPATH)
+    	
+    #CHARADE DATASET
+    testMany(theModels, DATASET_CHARADE, DATASET_CHARADE_IMAGES, OUTPUTPATH, "/CHARADE", ".png", True)
+
+    #TEST DATASET
+    testMany(theModels, DATASET_TEST, DATASET_TEST_IMAGES, OUTPUTPATH, "/TEST", ".jpg", False)
+
+    #testMany(netG, DATASET_TEST, DATASET_TEST_IMAGES, OUTPUTPATH, "/TEST", ".jpg")
 
         

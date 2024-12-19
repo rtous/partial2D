@@ -1,3 +1,7 @@
+set -x
+
+#./train.sh conf_DAE.sh confDataset_H36M.sh 0 
+
 if [ $# -eq 0 ]
 then
     echo "No arguments supplied"
@@ -14,7 +18,7 @@ else
 	######################
 	if [ $SETUP -eq 0 ]
 	then   
-	    DATASET_ORIGINAL="/Volumes/ElementsDat/pose/H36M/H36M"
+	    DATASET_ORIGINAL="data/H36M"
 	    #DATASET_ORIGINAL="/Volumes/ElementsDat/pose/H36M/ECCV2018/ECCV18OD_no_sufix"
 	else
 	    DATASET_ORIGINAL="/mnt/f/datasets/pose/H36M/H36M"

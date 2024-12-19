@@ -1,3 +1,5 @@
+set -x
+
 if [ $# -eq 0 ]
 then
     echo "No arguments supplied"
@@ -14,7 +16,8 @@ else
 	######################
 	if [ $SETUP -eq 0 ]
 	then   
-	    DATASET_REFERENCE="/Volumes/ElementsDat/pose/H36M/H36M"
+	    DATASET_REFERENCE="data/H36M"
+	    #DATASET_REFERENCE="/Volumes/ElementsDat/pose/H36M/H36M"
 	    #DATASET_ORIGINAL="/Volumes/ElementsDat/pose/H36M/ECCV2018/ECCV18OD_no_sufix"
 	else
 	    DATASET_REFERENCE="/mnt/f/datasets/pose/H36M/H36M"
